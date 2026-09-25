@@ -396,7 +396,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(value, style: TextStyle(
+          Text(value, style: const TextStyle(
             fontFamily: AppTypography.fontFamily,
             fontSize: 14,
             fontWeight: FontWeight.w700,

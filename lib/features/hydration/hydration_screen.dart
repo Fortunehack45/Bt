@@ -195,7 +195,7 @@ class _HydrationScreenState extends State<HydrationScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Add Custom Amount', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
-                        Text('${_customMl.toInt()} ml', style: TextStyle(
+                        Text('${_customMl.toInt()} ml', style: const TextStyle(
                           fontFamily: AppTypography.fontFamily,
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -227,7 +227,7 @@ class _HydrationScreenState extends State<HydrationScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.waterBlue,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedMd),
+                          shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedMd),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           elevation: 0,
                         ),

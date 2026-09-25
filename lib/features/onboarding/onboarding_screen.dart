@@ -184,9 +184,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                               ),
                             ),
-                            focusedBorder: OutlineInputBorder(
+                            focusedBorder: const OutlineInputBorder(
                               borderRadius: AppRadii.roundedMd,
-                              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                              borderSide: BorderSide(color: AppColors.primary, width: 2),
                             ),
                           ),
                         ),
@@ -238,7 +238,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.textPrimaryLight,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: AppRadii.roundedMd,
                   ),
                 ),

@@ -65,7 +65,7 @@ class EmptyStateView extends StatelessWidget {
                   foregroundColor: AppColors.textPrimaryLight,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: AppRadii.roundedMd,
                   ),
                 ),

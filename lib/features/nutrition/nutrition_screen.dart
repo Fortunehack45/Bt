@@ -73,7 +73,7 @@ class NutritionScreen extends StatelessWidget {
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.textPrimaryLight,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                      shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
                   ),
@@ -361,7 +361,7 @@ class NutritionScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('No $title logged today', style: AppTypography.caption(isDark).copyWith(fontSize: 13)),
-                Text('+ Add', style: TextStyle(
+                const Text('+ Add', style: TextStyle(
                   fontFamily: AppTypography.fontFamily,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,

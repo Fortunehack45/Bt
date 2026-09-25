@@ -4,7 +4,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
-import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';
 import '../../core/widgets/circular_progress_ring.dart';
 import '../../core/widgets/solid_wellness_card.dart';
@@ -128,7 +127,7 @@ class SleepScreen extends StatelessWidget {
                       backgroundColor: AppColors.sleepPurple,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                      shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
                   ),

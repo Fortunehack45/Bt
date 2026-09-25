@@ -34,12 +34,34 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Selected Date in Calendar Strip (3 is current day by default)
+  // Real Selected Date in Calendar
+  DateTime _selectedDate = DateTime.now();
+  DateTime get selectedDate => _selectedDate;
   int _selectedCalendarDayIndex = 3;
   int get selectedCalendarDayIndex => _selectedCalendarDayIndex;
 
   void selectCalendarDay(int index) {
     _selectedCalendarDayIndex = index;
+    notifyListeners();
+  }
+
+  void setSelectedDate(DateTime date) {
+    _selectedDate = date;
+    notifyListeners();
+  }
+
+  void previousWeek() {
+    _selectedDate = _selectedDate.subtract(const Duration(days: 7));
+    notifyListeners();
+  }
+
+  void nextWeek() {
+    _selectedDate = _selectedDate.add(const Duration(days: 7));
+    notifyListeners();
+  }
+
+  void jumpToToday() {
+    _selectedDate = DateTime.now();
     notifyListeners();
   }
 

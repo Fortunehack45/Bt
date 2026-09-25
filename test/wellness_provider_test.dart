@@ -72,5 +72,46 @@ void main() {
       expect(provider.themeMode, ThemeMode.dark);
       expect(provider.isDarkMode, true);
     });
+
+    test('Calendar week navigation and date selection work seamlessly', () {
+      final initialDate = provider.selectedDate;
+      provider.nextWeek();
+      expect(provider.selectedDate.isAfter(initialDate), true);
+      provider.previousWeek();
+      expect(provider.selectedDate.day, initialDate.day);
+
+      final customDate = DateTime(2026, 10, 15);
+      provider.setSelectedDate(customDate);
+      expect(provider.selectedDate, customDate);
+
+      provider.jumpToToday();
+      expect(provider.selectedDate.year, DateTime.now().year);
+    });
+
+    test('removeMeal decrements calories and removes entry', () {
+      provider.addMeal('Oatmeal', 'Breakfast', 300, 'Healthy breakfast');
+      expect(provider.meals.length, 1);
+      expect(provider.calories, 300);
+
+      final mealId = provider.meals.first.id;
+      provider.removeMeal(mealId);
+      expect(provider.meals, isEmpty);
+      expect(provider.calories, 0);
+    });
+
+    test('resetAllData clears all telemetry back to clean state', () {
+      provider.addSteps(5000);
+      provider.addWaterGlass(4);
+      provider.addMeal('Salad', 'Lunch', 450, 'Green salad');
+      provider.logSleep(8.0);
+
+      expect(provider.steps, 5000);
+      provider.resetAllData();
+      expect(provider.steps, 0);
+      expect(provider.waterGlasses, 0);
+      expect(provider.calories, 0);
+      expect(provider.sleepHours, 0.0);
+      expect(provider.meals, isEmpty);
+    });
   });
 }

@@ -116,7 +116,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.textPrimaryLight,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                      shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
                   ),
@@ -149,7 +149,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                         ),
                         Text(
                           totalHabits > 0 ? '${(completionRatio * 100).toInt()}%' : '0%',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontFamily: AppTypography.fontFamily,
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -389,7 +389,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                                   color: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
                                   borderRadius: AppRadii.roundedPill,
                                 ),
-                                child: Text('+ Add', style: TextStyle(
+                                child: const Text('+ Add', style: TextStyle(
                                   fontFamily: AppTypography.fontFamily,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,

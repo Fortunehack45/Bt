@@ -5,107 +5,165 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../core/widgets/solid_wellness_card.dart';
 
-class CalendarDayItem {
-  final String dayLetter; // S, M, T, W, T, F, S
-  final String dateNumber; // 07, 08, 09, 10, 11, 12, 13
-
-  const CalendarDayItem({
-    required this.dayLetter,
-    required this.dateNumber,
-  });
-}
-
-/// Interactive weekly calendar strip matching Reference Image 1 Screen 1:
-/// - "August 2025" with left/right pagination
-/// - Weekday columns (S M T W T F S)
+/// Fully interactive, dynamic weekly calendar strip matching Reference Image 1 Screen 1:
+/// - Real dynamic month and year display
+/// - Weekday columns (S M T W T F S) dynamically calculated from actual dates
+/// - Interactive week pagination (< and >)
 /// - Selected date highlighted in soft lime green pill
+/// - 1-tap full calendar picker integration
 class CalendarStrip extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onDaySelected;
+  final DateTime selectedDate;
+  final ValueChanged<DateTime> onDateSelected;
+  final VoidCallback onPreviousWeek;
+  final VoidCallback onNextWeek;
+  final VoidCallback onOpenDatePicker;
 
   const CalendarStrip({
     super.key,
-    required this.selectedIndex,
-    required this.onDaySelected,
+    required this.selectedDate,
+    required this.onDateSelected,
+    required this.onPreviousWeek,
+    required this.onNextWeek,
+    required this.onOpenDatePicker,
   });
 
-  static const List<CalendarDayItem> days = [
-    CalendarDayItem(dayLetter: 'S', dateNumber: '07'),
-    CalendarDayItem(dayLetter: 'M', dateNumber: '08'),
-    CalendarDayItem(dayLetter: 'T', dateNumber: '09'),
-    CalendarDayItem(dayLetter: 'W', dateNumber: '10'),
-    CalendarDayItem(dayLetter: 'T', dateNumber: '11'),
-    CalendarDayItem(dayLetter: 'F', dateNumber: '12'),
-    CalendarDayItem(dayLetter: 'S', dateNumber: '13'),
+  static const List<String> _months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
+
+  static const List<String> _dayLetters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  /// Computes the 7 days of the week starting from Sunday containing the selected date.
+  List<DateTime> _computeWeekDays(DateTime anchor) {
+    // weekday in Dart is 1 (Mon) to 7 (Sun)
+    final diffToSunday = anchor.weekday % 7;
+    final sunday = anchor.subtract(Duration(days: diffToSunday));
+    return List.generate(7, (i) => sunday.add(Duration(days: i)));
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final now = DateTime.now();
+    final weekDays = _computeWeekDays(selectedDate);
+    final monthName = _months[selectedDate.month - 1];
+    final isViewingToday = _isSameDay(selectedDate, now);
 
     return SolidWellnessCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       child: Column(
         children: [
-          // Header with Month and Pagination Chevrons
+          // Header with Month, Year, and Pagination Chevrons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'August 2025',
-                style: AppTypography.h3(isDark).copyWith(fontSize: 16),
+              GestureDetector(
+                onTap: onOpenDatePicker,
+                child: Row(
+                  children: [
+                    Text(
+                      '$monthName ${selectedDate.year}',
+                      style: AppTypography.h3(isDark).copyWith(fontSize: 16),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+                  ],
+                ),
               ),
               Row(
                 children: [
+                  if (!isViewingToday)
+                    GestureDetector(
+                      onTap: () {
+                        HapticService.selection();
+                        onDateSelected(now);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
+                          borderRadius: AppRadii.roundedPill,
+                        ),
+                        child: const Text(
+                          'Today',
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamily,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ),
                   _buildNavArrow(
                     icon: Icons.chevron_left_rounded,
-                    onTap: () => HapticService.selection(),
+                    onTap: () {
+                      HapticService.selection();
+                      onPreviousWeek();
+                    },
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),
                   _buildNavArrow(
                     icon: Icons.chevron_right_rounded,
-                    onTap: () => HapticService.selection(),
+                    onTap: () {
+                      HapticService.selection();
+                      onNextWeek();
+                    },
                     isDark: isDark,
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
           // 7-Day Interactive Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(days.length, (index) {
-              final isSelected = index == selectedIndex;
-              final day = days[index];
+            children: List.generate(weekDays.length, (index) {
+              final dayDate = weekDays[index];
+              final isSelected = _isSameDay(dayDate, selectedDate);
+              final isToday = _isSameDay(dayDate, now);
+              final dayLetter = _dayLetters[dayDate.weekday % 7];
+              final dateNumber = dayDate.day.toString().padLeft(2, '0');
 
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
                   HapticService.selection();
-                  onDaySelected(index);
+                  onDateSelected(dayDate);
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? (isDark ? AppColors.primary.withOpacity(0.25) : const Color(0xFFD6F57D))
+                        ? (isDark ? AppColors.primary.withOpacity(0.28) : const Color(0xFFD6F57D))
                         : Colors.transparent,
                     borderRadius: AppRadii.roundedPill,
                     border: isSelected
                         ? Border.all(
                             color: isDark ? AppColors.primary : const Color(0xFFC4E968),
-                            width: 1.0,
+                            width: 1.2,
                           )
-                        : null,
+                        : (isToday
+                            ? Border.all(
+                                color: isDark ? AppColors.darkBorderStrong : AppColors.lightBorderStrong,
+                                width: 1.0,
+                              )
+                            : null),
                   ),
                   child: Column(
                     children: [
                       Text(
-                        day.dayLetter,
+                        dayLetter,
                         style: TextStyle(
                           fontFamily: AppTypography.fontFamily,
                           fontSize: 12,
@@ -115,9 +173,9 @@ class CalendarStrip extends StatelessWidget {
                               : (isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
-                        day.dateNumber,
+                        dateNumber,
                         style: TextStyle(
                           fontFamily: AppTypography.fontFamily,
                           fontSize: 14,

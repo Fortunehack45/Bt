@@ -129,7 +129,7 @@ class ActivityScreen extends StatelessWidget {
                       backgroundColor: AppColors.stepsOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                      shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
                   ),
@@ -278,7 +278,7 @@ class ActivityScreen extends StatelessWidget {
                             color: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
                             borderRadius: AppRadii.roundedPill,
                           ),
-                          child: Text('+ Log', style: TextStyle(
+                          child: const Text('+ Log', style: TextStyle(
                             fontFamily: AppTypography.fontFamily,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
