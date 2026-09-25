@@ -28,7 +28,8 @@ class ResponsiveLayout {
       child: child,
     );
 
-    content = Center(
+    content = Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: maxContentWidth),
         child: content,

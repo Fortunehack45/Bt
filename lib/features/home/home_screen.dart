@@ -10,15 +10,23 @@ import 'widgets/recommendations_carousel.dart';
 import 'widgets/weekly_progress_hero_card.dart';
 
 /// Complete Home Dashboard screen matching Reference Image 1 Screen 1.
-/// Reactive to real user data with zero hardcoded sample metrics.
+/// Features a 2x2 wellness grid linking directly to Hydration, Activity, Sleep, and Nutrition.
 class HomeScreen extends StatelessWidget {
   final VoidCallback onNavigateToStats;
+  final VoidCallback onNavigateToHydration;
+  final VoidCallback onNavigateToActivity;
+  final VoidCallback onNavigateToSleep;
+  final VoidCallback onNavigateToNutrition;
   final VoidCallback onAddMeal;
   final VoidCallback onWaterQuickAdd;
 
   const HomeScreen({
     super.key,
     required this.onNavigateToStats,
+    required this.onNavigateToHydration,
+    required this.onNavigateToActivity,
+    required this.onNavigateToSleep,
+    required this.onNavigateToNutrition,
     required this.onAddMeal,
     required this.onWaterQuickAdd,
   });
@@ -53,7 +61,7 @@ class HomeScreen extends StatelessWidget {
           padding: EdgeInsets.only(
             left: AppSpacing.pageMargin,
             right: AppSpacing.pageMargin,
-            top: AppSpacing.sm,
+            top: AppSpacing.xs,
             bottom: AppSpacing.contentBottomPadding(context),
           ),
           child: Column(
@@ -65,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Calendar synchronized to today'),
-                      duration: Duration(seconds: 2),
+                      duration: Duration(seconds: 1),
                     ),
                   );
                 },
@@ -88,12 +96,16 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // 3. Metric Dual Card Grid ("Step to walk" & "Drink Water")
+              // 3. 2x2 Metric Grid (Steps, Water, Sleep, Nutrition)
               MetricSummaryGrid(
                 steps: provider.steps,
                 waterGlasses: provider.waterGlasses,
-                onStepsTap: onNavigateToStats,
-                onWaterTap: onWaterQuickAdd,
+                sleepHours: provider.sleepHours,
+                calories: provider.calories,
+                onStepsTap: onNavigateToActivity,
+                onWaterTap: onNavigateToHydration,
+                onSleepTap: onNavigateToSleep,
+                onNutritionTap: onNavigateToNutrition,
               ),
               const SizedBox(height: AppSpacing.md),
 

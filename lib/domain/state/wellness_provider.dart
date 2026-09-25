@@ -206,6 +206,35 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeMeal(String id) {
+    final meal = _meals.firstWhere((m) => m.id == id, orElse: () => const MealEntry(id: '', name: '', mealType: '', calories: 0, timeString: '', description: ''));
+    if (meal.id.isNotEmpty) {
+      _calories = (_calories - meal.calories).clamp(0, 99999);
+      _meals.removeWhere((m) => m.id == id);
+      notifyListeners();
+    }
+  }
+
+  void addWaterAmount(int ml) {
+    final glassesToAdd = (ml / 250.0).round().clamp(1, 10);
+    _waterGlasses += glassesToAdd;
+    notifyListeners();
+  }
+
+  void resetAllData() {
+    _steps = 0;
+    _waterGlasses = 0;
+    _calories = 0;
+    _exerciseHours = 0.0;
+    _bpm = 0;
+    _weightKg = 0.0;
+    _sleepHours = 0.0;
+    _sleepScore = 0;
+    _habits = [];
+    _meals = [];
+    notifyListeners();
+  }
+
   // Activity Logging
   void logActivity(double hours, int caloriesBurned, int stepsCount) {
     _exerciseHours += hours;

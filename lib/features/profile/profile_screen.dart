@@ -42,7 +42,7 @@ class ProfileScreen extends StatelessWidget {
           padding: EdgeInsets.only(
             left: AppSpacing.pageMargin,
             right: AppSpacing.pageMargin,
-            top: AppSpacing.sm,
+            top: AppSpacing.xs,
             bottom: AppSpacing.contentBottomPadding(context),
           ),
           child: Column(

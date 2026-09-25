@@ -394,6 +394,10 @@ class _AppShellState extends State<AppShell> {
       // 0: Home
       HomeScreen(
         onNavigateToStats: () => setState(() => _currentIndex = 1),
+        onNavigateToHydration: () => _navigateToSubpage(context, HydrationScreen(onBack: () => Navigator.of(context).pop())),
+        onNavigateToActivity: () => _navigateToSubpage(context, ActivityScreen(onBack: () => Navigator.of(context).pop())),
+        onNavigateToSleep: () => _navigateToSubpage(context, SleepScreen(onBack: () => Navigator.of(context).pop())),
+        onNavigateToNutrition: () => _navigateToSubpage(context, NutritionScreen(onBack: () => Navigator.of(context).pop(), onAddMeal: () => _showAddMealDialog(context, provider))),
         onAddMeal: () => _showAddMealDialog(context, provider),
         onWaterQuickAdd: () {
           HapticService.success();
