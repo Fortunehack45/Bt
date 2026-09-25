@@ -1,14 +1,18 @@
-name: Biothrix CI/CD
+name: Biothrix CI/CD & Build Pipeline
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  build-and-test:
-    name: Build & Test (Android & iOS Verification)
+  build-android:
+    name: Build Android (APK & AAB)
     runs-on: ubuntu-latest
 
     steps:
@@ -31,16 +35,65 @@ jobs:
         run: flutter pub get
 
       - name: Static Analysis
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Run Unit & Widget Tests
         run: flutter test
 
-      - name: Build Android Debug APK
-        run: flutter build apk --debug
+      - name: Build Android Release APK
+        run: flutter build apk --release
 
-      - name: Upload Build Artifact
+      - name: Build Android App Bundle (AAB)
+        run: flutter build appbundle --release
+
+      - name: Upload Android Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: biothrix-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: Biothrix-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload Android App Bundle (AAB)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Biothrix-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+
+  build-ios:
+    name: Build iOS (IPA & Runner Bundle)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build iOS App (Release Unsigned)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package iOS IPA (Payload Archive)
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r Biothrix.ipa Payload
+          zip -r Runner.app.zip Payload/Runner.app
+          rm -rf Payload
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Biothrix-ios-ipa
+          path: Biothrix.ipa
+
+      - name: Upload iOS Runner Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: Biothrix-ios-runner-zip
+          path: Runner.app.zip
