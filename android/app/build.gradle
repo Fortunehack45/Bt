@@ -48,13 +48,23 @@ android {
         versionName flutterVersionName
     }
 
+    signingConfigs {
+        release {
+            storeFile file('release.keystore')
+            storePassword 'biothrix2026'
+            keyAlias 'biothrix'
+            keyPassword 'biothrix2026'
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
         }
     }
+
 }
 
 flutter {

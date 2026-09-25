@@ -77,3 +77,38 @@ class WellnessRecommendation {
 /// Alias for HabitItem for flexible naming
 typedef HabitEntry = HabitItem;
 
+/// Daily telemetry snapshot representing recorded or historical data for a specific day.
+class DaySnapshot {
+  final int calories;
+  final int waterGlasses;
+  final int steps;
+  final double exerciseHours;
+  final int bpm;
+  final double weightKg;
+  final double sleepHours;
+  final int sleepScore;
+
+  const DaySnapshot({
+    required this.calories,
+    required this.waterGlasses,
+    required this.steps,
+    required this.exerciseHours,
+    required this.bpm,
+    required this.weightKg,
+    required this.sleepHours,
+    required this.sleepScore,
+  });
+
+  static const DaySnapshot zero = DaySnapshot(
+    calories: 0,
+    waterGlasses: 0,
+    steps: 0,
+    exerciseHours: 0.0,
+    bpm: 0,
+    weightKg: 0.0,
+    sleepHours: 0.0,
+    sleepScore: 0,
+  );
+}
+
+

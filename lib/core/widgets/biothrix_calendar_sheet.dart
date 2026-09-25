@@ -259,18 +259,29 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
         const SizedBox(height: 16),
 
         // Selected Day Summary Card
-        SolidWellnessCard(
-          padding: const EdgeInsets.all(14.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildSummaryCol('Calories', '${telemetry.hasNutrition ? widget.provider.calories : 0} kcal', isDark),
-              _buildSummaryCol('Water', '${telemetry.hasWater ? (widget.provider.waterGlasses * 0.25).toStringAsFixed(1) : 0} L', isDark),
-              _buildSummaryCol('Steps', '${telemetry.hasActivity ? widget.provider.steps : 0}', isDark),
-              _buildSummaryCol('Sleep', '${telemetry.hasSleep ? widget.provider.sleepHours.toStringAsFixed(1) : 0} hrs', isDark),
-            ],
-          ),
+        Builder(
+          builder: (_) {
+            final metrics = widget.provider.getMetricsForDate(_selected);
+            final calStr = metrics.calories > 0 ? '${metrics.calories} kcal' : '0 kcal';
+            final waterStr = metrics.waterGlasses > 0 ? '${(metrics.waterGlasses * 0.25).toStringAsFixed(1)} L' : '0.0 L';
+            final stepStr = metrics.steps > 0 ? '${metrics.steps}' : '0';
+            final sleepStr = metrics.sleepHours > 0 ? '${metrics.sleepHours.toStringAsFixed(1)} hrs' : '0.0 hrs';
+
+            return SolidWellnessCard(
+              padding: const EdgeInsets.all(14.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildSummaryCol('Calories', calStr, isDark),
+                  _buildSummaryCol('Water', waterStr, isDark),
+                  _buildSummaryCol('Steps', stepStr, isDark),
+                  _buildSummaryCol('Sleep', sleepStr, isDark),
+                ],
+              ),
+            );
+          },
         ),
+
         const SizedBox(height: 18),
 
         // Action Button: Sync & Apply Date

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../glass/platform_glass_button.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
 /// Universal, pixel-perfect top header ensuring 100% identical top measurement,
@@ -13,6 +14,7 @@ class ScreenHeader extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onLeadingTap;
   final double height;
+  final EdgeInsetsGeometry padding;
 
   const ScreenHeader({
     super.key,
@@ -23,6 +25,12 @@ class ScreenHeader extends StatelessWidget {
     this.onBack,
     this.onLeadingTap,
     this.height = 56.0,
+    this.padding = const EdgeInsets.only(
+      left: AppSpacing.pageMargin,
+      right: AppSpacing.pageMargin,
+      top: 10.0,
+      bottom: 8.0,
+    ),
   });
 
   @override
@@ -41,8 +49,11 @@ class ScreenHeader extends StatelessWidget {
       );
     }
 
-    return SizedBox(
-      height: height,
+    return Padding(
+      padding: padding,
+      child: SizedBox(
+        height: height,
+
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -90,6 +101,8 @@ class ScreenHeader extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

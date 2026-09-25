@@ -67,7 +67,7 @@ class HomeScreen extends StatelessWidget {
           padding: EdgeInsets.only(
             left: AppSpacing.pageMargin,
             right: AppSpacing.pageMargin,
-            top: AppSpacing.xs,
+            top: 10.0,
             bottom: AppSpacing.contentBottomPadding(context),
           ),
           child: Column(

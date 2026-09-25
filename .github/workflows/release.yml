@@ -110,7 +110,7 @@ jobs:
         run: |
           RAW_VERSION=$(grep '^version:' pubspec.yaml | head -n 1 | awk '{print $2}' | cut -d '+' -f 1)
           if [ -z "$RAW_VERSION" ]; then
-            RAW_VERSION="1.0.3"
+            RAW_VERSION="1.0.4"
           fi
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             RELEASE_TAG="${{ github.ref_name }}"

@@ -56,8 +56,8 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
       label: 'Statistics',
     ),
     NavItemData(
-      icon: Icons.track_changes_outlined,
-      activeIcon: Icons.track_changes_rounded,
+      icon: Icons.task_alt_outlined,
+      activeIcon: Icons.task_alt_rounded,
       label: 'Habits',
     ),
     NavItemData(

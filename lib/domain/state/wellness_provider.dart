@@ -140,13 +140,25 @@ class WellnessProvider extends ChangeNotifier {
 
   void setBpm(int value) => recordBpm(value);
 
-  // Weekly Statistics Bar Data (Starts Fresh: 0% until user logs)
-  int _selectedStatDayIndex = 3; // Today
+  // Weekly Statistics Bar Data & Historical Storage
+  int _selectedStatDayIndex = 3; // Defaults to Thursday / Current Day
   int get selectedStatDayIndex => _selectedStatDayIndex;
+
+  final Map<int, DaySnapshot> _weeklyStatDays = {};
+  final Map<String, DaySnapshot> _pastDaysData = {};
 
   List<DayBarData> get weeklyBarData {
     final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return List.generate(7, (index) {
+      if (_isDemoMode && _weeklyStatDays.containsKey(index)) {
+        final snap = _weeklyStatDays[index]!;
+        final pct = _targetCalories > 0 ? ((snap.calories / _targetCalories) * 100).toInt() : 0;
+        return DayBarData(
+          dayName: days[index],
+          percentage: pct,
+          value: snap.calories,
+        );
+      }
       final isToday = index == _selectedStatDayIndex;
       final val = isToday ? _calories : 0;
       final pct = _targetCalories > 0 ? ((val / _targetCalories) * 100).toInt() : 0;
@@ -162,6 +174,43 @@ class WellnessProvider extends ChangeNotifier {
     _selectedStatDayIndex = index;
     notifyListeners();
   }
+
+  // Interactive metrics for the currently selected day on the Statistics screen
+  int get statCalories {
+    if (_isDemoMode && _weeklyStatDays.containsKey(_selectedStatDayIndex)) {
+      return _weeklyStatDays[_selectedStatDayIndex]!.calories;
+    }
+    return _calories;
+  }
+
+  double get statExerciseHours {
+    if (_isDemoMode && _weeklyStatDays.containsKey(_selectedStatDayIndex)) {
+      return _weeklyStatDays[_selectedStatDayIndex]!.exerciseHours;
+    }
+    return _exerciseHours;
+  }
+
+  int get statBpm {
+    if (_isDemoMode && _weeklyStatDays.containsKey(_selectedStatDayIndex)) {
+      return _weeklyStatDays[_selectedStatDayIndex]!.bpm;
+    }
+    return _bpm;
+  }
+
+  double get statWeightKg {
+    if (_isDemoMode && _weeklyStatDays.containsKey(_selectedStatDayIndex)) {
+      return _weeklyStatDays[_selectedStatDayIndex]!.weightKg;
+    }
+    return _weightKg;
+  }
+
+  int get statWaterGlasses {
+    if (_isDemoMode && _weeklyStatDays.containsKey(_selectedStatDayIndex)) {
+      return _weeklyStatDays[_selectedStatDayIndex]!.waterGlasses;
+    }
+    return _waterGlasses;
+  }
+
 
   // Habits State (Starts Fresh: Empty List)
   List<HabitItem> _habits = [];
@@ -256,6 +305,8 @@ class WellnessProvider extends ChangeNotifier {
     _sleepScore = 0;
     _habits = [];
     _meals = [];
+    _weeklyStatDays.clear();
+    _pastDaysData.clear();
     notifyListeners();
   }
 
@@ -266,6 +317,7 @@ class WellnessProvider extends ChangeNotifier {
   void toggleDemoMode(bool enable) {
     _isDemoMode = enable;
     if (enable) {
+      // User's name (_userName) is strictly preserved!
       _steps = 8420;
       _waterGlasses = 7;
       _calories = 1775;
@@ -274,13 +326,46 @@ class WellnessProvider extends ChangeNotifier {
       _weightKg = 69.2;
       _sleepHours = 7.8;
       _sleepScore = 92;
+
+      // Rich weekly statistics breakdown for all 7 days of the week (Mon-Sun)
+      _weeklyStatDays[0] = const DaySnapshot(calories: 1840, waterGlasses: 7, steps: 9240, exerciseHours: 3.5, bpm: 71, weightKg: 69.5, sleepHours: 7.4, sleepScore: 92);
+      _weeklyStatDays[1] = const DaySnapshot(calories: 2120, waterGlasses: 8, steps: 10850, exerciseHours: 4.8, bpm: 76, weightKg: 69.4, sleepHours: 8.0, sleepScore: 100);
+      _weeklyStatDays[2] = const DaySnapshot(calories: 1960, waterGlasses: 8, steps: 9920, exerciseHours: 4.0, bpm: 73, weightKg: 69.3, sleepHours: 7.6, sleepScore: 95);
+      _weeklyStatDays[3] = const DaySnapshot(calories: 1775, waterGlasses: 7, steps: 8420, exerciseHours: 4.4, bpm: 74, weightKg: 69.2, sleepHours: 7.8, sleepScore: 92);
+      _weeklyStatDays[4] = const DaySnapshot(calories: 2250, waterGlasses: 9, steps: 11400, exerciseHours: 5.2, bpm: 78, weightKg: 69.1, sleepHours: 8.2, sleepScore: 100);
+      _weeklyStatDays[5] = const DaySnapshot(calories: 2380, waterGlasses: 8, steps: 12650, exerciseHours: 5.5, bpm: 75, weightKg: 69.0, sleepHours: 8.5, sleepScore: 100);
+      _weeklyStatDays[6] = const DaySnapshot(calories: 1690, waterGlasses: 6, steps: 7450, exerciseHours: 2.5, bpm: 68, weightKg: 69.2, sleepHours: 7.5, sleepScore: 94);
+
+      // Populate 30 days of rich historical snapshots for the calendar
+      final now = DateTime.now();
+      final baseCalories = [1840, 2120, 1960, 1775, 2250, 2380, 1690, 1920, 2080, 1850, 2180, 2290, 1790, 1990];
+      final baseSteps = [9240, 10850, 9920, 8420, 11400, 12650, 7450, 9800, 10500, 8900, 11100, 12100, 8300, 9700];
+      final baseWater = [7, 8, 8, 7, 9, 8, 6, 8, 8, 7, 9, 8, 7, 8];
+      final baseSleep = [7.4, 8.0, 7.6, 7.8, 8.2, 8.5, 7.5, 7.7, 8.1, 7.3, 8.0, 8.3, 7.6, 7.9];
+
+      for (int i = 0; i < 30; i++) {
+        final d = now.subtract(Duration(days: i));
+        final key = '${d.year}-${d.month}-${d.day}';
+        final mod = i % baseCalories.length;
+        _pastDaysData[key] = DaySnapshot(
+          calories: baseCalories[mod],
+          waterGlasses: baseWater[mod],
+          steps: baseSteps[mod],
+          exerciseHours: 3.0 + ((i % 5) * 0.5),
+          bpm: 70 + (i % 8),
+          weightKg: 69.2 + ((i % 4) * 0.1),
+          sleepHours: baseSleep[mod],
+          sleepScore: (baseSleep[mod] >= 8.0 ? 100 : 90 + (i % 6)),
+        );
+      }
+
       _meals = [
         const MealEntry(id: 'd1', name: 'Avocado Toast & Poached Egg', mealType: 'Breakfast', calories: 380, timeString: '08:15 AM', description: 'Fresh healthy fats and protein'),
         const MealEntry(id: 'd2', name: 'Grilled Chicken Quinoa Bowl', mealType: 'Lunch time', calories: 580, timeString: '12:45 PM', description: 'Lean protein & complex carbs'),
         const MealEntry(id: 'd3', name: 'Atlantic Salmon & Steamed Greens', mealType: 'Dinner', calories: 620, timeString: '07:30 PM', description: 'Omega-3 rich dinner'),
         const MealEntry(id: 'd4', name: 'Mixed Berries & Greek Yogurt', mealType: 'Healthy Snack', calories: 195, timeString: '04:10 PM', description: 'Antioxidant afternoon boost'),
       ];
-      // User's name (_userName) is strictly preserved!
+
       _habits = [
         const HabitItem(id: 'h1', title: '10 min Morning Sunlight', category: 'Mindfulness', icon: Icons.wb_sunny_rounded, color: Color(0xFF10B981), isCompletedToday: true, streakDays: 14),
         const HabitItem(id: 'h2', title: 'Drink 500ml upon waking', category: 'Hydration', icon: Icons.water_drop_rounded, color: Color(0xFF2EB5FA), isCompletedToday: true, streakDays: 21),
@@ -293,6 +378,46 @@ class WellnessProvider extends ChangeNotifier {
       _isDemoMode = false;
     }
     notifyListeners();
+  }
+
+  // Get full metrics snapshot for any calendar date
+  DaySnapshot getMetricsForDate(DateTime date) {
+    final key = '${date.year}-${date.month}-${date.day}';
+    final now = DateTime.now();
+    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+
+    if (_isDemoMode) {
+      if (isToday) {
+        return DaySnapshot(
+          calories: _calories,
+          waterGlasses: _waterGlasses,
+          steps: _steps,
+          exerciseHours: _exerciseHours,
+          bpm: _bpm,
+          weightKg: _weightKg,
+          sleepHours: _sleepHours,
+          sleepScore: _sleepScore,
+        );
+      }
+      if (_pastDaysData.containsKey(key)) {
+        return _pastDaysData[key]!;
+      }
+    }
+
+    if (isToday) {
+      return DaySnapshot(
+        calories: _calories,
+        waterGlasses: _waterGlasses,
+        steps: _steps,
+        exerciseHours: _exerciseHours,
+        bpm: _bpm,
+        weightKg: _weightKg,
+        sleepHours: _sleepHours,
+        sleepScore: _sleepScore,
+      );
+    }
+
+    return DaySnapshot.zero;
   }
 
   // Activity Logging
@@ -309,6 +434,19 @@ class WellnessProvider extends ChangeNotifier {
     final isSelectedOrToday = (date.year == _selectedDate.year && date.month == _selectedDate.month && date.day == _selectedDate.day) ||
                               (date.year == now.year && date.month == now.month && date.day == now.day);
 
+    if (_isDemoMode) {
+      final diff = now.difference(date).inDays;
+      // In demo mode, show full telemetry dots for all days within the past 30 days
+      if (diff >= 0 && diff <= 30) {
+        return const DayTelemetryStatus(
+          hasNutrition: true,
+          hasWater: true,
+          hasActivity: true,
+          hasSleep: true,
+        );
+      }
+    }
+
     if (isSelectedOrToday) {
       return DayTelemetryStatus(
         hasNutrition: _calories > 0,
@@ -320,6 +458,7 @@ class WellnessProvider extends ChangeNotifier {
 
     return const DayTelemetryStatus();
   }
+
 }
 
 /// Snapshot of telemetry metrics recorded on a specific date.

@@ -152,7 +152,7 @@ class StatisticsScreen extends StatelessWidget {
           padding: EdgeInsets.only(
             left: AppSpacing.pageMargin,
             right: AppSpacing.pageMargin,
-            top: AppSpacing.xs,
+            top: 10.0,
             bottom: AppSpacing.contentBottomPadding(context),
           ),
           child: Column(
@@ -165,9 +165,9 @@ class StatisticsScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // 2. Calories Hero Card with Weekly Bar Chart (Mon-Sun, Wednesday highlighted)
+              // 2. Calories Hero Card with Weekly Bar Chart (Mon-Sun with interactive day selection)
               CaloriesHeroCard(
-                calories: provider.calories,
+                calories: provider.statCalories,
                 targetCalories: provider.targetCalories,
                 barData: provider.weeklyBarData,
                 selectedDayIndex: provider.selectedStatDayIndex,
@@ -176,17 +176,18 @@ class StatisticsScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // 3. 2x2 Metric Grid (Exercise, BPM, Weight, Water)
+              // 3. 2x2 Metric Grid (Exercise, BPM, Weight, Water) dynamically updating with selected day
               Metric2x2Grid(
-                exerciseHours: provider.exerciseHours,
-                bpm: provider.bpm,
-                weightKg: provider.weightKg,
-                waterLitres: provider.waterGlasses * 0.25,
+                exerciseHours: provider.statExerciseHours,
+                bpm: provider.statBpm,
+                weightKg: provider.statWeightKg,
+                waterLitres: provider.statWaterGlasses * 0.25,
                 onExerciseTap: onExerciseTap,
                 onBpmTap: onBpmTap,
                 onWeightTap: onWeightTap,
                 onWaterTap: onWaterTap,
               ),
+
             ],
           ),
         ),
