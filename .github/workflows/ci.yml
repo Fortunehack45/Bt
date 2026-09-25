@@ -1,4 +1,4 @@
-name: AuraPulse Flutter CI/CD
+name: Biothrix CI/CD
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test (Android & iOS Validation)
+    name: Build & Test (Android & iOS Verification)
     runs-on: ubuntu-latest
 
     steps:
@@ -27,17 +27,14 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Verify Flutter Installation
-        run: flutter doctor -v
-
       - name: Install Dependencies
         run: flutter pub get
 
       - name: Static Analysis
         run: flutter analyze
 
-      - name: Run Unit & Component Tests
-        run: flutter test --coverage
+      - name: Run Unit & Widget Tests
+        run: flutter test
 
       - name: Build Android Debug APK
         run: flutter build apk --debug
@@ -45,5 +42,5 @@ jobs:
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
+          name: biothrix-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
