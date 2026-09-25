@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/glass/platform_glass_button.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
@@ -7,6 +6,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';
 import '../../core/widgets/circular_progress_ring.dart';
+import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
 import '../../domain/state/wellness_provider.dart';
 
@@ -42,44 +42,40 @@ class NutritionScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         topSafeArea: true,
         bottomSafeArea: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.only(
-            left: AppSpacing.pageMargin,
-            right: AppSpacing.pageMargin,
-            top: AppSpacing.xs,
-            bottom: AppSpacing.contentBottomPadding(context),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Top Bar Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  PlatformGlassButton(
-                    icon: Icons.chevron_left_rounded,
-                    size: 42,
-                    iconSize: 24,
-                    tooltip: 'Back',
-                    onTap: onBack,
-                  ),
-                  Text('Nutrition & Meals', style: AppTypography.h2(isDark).copyWith(fontSize: 18)),
-                  ElevatedButton.icon(
-                    onPressed: onAddMeal,
-                    icon: const Icon(Icons.add_rounded, size: 16),
-                    label: const Text('Log Meal', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.textPrimaryLight,
-                      elevation: 0,
-                      shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    ),
-                  ),
-                ],
+        child: Column(
+          children: [
+            // Standardized 56pt Header
+            ScreenHeader(
+              title: 'Nutrition & Meals',
+              subtitle: 'Daily Energy & Macros',
+              onLeadingTap: onBack,
+              trailing: ElevatedButton.icon(
+                onPressed: onAddMeal,
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Log Meal', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textPrimaryLight,
+                  elevation: 0,
+                  shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                ),
               ),
-              const SizedBox(height: AppSpacing.md),
+            ),
+
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: AppSpacing.pageMargin,
+                  right: AppSpacing.pageMargin,
+                  top: AppSpacing.xs,
+                  bottom: AppSpacing.contentBottomPadding(context),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
 
               // 2. Calorie Energy Intake Hero Card
               SolidWellnessCard(
@@ -241,8 +237,11 @@ class NutritionScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ],
+  ),
+),
+);
+}
 
   Widget _buildMacroCard(bool isDark, String label, String grams, String percent, Color color, double ratio) {
     return SolidWellnessCard(

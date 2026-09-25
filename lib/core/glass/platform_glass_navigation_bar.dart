@@ -18,9 +18,10 @@ class NavItemData {
   });
 }
 
-/// Floating Platform-Adaptive Glass Bottom Navigation Bar.
-/// Implements the exact layout from Reference Image 1 with the central
-/// elevated wellness green action button.
+/// Floating Platform-Adaptive Navigation Bar matching the user's reference:
+/// - Oblong capsule on the left containing the 4 primary tabs (Home, Statistics, Habits, Profile)
+/// - Active tab highlighted with a rounded pill background
+/// - Standalone floating circular action button (+) positioned beside the main capsule
 class PlatformGlassNavigationBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onIndexChanged;
@@ -54,7 +55,6 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
       activeIcon: Icons.bar_chart_rounded,
       label: 'Statistics',
     ),
-    // Center is Action Button
     NavItemData(
       icon: Icons.track_changes_outlined,
       activeIcon: Icons.track_changes_rounded,
@@ -105,30 +105,29 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: PlatformGlassSurface(
-            borderRadius: AppRadii.roundedNav,
-            height: AppSpacing.floatingNavHeight,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                // Item 0: Home
-                _buildNavItem(0, _items[0], isDark),
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Row(
+            children: [
+              // 1. Primary Navigation Capsule with 4 Tabs
+              Expanded(
+                child: PlatformGlassSurface(
+                  borderRadius: AppRadii.roundedNav,
+                  height: 64.0,
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(_items.length, (index) {
+                      return _buildNavItem(index, _items[index], isDark);
+                    }),
+                  ),
+                ),
+              ),
 
-                // Item 1: Statistics
-                _buildNavItem(1, _items[1], isDark),
+              const SizedBox(width: 12),
 
-                // Central Elevated Action Button [+]
-                _buildCentralFab(),
-
-                // Item 2: Habits
-                _buildNavItem(2, _items[2], isDark),
-
-                // Item 3: Profile
-                _buildNavItem(3, _items[3], isDark),
-              ],
-            ),
+              // 2. Standalone Floating Circular Action Button (+) beside the bar
+              _buildBesideFab(isDark),
+            ],
           ),
         ),
       ),
@@ -139,42 +138,47 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
     final isSelected = widget.currentIndex == index;
 
     return Expanded(
-      child: InkWell(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           HapticService.selection();
           widget.onIndexChanged(index);
         },
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
           padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark ? const Color(0xFF242F2A) : const Color(0xFFE5EBE7))
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AnimatedScale(
-                scale: isSelected ? 1.12 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutBack,
-                child: Icon(
-                  isSelected ? item.activeIcon : item.icon,
-                  size: 24,
-                  color: isSelected
-                      ? (isDark ? AppColors.primaryLight : AppColors.primaryDark)
-                      : (isDark
-                          ? AppColors.textMutedDark
-                          : AppColors.textSecondaryLight),
-                ),
+              Icon(
+                isSelected ? item.activeIcon : item.icon,
+                size: 22,
+                color: isSelected
+                    ? AppColors.primary
+                    : (isDark
+                        ? AppColors.textMutedDark
+                        : AppColors.textSecondaryLight),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
                 item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
+                  fontFamily: 'SF Pro Display',
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected
-                      ? (isDark ? AppColors.primaryLight : AppColors.primaryDark)
+                      ? AppColors.primary
                       : (isDark
                           ? AppColors.textMutedDark
                           : AppColors.textSecondaryLight),
@@ -187,28 +191,45 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
     );
   }
 
-  Widget _buildCentralFab() {
+  Widget _buildBesideFab(bool isDark) {
     return ScaleTransition(
       scale: _fabScaleAnimation,
       child: GestureDetector(
         onTap: _onFabTap,
         child: Container(
-          width: 52,
-          height: 52,
+          width: 58,
+          height: 58,
           decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: AppShadows.fabGlow,
+            shape: BoxShape.circle,
+            color: isDark ? const Color(0xFF1E2824) : AppColors.lightSurface,
+            boxShadow: AppShadows.floating(isDark),
             border: Border.all(
-              color: Colors.white.withOpacity(0.55),
-              width: 1.5,
+              color: isDark ? const Color(0xFF2E3D36) : AppColors.lightBorder,
+              width: 1.2,
             ),
           ),
-          child: const Center(
-            child: Icon(
-              Icons.add_rounded,
-              color: AppColors.textPrimaryLight,
-              size: 30,
+          child: Center(
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.add_rounded,
+                  color: AppColors.textPrimaryLight,
+                  size: 24,
+                ),
+              ),
             ),
           ),
         ),

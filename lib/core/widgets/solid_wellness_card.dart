@@ -44,7 +44,7 @@ class SolidWellnessCard extends StatelessWidget {
         );
 
     Widget container = Container(
-      width: width,
+      width: width ?? double.infinity,
       height: height,
       padding: padding ?? AppSpacing.cardPadding,
       decoration: BoxDecoration(

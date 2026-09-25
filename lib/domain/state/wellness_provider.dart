@@ -257,6 +257,41 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Investor Presentation Demo Mode
+  bool _isDemoMode = false;
+  bool get isDemoMode => _isDemoMode;
+
+  void toggleDemoMode(bool enable) {
+    _isDemoMode = enable;
+    if (enable) {
+      _steps = 8420;
+      _waterGlasses = 7;
+      _calories = 1775;
+      _exerciseHours = 4.4;
+      _bpm = 74;
+      _weightKg = 69.2;
+      _sleepHours = 7.8;
+      _sleepScore = 92;
+      _meals = [
+        const MealEntry(id: 'd1', name: 'Avocado Toast & Poached Egg', mealType: 'Breakfast', calories: 380, timeString: '08:15 AM', description: 'Fresh healthy fats and protein'),
+        const MealEntry(id: 'd2', name: 'Grilled Chicken Quinoa Bowl', mealType: 'Lunch time', calories: 580, timeString: '12:45 PM', description: 'Lean protein & complex carbs'),
+        const MealEntry(id: 'd3', name: 'Atlantic Salmon & Steamed Greens', mealType: 'Dinner', calories: 620, timeString: '07:30 PM', description: 'Omega-3 rich dinner'),
+        const MealEntry(id: 'd4', name: 'Mixed Berries & Greek Yogurt', mealType: 'Healthy Snack', calories: 195, timeString: '04:10 PM', description: 'Antioxidant afternoon boost'),
+      ];
+      _habits = [
+        const HabitEntry(id: 'h1', title: '10 min Morning Sunlight', category: 'Mindfulness', icon: Icons.wb_sunny_rounded, color: Color(0xFF10B981), isCompletedToday: true, streakDays: 14),
+        const HabitEntry(id: 'h2', title: 'Drink 500ml upon waking', category: 'Hydration', icon: Icons.water_drop_rounded, color: Color(0xFF2EB5FA), isCompletedToday: true, streakDays: 21),
+        const HabitEntry(id: 'h3', title: '10,000 Steps Daily', category: 'Activity', icon: Icons.directions_run_rounded, color: Color(0xFFFF9442), isCompletedToday: false, streakDays: 7),
+        const HabitEntry(id: 'h4', title: '5 min Deep Box Breathing', category: 'Mindfulness', icon: Icons.spa_rounded, color: Color(0xFF10B981), isCompletedToday: true, streakDays: 5),
+        const HabitEntry(id: 'h5', title: 'No screens 30m before sleep', category: 'Sleep', icon: Icons.bedtime_rounded, color: Color(0xFF818CF8), isCompletedToday: false, streakDays: 9),
+      ];
+    } else {
+      resetAllData();
+      _isDemoMode = false;
+    }
+    notifyListeners();
+  }
+
   // Activity Logging
   void logActivity(double hours, int caloriesBurned, int stepsCount) {
     _exerciseHours += hours;
@@ -264,6 +299,41 @@ class WellnessProvider extends ChangeNotifier {
     _steps += stepsCount;
     notifyListeners();
   }
+
+  // Day Telemetry Tracking for Calendar Dots
+  DayTelemetryStatus getDayTelemetry(DateTime date) {
+    final now = DateTime.now();
+    final isSelectedOrToday = (date.year == _selectedDate.year && date.month == _selectedDate.month && date.day == _selectedDate.day) ||
+                              (date.year == now.year && date.month == now.month && date.day == now.day);
+
+    if (isSelectedOrToday) {
+      return DayTelemetryStatus(
+        hasNutrition: _calories > 0,
+        hasWater: _waterGlasses > 0,
+        hasActivity: _exerciseHours > 0 || _steps > 0,
+        hasSleep: _sleepHours > 0,
+      );
+    }
+
+    return const DayTelemetryStatus();
+  }
+}
+
+/// Snapshot of telemetry metrics recorded on a specific date.
+class DayTelemetryStatus {
+  final bool hasNutrition;
+  final bool hasWater;
+  final bool hasActivity;
+  final bool hasSleep;
+
+  const DayTelemetryStatus({
+    this.hasNutrition = false,
+    this.hasWater = false,
+    this.hasActivity = false,
+    this.hasSleep = false,
+  });
+
+  bool get hasAny => hasNutrition || hasWater || hasActivity || hasSleep;
 }
 
 /// An InheritedNotifier providing access to the reactive state tree.

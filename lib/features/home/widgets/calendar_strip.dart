@@ -5,11 +5,14 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../core/widgets/solid_wellness_card.dart';
 
+import '../../../domain/state/wellness_provider.dart';
+
 /// Fully interactive, dynamic weekly calendar strip matching Reference Image 1 Screen 1:
 /// - Real dynamic month and year display
 /// - Weekday columns (S M T W T F S) dynamically calculated from actual dates
 /// - Interactive week pagination (< and >)
 /// - Selected date highlighted in soft lime green pill
+/// - Colored telemetry dots indicating logged health data
 /// - 1-tap full calendar picker integration
 class CalendarStrip extends StatelessWidget {
   final DateTime selectedDate;
@@ -17,6 +20,7 @@ class CalendarStrip extends StatelessWidget {
   final VoidCallback onPreviousWeek;
   final VoidCallback onNextWeek;
   final VoidCallback onOpenDatePicker;
+  final DayTelemetryStatus Function(DateTime)? telemetryProvider;
 
   const CalendarStrip({
     super.key,
@@ -25,6 +29,7 @@ class CalendarStrip extends StatelessWidget {
     required this.onPreviousWeek,
     required this.onNextWeek,
     required this.onOpenDatePicker,
+    this.telemetryProvider,
   });
 
   static const List<String> _months = [
@@ -184,6 +189,61 @@ class CalendarStrip extends StatelessWidget {
                               ? (isDark ? AppColors.primaryLight : AppColors.textPrimaryLight)
                               : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
                         ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Mini telemetry dots under date
+                      Builder(
+                        builder: (_) {
+                          final telemetry = telemetryProvider?.call(dayDate);
+                          if (telemetry == null || !telemetry.hasAny) {
+                            return const SizedBox(height: 4);
+                          }
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (telemetry.hasNutrition)
+                                Container(
+                                  width: 3.5,
+                                  height: 3.5,
+                                  margin: const EdgeInsets.symmetric(horizontal: 0.8),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF10B981),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              if (telemetry.hasWater)
+                                Container(
+                                  width: 3.5,
+                                  height: 3.5,
+                                  margin: const EdgeInsets.symmetric(horizontal: 0.8),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF2EB5FA),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              if (telemetry.hasActivity)
+                                Container(
+                                  width: 3.5,
+                                  height: 3.5,
+                                  margin: const EdgeInsets.symmetric(horizontal: 0.8),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFF9442),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              if (telemetry.hasSleep)
+                                Container(
+                                  width: 3.5,
+                                  height: 3.5,
+                                  margin: const EdgeInsets.symmetric(horizontal: 0.8),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF818CF8),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),

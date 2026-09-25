@@ -5,8 +5,10 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';
+import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
 import '../../domain/state/wellness_provider.dart';
+import 'widgets/add_habit_sheet.dart';
 
 /// Habits Screen with completion progress, category filters, quick habit starter templates,
 /// and interactive streak checklist.
@@ -80,51 +82,42 @@ class _HabitsScreenState extends State<HabitsScreen> {
         padding: EdgeInsets.zero,
         topSafeArea: true,
         bottomSafeArea: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.only(
-            left: AppSpacing.pageMargin,
-            right: AppSpacing.pageMargin,
-            top: AppSpacing.xs,
-            bottom: AppSpacing.contentBottomPadding(context),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Top Bar Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Daily Habits', style: AppTypography.h1(isDark).copyWith(fontSize: 24)),
-                      const SizedBox(height: 2),
-                      Text(
-                        totalHabits > 0
-                            ? '$completedCount of $totalHabits completed today'
-                            : 'Build your personalized daily routine',
-                        style: AppTypography.bodyMedium(isDark),
-                      ),
-                    ],
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: widget.onAddHabit,
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Add Habit', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.textPrimaryLight,
-                      elevation: 0,
-                      shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    ),
-                  ),
-                ],
+        child: Column(
+          children: [
+            // Standardized 56pt Header
+            ScreenHeader(
+              title: 'Daily Habits',
+              subtitle: totalHabits > 0
+                  ? '$completedCount of $totalHabits completed today'
+                  : 'Build healthy micro-routines',
+              trailing: ElevatedButton.icon(
+                onPressed: widget.onAddHabit,
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Add Habit', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textPrimaryLight,
+                  elevation: 0,
+                  shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                ),
               ),
-              const SizedBox(height: AppSpacing.md),
+            ),
 
-              // 2. Daily Completion Progress Hero
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: AppSpacing.pageMargin,
+                  right: AppSpacing.pageMargin,
+                  top: AppSpacing.xs,
+                  bottom: AppSpacing.contentBottomPadding(context),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 2. Daily Completion Progress Hero
               SolidWellnessCard(
                 padding: const EdgeInsets.all(18.0),
                 child: Column(
@@ -349,15 +342,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
                     onTap: isAlreadyAdded
                         ? null
                         : () {
-                            HapticService.success();
-                            provider.addHabit(
-                              template['title'] as String,
-                              template['category'] as String,
-                              template['icon'] as IconData,
-                              template['color'] as Color,
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Added "${template['title']}" to your habits!'), duration: const Duration(seconds: 1)),
+                            showAddHabitSheet(
+                              context,
+                              provider,
+                              initialTitle: template['title'] as String,
+                              initialCategory: template['category'] as String,
                             );
                           },
                     child: Row(
@@ -389,7 +378,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                                   color: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
                                   borderRadius: AppRadii.roundedPill,
                                 ),
-                                child: const Text('+ Add', style: TextStyle(
+                                child: const Text('+ Configure', style: TextStyle(
                                   fontFamily: AppTypography.fontFamily,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -405,6 +394,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
           ),
         ),
       ),
-    );
-  }
+    ],
+  ),
+),
+);
+}
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/responsive_layout.dart';
 import '../../domain/state/wellness_provider.dart';
+import '../../core/widgets/biothrix_calendar_sheet.dart';
 import 'widgets/calendar_strip.dart';
 import 'widgets/home_header.dart';
 import 'widgets/meal_tracker_section.dart';
@@ -12,7 +12,7 @@ import 'widgets/weekly_progress_hero_card.dart';
 
 /// Complete Home Dashboard screen matching Reference Image 1 Screen 1.
 /// Features a 2x2 wellness grid linking directly to Hydration, Activity, Sleep, and Nutrition,
-/// plus a fully functional dynamic calendar with week navigation and date picker.
+/// plus a fully functional dynamic calendar with week navigation and custom slide-up calendar sheet.
 class HomeScreen extends StatelessWidget {
   final VoidCallback onNavigateToStats;
   final VoidCallback onNavigateToHydration;
@@ -33,37 +33,8 @@ class HomeScreen extends StatelessWidget {
     required this.onWaterQuickAdd,
   });
 
-  Future<void> _openDatePicker(BuildContext context, WellnessProvider provider) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: provider.selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2035),
-      builder: (context, child) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primary,
-              primary: AppColors.primary,
-              onPrimary: AppColors.textPrimaryLight,
-              surface: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-              brightness: isDark ? Brightness.dark : Brightness.light,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      provider.setSelectedDate(picked);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Synchronized to ${picked.day}/${picked.month}/${picked.year}'),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
+  void _openDatePicker(BuildContext context, WellnessProvider provider) {
+    showBiothrixCalendarSheet(context, provider);
   }
 
   @override
@@ -144,6 +115,7 @@ class HomeScreen extends StatelessWidget {
                 onPreviousWeek: () => provider.previousWeek(),
                 onNextWeek: () => provider.nextWeek(),
                 onOpenDatePicker: () => _openDatePicker(context, provider),
+                telemetryProvider: (date) => provider.getDayTelemetry(date),
               ),
               const SizedBox(height: AppSpacing.lg),
 

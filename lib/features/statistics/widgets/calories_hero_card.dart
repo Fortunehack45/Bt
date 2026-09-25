@@ -17,6 +17,7 @@ class CaloriesHeroCard extends StatelessWidget {
   final List<DayBarData> barData;
   final int selectedDayIndex;
   final ValueChanged<int> onDaySelected;
+  final VoidCallback? onTap;
 
   const CaloriesHeroCard({
     super.key,
@@ -25,6 +26,7 @@ class CaloriesHeroCard extends StatelessWidget {
     required this.barData,
     required this.selectedDayIndex,
     required this.onDaySelected,
+    this.onTap,
   });
 
   @override
@@ -36,10 +38,35 @@ class CaloriesHeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Subtitle "Calories"
-          Text(
-            'Calories',
-            style: AppTypography.caption(isDark).copyWith(fontSize: 13),
+          // Subtitle "Calories" with optional arrow to Nutrition Hub
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Calories',
+                style: AppTypography.caption(isDark).copyWith(fontSize: 13),
+              ),
+              if (onTap != null)
+                GestureDetector(
+                  onTap: onTap,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Nutrition Hub',
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.primaryDark),
+                    ],
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
 
