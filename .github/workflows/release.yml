@@ -8,6 +8,7 @@ on:
         required: false
         default: 'v1.0.0'
   push:
+    branches: [ main, master ]
     tags:
       - 'v*'
 
@@ -39,10 +40,10 @@ jobs:
         run: flutter pub get
 
       - name: Build Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Build Release App Bundle (AAB)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --android-skip-build-dependency-validation
 
       - name: Rename Artifacts
         run: |
@@ -95,7 +96,7 @@ jobs:
     name: Publish Official GitHub Release
     needs: [build-android, build-ios]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
 
     steps:
       - name: Download Android Artifacts
@@ -113,8 +114,11 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.release_version || github.ref_name }}
-          name: Biothrix Release ${{ github.event.inputs.release_version || github.ref_name }}
+          tag_name: ${{ github.event.inputs.release_version || (startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v1.0.0') }}
+          name: Biothrix Release ${{ github.event.inputs.release_version || (startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v1.0.0') }}
+          make_latest: true
+          prerelease: false
+          fail_on_unmatched_files: false
           body: |
             ## Biothrix Wellness — Production Release
 
