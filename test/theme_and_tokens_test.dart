@@ -18,6 +18,7 @@ void main() {
       expect(AppColors.waterBlue, const Color(0xFF2EB5FA));
       expect(AppColors.stepsOrange, const Color(0xFFFF9442));
       expect(AppColors.heartRed, const Color(0xFFFF5252));
+      expect(AppColors.lightSurfaceElevated, const Color(0xFFF2F4F3));
     });
 
     test('Radii and Geometry Check', () {

@@ -105,16 +105,9 @@ void showAiWellnessInsightsSheet(BuildContext context, WellnessProvider provider
                         size: 72,
                         strokeWidth: 8,
                         progressColor: AppColors.primary,
-                        backgroundColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                        child: Text(
-                          '$readinessScore%',
-                          style: TextStyle(
-                            fontFamily: AppTypography.fontFamily,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                          ),
-                        ),
+                        trackColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                        centerPrimaryText: '$readinessScore%',
+                        centerSecondaryText: 'Score',
                       ),
                       const SizedBox(width: 16),
                       Expanded(

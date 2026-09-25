@@ -35,6 +35,7 @@ class AppColors {
   static const Color lightBackground = Color(0xFFF7F9F8);
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightSurfaceSubtle = Color(0xFFF2F4F3);
+  static const Color lightSurfaceElevated = Color(0xFFF2F4F3);
   static const Color lightBorder = Color(0xFFE8ECE9);
   static const Color lightBorderStrong = Color(0xFFD6DED9);
 
