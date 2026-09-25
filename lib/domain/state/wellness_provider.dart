@@ -138,6 +138,8 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setBpm(int value) => recordBpm(value);
+
   // Weekly Statistics Bar Data (Starts Fresh: 0% until user logs)
   int _selectedStatDayIndex = 3; // Today
   int get selectedStatDayIndex => _selectedStatDayIndex;
@@ -278,12 +280,13 @@ class WellnessProvider extends ChangeNotifier {
         const MealEntry(id: 'd3', name: 'Atlantic Salmon & Steamed Greens', mealType: 'Dinner', calories: 620, timeString: '07:30 PM', description: 'Omega-3 rich dinner'),
         const MealEntry(id: 'd4', name: 'Mixed Berries & Greek Yogurt', mealType: 'Healthy Snack', calories: 195, timeString: '04:10 PM', description: 'Antioxidant afternoon boost'),
       ];
+      // User's name (_userName) is strictly preserved!
       _habits = [
-        const HabitEntry(id: 'h1', title: '10 min Morning Sunlight', category: 'Mindfulness', icon: Icons.wb_sunny_rounded, color: Color(0xFF10B981), isCompletedToday: true, streakDays: 14),
-        const HabitEntry(id: 'h2', title: 'Drink 500ml upon waking', category: 'Hydration', icon: Icons.water_drop_rounded, color: Color(0xFF2EB5FA), isCompletedToday: true, streakDays: 21),
-        const HabitEntry(id: 'h3', title: '10,000 Steps Daily', category: 'Activity', icon: Icons.directions_run_rounded, color: Color(0xFFFF9442), isCompletedToday: false, streakDays: 7),
-        const HabitEntry(id: 'h4', title: '5 min Deep Box Breathing', category: 'Mindfulness', icon: Icons.spa_rounded, color: Color(0xFF10B981), isCompletedToday: true, streakDays: 5),
-        const HabitEntry(id: 'h5', title: 'No screens 30m before sleep', category: 'Sleep', icon: Icons.bedtime_rounded, color: Color(0xFF818CF8), isCompletedToday: false, streakDays: 9),
+        const HabitItem(id: 'h1', title: '10 min Morning Sunlight', category: 'Mindfulness', icon: Icons.wb_sunny_rounded, color: Color(0xFF10B981), isCompletedToday: true, streakDays: 14),
+        const HabitItem(id: 'h2', title: 'Drink 500ml upon waking', category: 'Hydration', icon: Icons.water_drop_rounded, color: Color(0xFF2EB5FA), isCompletedToday: true, streakDays: 21),
+        const HabitItem(id: 'h3', title: '10,000 Steps Daily', category: 'Activity', icon: Icons.directions_run_rounded, color: Color(0xFFFF9442), isCompletedToday: false, streakDays: 7),
+        const HabitItem(id: 'h4', title: '5 min Deep Box Breathing', category: 'Mindfulness', icon: Icons.spa_rounded, color: Color(0xFF10B981), isCompletedToday: true, streakDays: 5),
+        const HabitItem(id: 'h5', title: 'No screens 30m before sleep', category: 'Sleep', icon: Icons.bedtime_rounded, color: Color(0xFF818CF8), isCompletedToday: false, streakDays: 9),
       ];
     } else {
       resetAllData();

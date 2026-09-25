@@ -58,6 +58,10 @@ class AppShadows {
     ];
   }
 
+  // Floating helper for beside-FAB and floating elements
+  static List<BoxShadow> floating(bool isDark) => floatingGlass(isDark: isDark, isIos: false);
+
+
   // Central FAB Soft Wellness Glow
   static List<BoxShadow> fabGlow = [
     BoxShadow(

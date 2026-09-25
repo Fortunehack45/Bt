@@ -113,5 +113,29 @@ void main() {
       expect(provider.sleepHours, 0.0);
       expect(provider.meals, isEmpty);
     });
+
+    test('Investor Demo Mode populates data while strictly preserving user name', () {
+      provider.setUserName('Fortune');
+      expect(provider.userName, 'Fortune');
+
+      // Turn on demo mode
+      provider.toggleDemoMode(true);
+      expect(provider.isDemoMode, true);
+      expect(provider.userName, 'Fortune'); // Preserved!
+      expect(provider.steps, 8420);
+      expect(provider.waterGlasses, 7);
+      expect(provider.calories, 1775);
+      expect(provider.habits.length, 5);
+      expect(provider.meals.length, 4);
+
+      // Turn off demo mode
+      provider.toggleDemoMode(false);
+      expect(provider.isDemoMode, false);
+      expect(provider.userName, 'Fortune'); // Still preserved!
+      expect(provider.steps, 0);
+      expect(provider.habits, isEmpty);
+      expect(provider.meals, isEmpty);
+    });
   });
 }
+

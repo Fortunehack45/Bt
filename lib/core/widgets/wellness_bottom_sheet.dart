@@ -132,3 +132,27 @@ Future<T?> showWellnessBottomSheet<T>({
     },
   );
 }
+
+/// Convenience class wrapper with static `show` method matching modal sheets
+class WellnessBottomSheet {
+  WellnessBottomSheet._();
+
+  static Future<T?> show<T>({
+    required BuildContext context,
+    required String title,
+    String? subtitle,
+    required Widget child,
+    Widget? trailingAction,
+    bool isScrollControlled = true,
+  }) {
+    return showWellnessBottomSheet<T>(
+      context: context,
+      title: title,
+      subtitle: subtitle,
+      trailingAction: trailingAction,
+      isScrollControlled: isScrollControlled,
+      builder: (_) => child,
+    );
+  }
+}
+

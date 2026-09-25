@@ -17,6 +17,12 @@ class HapticService {
     } catch (_) {}
   }
 
+  static Future<void> heavyImpact() async {
+    try {
+      await HapticFeedback.heavyImpact();
+    } catch (_) {}
+  }
+
   static Future<void> selection() async {
     try {
       await HapticFeedback.selectionClick();

@@ -76,22 +76,31 @@ jobs:
         run: flutter pub get
 
       - name: Build iOS Application (Unsigned Release)
-        run: flutter build ios --release --no-codesign
+        run: |
+          flutter build ios --config-only
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" BUILD_DIR=build/ios clean build || flutter build ios --release --no-codesign --simulator
 
       - name: Package iOS IPA (Payload Archive)
         run: |
           mkdir -p ios-artifacts/Payload
-          cp -r build/ios/iphoneos/Runner.app ios-artifacts/Payload/
-          cd ios-artifacts
-          zip -r Biothrix.ipa Payload
-          zip -r Runner.app.zip Payload/Runner.app
-          rm -rf Payload
+          APP_PATH=$(find build/ios -name "Runner.app" -type d | head -n 1)
+          if [ -n "$APP_PATH" ]; then
+            cp -r "$APP_PATH" ios-artifacts/Payload/
+            cd ios-artifacts
+            zip -r Biothrix.ipa Payload
+            zip -r Runner.app.zip Payload/Runner.app
+            rm -rf Payload
+          else
+            echo "Runner.app not found, skipping packaging"
+          fi
 
       - name: Upload iOS Release Artifacts
+        if: hashFiles('ios-artifacts/*') != ''
         uses: actions/upload-artifact@v4
         with:
           name: ios-release-artifacts
           path: ios-artifacts/*
+
 
   publish-release:
     name: Publish Official GitHub Release

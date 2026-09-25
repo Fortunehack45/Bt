@@ -73,3 +73,7 @@ class WellnessRecommendation {
     required this.accentColor,
   });
 }
+
+/// Alias for HabitItem for flexible naming
+typedef HabitEntry = HabitItem;
+
