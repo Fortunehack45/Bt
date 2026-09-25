@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/glass/platform_glass_button.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/haptic_service.dart';
@@ -68,7 +67,7 @@ class HydrationScreen extends StatelessWidget {
                       strokeWidth: 14,
                       progressColor: AppColors.waterBlue,
                       trackColor: isDark ? const Color(0xFF1E303B) : const Color(0xFFE3F3FC),
-                      centerPrimaryText: '$litres',
+                      centerPrimaryText: litres,
                       centerSecondaryText: 'Litres',
                     ),
                     const SizedBox(height: AppSpacing.lg),

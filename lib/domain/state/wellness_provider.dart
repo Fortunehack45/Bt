@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/widgets/weekly_bar_chart.dart';
 import '../models/wellness_models.dart';
 

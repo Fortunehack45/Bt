@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
-import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';
@@ -131,7 +130,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
 
                   // Final Setup Page: Personalize Profile
                   Padding(

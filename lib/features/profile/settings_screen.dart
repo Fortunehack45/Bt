@@ -99,7 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     Switch.adaptive(
                       value: provider.isDarkMode,
-                      activeColor: AppColors.primary,
+                      activeTrackColor: AppColors.primary,
                       onChanged: (val) {
                         HapticService.selection();
                         provider.toggleTheme();
@@ -212,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           Switch.adaptive(
             value: value,
-            activeColor: AppColors.primary,
+            activeTrackColor: AppColors.primary,
             onChanged: (val) {
               HapticService.selection();
               onChanged(val);

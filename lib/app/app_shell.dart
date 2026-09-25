@@ -3,7 +3,6 @@ import '../core/glass/platform_glass_bottom_sheet.dart';
 import '../core/glass/platform_glass_navigation_bar.dart';
 import '../core/glass/platform_glass_quick_action_panel.dart';
 import '../core/theme/app_colors.dart';
-import '../core/theme/app_radii.dart';
 import '../core/utils/haptic_service.dart';
 import '../domain/state/wellness_provider.dart';
 import '../features/activity/activity_screen.dart';
@@ -13,6 +12,7 @@ import '../features/hydration/hydration_screen.dart';
 import '../features/nutrition/nutrition_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/profile/settings_screen.dart';
+import '../features/sleep/sleep_screen.dart';
 import '../features/statistics/statistics_screen.dart';
 
 /// The root application shell housing the floating platform-adaptive glass
@@ -82,7 +82,7 @@ class _AppShellState extends State<AppShell> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: selectedMealType,
+                    initialValue: selectedMealType,
                     items: const [
                       DropdownMenuItem(value: 'Breakfast', child: Text('Breakfast')),
                       DropdownMenuItem(value: 'Lunch time', child: Text('Lunch')),
@@ -165,7 +165,7 @@ class _AppShellState extends State<AppShell> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedCategory,
+                    initialValue: selectedCategory,
                     items: const [
                       DropdownMenuItem(value: 'Hydration', child: Text('Hydration')),
                       DropdownMenuItem(value: 'Activity', child: Text('Activity')),

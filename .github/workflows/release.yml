@@ -1,0 +1,134 @@
+name: Biothrix Release (Android APK & iOS Package)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release Version (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    name: Build Android Release (APK & AAB)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Build Release App Bundle (AAB)
+        run: flutter build appbundle --release
+
+      - name: Rename Artifacts
+        run: |
+          mkdir -p release-artifacts
+          cp build/app/outputs/flutter-apk/app-release.apk release-artifacts/Biothrix-release.apk
+          cp build/app/outputs/bundle/release/app-release.aab release-artifacts/Biothrix-release.aab
+
+      - name: Upload Android Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: release-artifacts/*
+
+  build-ios:
+    name: Build iOS Release (IPA & App)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build iOS Application (Unsigned Release)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package iOS IPA (Payload Archive)
+        run: |
+          mkdir -p ios-artifacts/Payload
+          cp -r build/ios/iphoneos/Runner.app ios-artifacts/Payload/
+          cd ios-artifacts
+          zip -r Biothrix.ipa Payload
+          zip -r Runner.app.zip Payload/Runner.app
+          rm -rf Payload
+
+      - name: Upload iOS Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-artifacts
+          path: ios-artifacts/*
+
+  publish-release:
+    name: Publish Official GitHub Release
+    needs: [build-android, build-ios]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Download Android Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: release-files
+
+      - name: Download iOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-release-artifacts
+          path: release-files
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_version || github.ref_name }}
+          name: Biothrix Release ${{ github.event.inputs.release_version || github.ref_name }}
+          body: |
+            ## Biothrix Wellness — Production Release
+
+            ### Included Release Packages:
+            - **Android APK** (`Biothrix-release.apk`): Direct install on any Android phone.
+            - **Android App Bundle** (`Biothrix-release.aab`): For Google Play Store submission.
+            - **iOS Package** (`Biothrix.ipa`): For iOS sideloading (AltStore, Sideloadly, TrollStore) or re-signing.
+            - **iOS Runner Bundle** (`Runner.app.zip`): Xcode simulator / archive.
+
+            ### Highlights:
+            - Platform-adaptive glass design (Frosted Android, Liquid-Glass iOS).
+            - 16px responsive grid layout matching guidelines.
+            - Zero demo data: all users start fresh.
+            - Full interactive tracking for Steps, Water, Sleep, Habits, and Meals.
+          files: release-files/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
