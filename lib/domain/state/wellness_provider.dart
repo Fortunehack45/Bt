@@ -19,6 +19,98 @@ class WellnessProvider extends ChangeNotifier {
     }
   }
 
+  // Biometrics & Personal Health Profile
+  int _age = 26;
+  int get age => _age;
+
+  String _gender = 'Male';
+  String get gender => _gender;
+
+  double _heightCm = 178.0;
+  double get heightCm => _heightCm;
+
+  double _targetWeightKg = 70.0;
+  double get targetWeightKg => _targetWeightKg;
+
+  String _primaryGoal = 'Vitality & Longevity';
+  String get primaryGoal => _primaryGoal;
+
+  String _activityLevel = 'Moderate Activity';
+  String get activityLevel => _activityLevel;
+
+  void setAge(int age) {
+    _age = age;
+    notifyListeners();
+  }
+
+  void setGender(String gender) {
+    _gender = gender;
+    notifyListeners();
+  }
+
+  void setHeight(double cm) {
+    _heightCm = cm;
+    notifyListeners();
+  }
+
+  void setTargetWeight(double kg) {
+    _targetWeightKg = kg;
+    notifyListeners();
+  }
+
+  void setPrimaryGoal(String goal) {
+    _primaryGoal = goal;
+    notifyListeners();
+  }
+
+  void setActivityLevel(String level) {
+    _activityLevel = level;
+    notifyListeners();
+  }
+
+  void updateBiometrics({
+    int? age,
+    String? gender,
+    double? heightCm,
+    double? weightKg,
+    double? targetWeightKg,
+    String? primaryGoal,
+    String? activityLevel,
+  }) {
+    if (age != null) _age = age;
+    if (gender != null) _gender = gender;
+    if (heightCm != null) _heightCm = heightCm;
+    if (weightKg != null) _weightKg = weightKg;
+    if (targetWeightKg != null) _targetWeightKg = targetWeightKg;
+    if (primaryGoal != null) _primaryGoal = primaryGoal;
+    if (activityLevel != null) _activityLevel = activityLevel;
+    notifyListeners();
+  }
+
+  double get bmi {
+    final currentWeight = _isDemoMode && _weeklyStatDays.containsKey(_selectedStatDayIndex)
+        ? _weeklyStatDays[_selectedStatDayIndex]!.weightKg
+        : (_weightKg > 0 ? _weightKg : 72.5);
+    final hM = _heightCm > 0 ? _heightCm / 100.0 : 1.78;
+    return double.parse((currentWeight / (hM * hM)).toStringAsFixed(1));
+  }
+
+  String get bmiCategory {
+    final b = bmi;
+    if (b < 18.5) return 'Underweight';
+    if (b < 25.0) return 'Optimal Normal';
+    if (b < 30.0) return 'Overweight';
+    return 'Obese Range';
+  }
+
+  Color get bmiColor {
+    final b = bmi;
+    if (b < 18.5) return const Color(0xFF2EB5FA);
+    if (b < 25.0) return const Color(0xFF10B981);
+    if (b < 30.0) return const Color(0xFFF59E0B);
+    return const Color(0xFFEF4444);
+  }
+
   // Theme Mode
   ThemeMode _themeMode = ThemeMode.light;
   ThemeMode get themeMode => _themeMode;
@@ -326,6 +418,12 @@ class WellnessProvider extends ChangeNotifier {
       _weightKg = 69.2;
       _sleepHours = 7.8;
       _sleepScore = 92;
+      _age = 26;
+      _gender = 'Male';
+      _heightCm = 178.0;
+      _targetWeightKg = 68.5;
+      _primaryGoal = 'Vitality & Longevity';
+      _activityLevel = 'Active (4-5x / week)';
 
       // Rich weekly statistics breakdown for all 7 days of the week (Mon-Sun)
       _weeklyStatDays[0] = const DaySnapshot(calories: 1840, waterGlasses: 7, steps: 9240, exerciseHours: 3.5, bpm: 71, weightKg: 69.5, sleepHours: 7.4, sleepScore: 92);

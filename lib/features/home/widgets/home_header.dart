@@ -78,10 +78,10 @@ class HomeHeader extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         PlatformGlassButton(
-          icon: Icons.refresh_rounded,
+          icon: Icons.auto_awesome_rounded,
           size: 40,
           iconSize: 19,
-          tooltip: 'Refresh',
+          tooltip: 'AI Health Pulse',
           onTap: onRefreshTap,
         ),
       ],

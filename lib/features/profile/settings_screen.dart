@@ -9,6 +9,7 @@ import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
 import '../../core/widgets/wellness_bottom_sheet.dart';
 import '../../domain/state/wellness_provider.dart';
+import '../widgets/widget_studio_screen.dart';
 
 /// Settings Screen organized into distinct sections: Investor Pitch Demo Mode,
 /// Appearance, Reminders, Goals, Data Management, and App Info.
@@ -312,6 +313,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               provider.toggleTheme();
                             },
                           ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => WidgetStudioScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF323B36) : AppColors.primaryTint,
+                                  borderRadius: AppRadii.roundedSm,
+                                ),
+                                child: const Icon(
+                                  Icons.widgets_rounded,
+                                  color: AppColors.primaryDark,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Android Home Widgets', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                                  Text('7 responsive widgets & launcher shortcuts', style: AppTypography.caption(isDark)),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                         ],
                       ),
                     ),

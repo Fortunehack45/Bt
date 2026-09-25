@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../core/theme/app_theme.dart';
 import '../domain/state/wellness_provider.dart';
 import '../features/onboarding/onboarding_screen.dart';
@@ -31,13 +32,26 @@ class _BiothrixAppState extends State<BiothrixApp> {
       child: AnimatedBuilder(
         animation: _wellnessProvider,
         builder: (context, _) {
-          return MaterialApp(
-            title: 'Biothrix Wellness',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
-            themeMode: _wellnessProvider.themeMode,
-            home: _buildHomeView(),
+          final isDark = _wellnessProvider.themeMode == ThemeMode.dark;
+          final overlayStyle = SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarDividerColor: Colors.transparent,
+            systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          );
+
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: overlayStyle,
+            child: MaterialApp(
+              title: 'Biothrix Wellness',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light(),
+              darkTheme: AppTheme.dark(),
+              themeMode: _wellnessProvider.themeMode,
+              home: _buildHomeView(),
+            ),
           );
         },
       ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../core/glass/platform_glass_bottom_sheet.dart';
 import '../core/glass/platform_glass_navigation_bar.dart';
 import '../core/glass/platform_glass_quick_action_panel.dart';
+import '../core/theme/app_colors.dart';
 import '../core/utils/haptic_service.dart';
 import '../domain/state/wellness_provider.dart';
 import '../features/activity/activity_screen.dart';
@@ -32,6 +34,38 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  static const _shortcutsChannel = MethodChannel('com.biothrix.app/shortcuts');
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkShortcutsIntent();
+    });
+  }
+
+  Future<void> _checkShortcutsIntent() async {
+    try {
+      final action = await _shortcutsChannel.invokeMethod<String>('getInitialAction');
+      if (action != null && mounted) {
+        final provider = WellnessStateScope.of(context);
+        switch (action) {
+          case 'com.biothrix.app.ACTION_LOG_WATER':
+            showLogWaterSheet(context, provider);
+            break;
+          case 'com.biothrix.app.ACTION_RECORD_BPM':
+            _navigateToSubpage(context, BpmScreen(onBack: () => Navigator.of(context).pop()));
+            break;
+          case 'com.biothrix.app.ACTION_ADD_MEAL':
+            showLogMealSheet(context, provider);
+            break;
+          case 'com.biothrix.app.ACTION_TRACK_ACTIVITY':
+            showLogActivitySheet(context, provider);
+            break;
+        }
+      }
+    } catch (_) {}
+  }
 
   void _onCentralActionPressed(BuildContext context) {
     final provider = WellnessStateScope.of(context);
@@ -116,7 +150,11 @@ class _AppShellState extends State<AppShell> {
       ),
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      extendBody: true,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       body: Stack(
         children: [
           // Main Content

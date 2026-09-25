@@ -63,36 +63,38 @@ class _BpmScreenState extends State<BpmScreen> with SingleTickerProviderStateMix
         padding: EdgeInsets.zero,
         topSafeArea: true,
         bottomSafeArea: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.only(
-            left: AppSpacing.pageMargin,
-            right: AppSpacing.pageMargin,
-            top: AppSpacing.xs,
-            bottom: AppSpacing.contentBottomPadding(context),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Unified Standardized Header
-              ScreenHeader(
-                title: 'Heart Rate & Vitals',
-                subtitle: 'Cardiovascular Vitality',
-                onBack: widget.onBack,
-                trailing: ElevatedButton.icon(
-                  onPressed: () => showLogBpmSheet(context, provider),
-                  icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text('Log', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.heartRed,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  ),
+        child: Column(
+          children: [
+            // 1. Unified Standardized Header with strictly standard 16px page margin
+            ScreenHeader(
+              title: 'Heart Rate & Vitals',
+              subtitle: 'Cardiovascular Vitality',
+              onBack: widget.onBack,
+              trailing: ElevatedButton.icon(
+                onPressed: () => showLogBpmSheet(context, provider),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Log', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.heartRed,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: AppSpacing.pageMargin,
+                  right: AppSpacing.pageMargin,
+                  top: AppSpacing.xs,
+                  bottom: AppSpacing.contentBottomPadding(context),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
 
               // 2. Heart Pulse Hero Card
               SolidWellnessCard(
@@ -205,8 +207,11 @@ class _BpmScreenState extends State<BpmScreen> with SingleTickerProviderStateMix
           ),
         ),
       ),
-    );
-  }
+    ],
+  ),
+),
+);
+}
 
   Widget _buildZoneRow(String title, String range, String desc, Color color, bool isDark) {
     return SolidWellnessCard(

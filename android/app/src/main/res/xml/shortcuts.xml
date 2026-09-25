@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="shortcut_water"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_water_short"
+        android:shortcutLongLabel="@string/shortcut_water_long">
+        <intent
+            android:action="com.biothrix.app.ACTION_LOG_WATER"
+            android:targetPackage="com.biothrix.app"
+            android:targetClass="com.biothrix.app.MainActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="shortcut_heart"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_heart_short"
+        android:shortcutLongLabel="@string/shortcut_heart_long">
+        <intent
+            android:action="com.biothrix.app.ACTION_RECORD_BPM"
+            android:targetPackage="com.biothrix.app"
+            android:targetClass="com.biothrix.app.MainActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="shortcut_meal"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_meal_short"
+        android:shortcutLongLabel="@string/shortcut_meal_long">
+        <intent
+            android:action="com.biothrix.app.ACTION_ADD_MEAL"
+            android:targetPackage="com.biothrix.app"
+            android:targetClass="com.biothrix.app.MainActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="shortcut_activity"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_activity_short"
+        android:shortcutLongLabel="@string/shortcut_activity_long">
+        <intent
+            android:action="com.biothrix.app.ACTION_TRACK_ACTIVITY"
+            android:targetPackage="com.biothrix.app"
+            android:targetClass="com.biothrix.app.MainActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

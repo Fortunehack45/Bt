@@ -11,6 +11,8 @@ import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
 import '../../core/widgets/wellness_bottom_sheet.dart';
 import '../../domain/state/wellness_provider.dart';
+import '../widgets/widget_studio_screen.dart';
+import 'personal_profile_screen.dart';
 
 /// Profile Screen with health score, device sync, and account overview.
 class ProfileScreen extends StatelessWidget {
@@ -133,6 +135,14 @@ class ProfileScreen extends StatelessWidget {
                     // Profile Hero Card
                     SolidWellnessCard(
                       padding: const EdgeInsets.all(20.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => PersonalProfileScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
                       child: Row(
                         children: [
                           Container(
@@ -209,6 +219,23 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                     _buildHubTile(
                       isDark: isDark,
+                      icon: Icons.badge_outlined,
+                      color: AppColors.primaryDark,
+                      bgColor: AppColors.primaryTint,
+                      title: 'Personal Biometrics & BMI',
+                      subtitle: 'Age ${provider.age} • ${provider.bmi} BMI (${provider.bmiCategory})',
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => PersonalProfileScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _buildHubTile(
+                      isDark: isDark,
                       icon: Icons.water_drop_rounded,
                       color: AppColors.waterBlue,
                       bgColor: AppColors.waterBlueTint,
@@ -276,6 +303,47 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ),
                           const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 20),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Android Home Widgets & Studio
+                    Text('Android System & Launcher', style: AppTypography.h2(isDark).copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.sm),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.all(16.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => WidgetStudioScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.18),
+                              borderRadius: AppRadii.roundedMd,
+                            ),
+                            child: const Icon(Icons.widgets_rounded, color: AppColors.primaryDark, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Widget Studio & Shortcuts', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                                const SizedBox(height: 2),
+                                Text('7 responsive Android widgets & launcher actions', style: AppTypography.caption(isDark)),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                         ],
                       ),
                     ),

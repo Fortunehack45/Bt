@@ -3,6 +3,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/utils/responsive_layout.dart';
 import '../../domain/state/wellness_provider.dart';
 import '../../core/widgets/biothrix_calendar_sheet.dart';
+import 'widgets/ai_readiness_sheet.dart';
 import 'widgets/calendar_strip.dart';
 import 'widgets/home_header.dart';
 import 'widgets/meal_tracker_section.dart';
@@ -76,14 +77,7 @@ class HomeScreen extends StatelessWidget {
               // 1. Header (User avatar, greeting, name, glass utility buttons)
               HomeHeader(
                 onCalendarTap: () => _openDatePicker(context, provider),
-                onRefreshTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Biothrix wellness telemetry updated'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
+                onRefreshTap: () => showAiWellnessInsightsSheet(context, provider),
               ),
               const SizedBox(height: AppSpacing.md),
 

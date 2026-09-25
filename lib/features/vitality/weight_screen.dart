@@ -44,36 +44,38 @@ class WeightScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         topSafeArea: true,
         bottomSafeArea: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.only(
-            left: AppSpacing.pageMargin,
-            right: AppSpacing.pageMargin,
-            top: AppSpacing.xs,
-            bottom: AppSpacing.contentBottomPadding(context),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Unified Standardized Header
-              ScreenHeader(
-                title: 'Weight & Body Mass',
-                subtitle: 'Body Composition Tracker',
-                onBack: onBack,
-                trailing: ElevatedButton.icon(
-                  onPressed: () => showLogWeightSheet(context, provider),
-                  icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text('Log', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF59E0B),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  ),
+        child: Column(
+          children: [
+            // 1. Unified Standardized Header with strictly standard 16px page margin
+            ScreenHeader(
+              title: 'Weight & Body Mass',
+              subtitle: 'Body Composition Tracker',
+              onBack: onBack,
+              trailing: ElevatedButton.icon(
+                onPressed: () => showLogWeightSheet(context, provider),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Log', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF59E0B),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: AppSpacing.pageMargin,
+                  right: AppSpacing.pageMargin,
+                  top: AppSpacing.xs,
+                  bottom: AppSpacing.contentBottomPadding(context),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
 
               // 2. Weight Hero Card
               SolidWellnessCard(
@@ -182,8 +184,11 @@ class WeightScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ],
+  ),
+),
+);
+}
 
   Widget _buildInsightCard(String title, String val, IconData icon, Color color, bool isDark) {
     return SolidWellnessCard(

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Biothrix</string>
+    <string name="widget_heart_rate_desc">Live cardiovascular heart rate and resting pulse.</string>
+    <string name="widget_hydration_desc">Daily hydration tracker and glass counter.</string>
+    <string name="widget_calories_desc">Active nutrition burn and caloric budget.</string>
+    <string name="widget_sleep_desc">Circadian sleep architecture and score.</string>
+    <string name="widget_habits_desc">Daily wellness habits and streak tracking.</string>
+    <string name="widget_steps_desc">Daily steps and movement progress.</string>
+    <string name="widget_master_vitals_desc">Biothrix 4-in-1 executive health vitals.</string>
+    
+    <!-- Shortcut Strings -->
+    <string name="shortcut_water_short">Log Water</string>
+    <string name="shortcut_water_long">Log Water Intake (+1 Glass)</string>
+    <string name="shortcut_heart_short">Heart Rate</string>
+    <string name="shortcut_heart_long">Record Heart Rate (BPM)</string>
+    <string name="shortcut_meal_short">Add Meal</string>
+    <string name="shortcut_meal_long">Log Nutrition / Meal</string>
+    <string name="shortcut_activity_short">Log Workout</string>
+    <string name="shortcut_activity_long">Record Activity &amp; Steps</string>
+</resources>

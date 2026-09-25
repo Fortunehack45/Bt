@@ -191,6 +191,28 @@ void main() {
       expect(threeDaysMetrics.calories > 0, true);
       expect(threeDaysMetrics.steps > 0, true);
     });
+
+    test('Biometrics and BMI calculation work accurately', () {
+      provider.updateBiometrics(
+        age: 28,
+        gender: 'Female',
+        heightCm: 165.0,
+        weightKg: 60.0,
+        targetWeightKg: 58.0,
+        primaryGoal: 'Deep Sleep & Rest',
+      );
+
+      expect(provider.age, 28);
+      expect(provider.gender, 'Female');
+      expect(provider.heightCm, 165.0);
+      expect(provider.weightKg, 60.0);
+      expect(provider.targetWeightKg, 58.0);
+      expect(provider.primaryGoal, 'Deep Sleep & Rest');
+
+      // BMI = 60 / (1.65 * 1.65) = 22.03 -> 22.0
+      expect(provider.bmi, 22.0);
+      expect(provider.bmiCategory, 'Optimal Normal');
+    });
   });
 }
 
