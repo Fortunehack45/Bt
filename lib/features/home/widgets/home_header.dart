@@ -6,6 +6,7 @@ import '../../../core/theme/app_radii.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/time_of_day_helper.dart';
 import '../../../domain/state/wellness_provider.dart';
+import '../../notifications/notification_center_sheet.dart';
 
 /// Top header of the Home screen matching Reference Image 1 Screen 1:
 /// - User avatar with presence badge
@@ -86,6 +87,32 @@ class HomeHeader extends StatelessWidget {
         ),
 
         // Floating Glass Utility Buttons
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            PlatformGlassButton(
+              icon: Icons.notifications_none_rounded,
+              size: 40,
+              iconSize: 20,
+              tooltip: 'Notifications',
+              onTap: () => NotificationCenterSheet.show(context),
+            ),
+            if (provider.unreadNotificationCount > 0)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF10B981),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(width: 8),
         PlatformGlassButton(
           icon: Icons.calendar_today_outlined,
           size: 40,

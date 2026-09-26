@@ -11,6 +11,7 @@ import '../../core/widgets/wellness_bottom_sheet.dart';
 import '../../domain/state/wellness_provider.dart';
 import 'widgets/export_report_sheet.dart';
 import '../widgets/widget_studio_screen.dart';
+import '../wearables/wearables_hub_screen.dart';
 
 /// Settings Screen organized into distinct sections: Investor Pitch Demo Mode,
 /// Appearance, Reminders, Goals, Data Management, and App Info.
@@ -569,6 +570,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 children: [
                                   Text('Android Home Widgets', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
                                   Text('7 responsive widgets & launcher shortcuts', style: AppTypography.caption(isDark)),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => WearablesHubScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1E2B22) : const Color(0xFFD1FAE5),
+                                  borderRadius: AppRadii.roundedSm,
+                                ),
+                                child: const Icon(
+                                  Icons.watch_rounded,
+                                  color: Color(0xFF10B981),
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Smart Watches & Rings Hub', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                                  Text('Apple Watch, Wear OS, Oura Ring & BLE Cuffs', style: AppTypography.caption(isDark)),
                                 ],
                               ),
                             ],

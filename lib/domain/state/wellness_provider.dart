@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../core/widgets/weekly_bar_chart.dart';
+import '../models/notification_item.dart';
 import '../models/reproductive_health_models.dart';
+import '../models/smart_device_models.dart';
 import '../models/wellness_models.dart';
 
 /// Central reactive state store for Biothrix Wellness.
 /// Clean state with ZERO hardcoded demo data — all users start fresh.
 class WellnessProvider extends ChangeNotifier {
+  WellnessProvider() {
+    _seedInitialNotifications();
+    _seedInitialWearables();
+  }
+
   // User Profile
   String _userName = 'Wellness Explorer';
   String get userName => _userName;
@@ -298,6 +305,162 @@ class WellnessProvider extends ChangeNotifier {
   }
 
   void setBpm(int value) => recordBpm(value);
+
+  // --- Extended Clinical & Wearable Telemetry ---
+  int _systolicBp = 118; // mmHg
+  int get systolicBp => _systolicBp;
+
+  int _diastolicBp = 76; // mmHg
+  int get diastolicBp => _diastolicBp;
+
+  BloodPressureCategory get bpCategory {
+    if (_systolicBp < 120 && _diastolicBp < 80) {
+      return BloodPressureCategory.optimal;
+    } else if (_systolicBp <= 129 && _diastolicBp < 80) {
+      return BloodPressureCategory.elevated;
+    } else if ((_systolicBp >= 130 && _systolicBp <= 139) || (_diastolicBp >= 80 && _diastolicBp <= 89)) {
+      return BloodPressureCategory.stage1Hypertension;
+    } else if (_systolicBp >= 180 || _diastolicBp >= 120) {
+      return BloodPressureCategory.hypertensiveCrisis;
+    } else {
+      return BloodPressureCategory.stage2Hypertension;
+    }
+  }
+
+  void recordBloodPressure(int systolic, int diastolic) {
+    _systolicBp = systolic;
+    _diastolicBp = diastolic;
+    notifyListeners();
+  }
+
+  double _bodyTemperatureCelsius = 36.6; // °C
+  double get bodyTemperatureCelsius => _bodyTemperatureCelsius;
+  double get bodyTemperatureFahrenheit => (_bodyTemperatureCelsius * 9 / 5) + 32.0;
+
+  void recordBodyTemperature(double tempC) {
+    _bodyTemperatureCelsius = double.parse(tempC.toStringAsFixed(1));
+    notifyListeners();
+  }
+
+  int _bloodOxygenSpO2 = 98; // %
+  int get bloodOxygenSpO2 => _bloodOxygenSpO2;
+
+  void recordBloodOxygen(int spo2) {
+    _bloodOxygenSpO2 = spo2.clamp(70, 100);
+    notifyListeners();
+  }
+
+  int _hrvMs = 54; // RMSSD in ms
+  int get hrvMs => _hrvMs;
+
+  void recordHrv(int ms) {
+    _hrvMs = ms;
+    notifyListeners();
+  }
+
+  int _cadenceSpm = 0; // Steps per minute
+  int get cadenceSpm => _cadenceSpm;
+
+  void updateCadence(int spm) {
+    _cadenceSpm = spm;
+    notifyListeners();
+  }
+
+  // --- Smart Wearables & Peripheral Devices Hub ---
+  final List<SmartDevice> _connectedDevices = [];
+  List<SmartDevice> get connectedDevices => List.unmodifiable(_connectedDevices);
+
+  SmartDevice? _activeDevice;
+  SmartDevice? get activeDevice => _activeDevice;
+
+  bool _isAutoSyncEnabled = true;
+  bool get isAutoSyncEnabled => _isAutoSyncEnabled;
+
+  void toggleAutoSync(bool enabled) {
+    _isAutoSyncEnabled = enabled;
+    notifyListeners();
+  }
+
+  void pairDevice(SmartDevice device) {
+    final idx = _connectedDevices.indexWhere((d) => d.id == device.id);
+    if (idx != -1) {
+      _connectedDevices[idx] = device.copyWith(
+        connectionState: DeviceConnectionState.connected,
+        lastSyncedAt: DateTime.now(),
+      );
+      _activeDevice = _connectedDevices[idx];
+    } else {
+      final paired = device.copyWith(
+        connectionState: DeviceConnectionState.connected,
+        lastSyncedAt: DateTime.now(),
+      );
+      _connectedDevices.add(paired);
+      _activeDevice = paired;
+    }
+    notifyListeners();
+  }
+
+  void disconnectDevice(String id) {
+    final idx = _connectedDevices.indexWhere((d) => d.id == id);
+    if (idx != -1) {
+      _connectedDevices[idx] = _connectedDevices[idx].copyWith(
+        connectionState: DeviceConnectionState.disconnected,
+      );
+      if (_activeDevice?.id == id) {
+        _activeDevice = null;
+      }
+      notifyListeners();
+    }
+  }
+
+  void syncActiveDevice([VitalsTelemetry? telemetry]) {
+    if (telemetry != null) {
+      if (telemetry.steps > 0) _steps = telemetry.steps;
+      if (telemetry.cadenceSpm > 0) _cadenceSpm = telemetry.cadenceSpm;
+      if (telemetry.heartRateBpm > 0) _bpm = telemetry.heartRateBpm;
+      if (telemetry.systolicBp > 0) {
+        _systolicBp = telemetry.systolicBp;
+        _diastolicBp = telemetry.diastolicBp;
+      }
+      if (telemetry.bodyTemperatureCelsius > 0) {
+        _bodyTemperatureCelsius = telemetry.bodyTemperatureCelsius;
+      }
+      if (telemetry.spo2Percentage > 0) {
+        _bloodOxygenSpO2 = telemetry.spo2Percentage;
+      }
+      if (telemetry.hrvMs > 0) {
+        _hrvMs = telemetry.hrvMs;
+      }
+    }
+
+    if (_activeDevice != null) {
+      final idx = _connectedDevices.indexWhere((d) => d.id == _activeDevice!.id);
+      if (idx != -1) {
+        _connectedDevices[idx] = _connectedDevices[idx].copyWith(
+          lastSyncedAt: DateTime.now(),
+        );
+        _activeDevice = _connectedDevices[idx];
+      }
+    }
+    notifyListeners();
+  }
+
+  void _seedInitialWearables() {
+    final ring = SmartDevice(
+      id: 'oura-gen3-01',
+      name: 'Oura Ring Horizon Gen 3',
+      type: DeviceType.smartRing,
+      brand: DeviceBrand.oura,
+      connectionState: DeviceConnectionState.connected,
+      batteryLevel: 86,
+      lastSyncedAt: DateTime.now().subtract(const Duration(minutes: 4)),
+      macAddressOrUuid: 'EC:24:B8:91:02:1F',
+      firmwareVersion: 'v2.9.44',
+      supportedMetrics: const ['Heart Rate', 'Body Temp', 'Sleep HRV', 'Steps', 'SpO2'],
+    );
+    _connectedDevices.add(ring);
+    _activeDevice = ring;
+  }
 
   // Weekly Statistics Bar Data & Historical Storage
   int _selectedStatDayIndex = 3; // Defaults to Thursday / Current Day
@@ -1189,6 +1352,135 @@ class WellnessProvider extends ChangeNotifier {
     if (week <= 32) return (fruit: 'Pineapple', comparison: 'Size of a tropical pineapple (~42.4cm)', lengthCm: 42.4, weightGrams: 1700.0);
     if (week <= 36) return (fruit: 'Honeydew Melon', comparison: 'Size of a ripe honeydew melon (~47.4cm)', lengthCm: 47.4, weightGrams: 2600.0);
     return (fruit: 'Watermelon', comparison: 'Full term, size of a sweet watermelon (~51cm)', lengthCm: 51.0, weightGrams: 3400.0);
+  }
+
+  // ==========================================
+  // NOTIFICATIONS STATE & PREFERENCES
+  // ==========================================
+  final List<WellnestNotification> _notifications = [];
+  List<WellnestNotification> get notifications => List.unmodifiable(_notifications);
+
+  int get unreadNotificationCount => _notifications.where((n) => !n.isRead).length;
+
+  bool _isHydrationNotificationEnabled = true;
+  bool get isHydrationNotificationEnabled => _isHydrationNotificationEnabled;
+
+  bool _isPeriodReminderEnabled = true;
+  bool get isPeriodReminderEnabled => _isPeriodReminderEnabled;
+
+  bool _isPregnancyAlertsEnabled = true;
+  bool get isPregnancyAlertsEnabled => _isPregnancyAlertsEnabled;
+
+  bool _isSleepReminderEnabled = true;
+  bool get isSleepReminderEnabled => _isSleepReminderEnabled;
+
+  bool _isActivityRemindersEnabled = true;
+  bool get isActivityRemindersEnabled => _isActivityRemindersEnabled;
+
+  bool _isSystemSoundEnabled = true;
+  bool get isSystemSoundEnabled => _isSystemSoundEnabled;
+
+  bool _isInAppBannersEnabled = true;
+  bool get isInAppBannersEnabled => _isInAppBannersEnabled;
+
+  void addNotification(WellnestNotification notification) {
+    _notifications.insert(0, notification);
+    notifyListeners();
+  }
+
+  void markNotificationAsRead(String id) {
+    final idx = _notifications.indexWhere((n) => n.id == id);
+    if (idx != -1 && !_notifications[idx].isRead) {
+      _notifications[idx] = _notifications[idx].copyWith(isRead: true);
+      notifyListeners();
+    }
+  }
+
+  void markAllNotificationsAsRead() {
+    bool changed = false;
+    for (int i = 0; i < _notifications.length; i++) {
+      if (!_notifications[i].isRead) {
+        _notifications[i] = _notifications[i].copyWith(isRead: true);
+        changed = true;
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
+  void clearNotification(String id) {
+    final before = _notifications.length;
+    _notifications.removeWhere((n) => n.id == id);
+    if (_notifications.length != before) {
+      notifyListeners();
+    }
+  }
+
+  void clearAllNotifications() {
+    if (_notifications.isNotEmpty) {
+      _notifications.clear();
+      notifyListeners();
+    }
+  }
+
+  void updateNotificationPreferences({
+    bool? hydration,
+    bool? period,
+    bool? pregnancy,
+    bool? sleep,
+    bool? activity,
+    bool? sound,
+    bool? inAppBanners,
+  }) {
+    if (hydration != null) _isHydrationNotificationEnabled = hydration;
+    if (period != null) _isPeriodReminderEnabled = period;
+    if (pregnancy != null) _isPregnancyAlertsEnabled = pregnancy;
+    if (sleep != null) _isSleepReminderEnabled = sleep;
+    if (activity != null) _isActivityRemindersEnabled = activity;
+    if (sound != null) _isSystemSoundEnabled = sound;
+    if (inAppBanners != null) _isInAppBannersEnabled = inAppBanners;
+    notifyListeners();
+  }
+
+  void _seedInitialNotifications() {
+    final now = DateTime.now();
+    _notifications.addAll([
+      WellnestNotification(
+        id: 'seed-1',
+        title: 'Welcome to Wellnest OS',
+        message: 'Your biometric command center is primed and ready. Explore cycle insights, daily hydration pacing, and rest telemetry.',
+        timestamp: now.subtract(const Duration(minutes: 12)),
+        category: NotificationCategory.insights,
+        type: NotificationType.milestone,
+        isRead: false,
+      ),
+      WellnestNotification(
+        id: 'seed-2',
+        title: 'Hydration Target Optimal',
+        message: 'Stay ahead of afternoon fatigue. Drink a glass of water now to maintain peak metabolic rate.',
+        timestamp: now.subtract(const Duration(hours: 2, minutes: 25)),
+        category: NotificationCategory.reminders,
+        type: NotificationType.hydration,
+        isRead: false,
+      ),
+      WellnestNotification(
+        id: 'seed-3',
+        title: 'Cycle Phase Advisory',
+        message: 'Follicular energy peak detected. Great day for strength workouts or focused creative problem solving.',
+        timestamp: now.subtract(const Duration(hours: 6)),
+        category: NotificationCategory.reproductive,
+        type: NotificationType.period,
+        isRead: true,
+      ),
+      WellnestNotification(
+        id: 'seed-4',
+        title: 'Rest & Recovery Score: 92%',
+        message: 'Deep sleep ratio was exceptional last night. Your heart rate variability indicates optimal nervous system recovery.',
+        timestamp: now.subtract(const Duration(hours: 14)),
+        category: NotificationCategory.system,
+        type: NotificationType.sleep,
+        isRead: true,
+      ),
+    ]);
   }
 }
 

@@ -18,18 +18,18 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="MASTER VITALS MATRIX"
-            android:textColor="#CCFF00"
+            android:textColor="#10B981"
             android:textSize="10sp"
             android:textStyle="bold"
             android:letterSpacing="0.08" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="● LIVE SYNC"
-            android:textColor="#10B981"
-            android:textSize="8sp"
+            android:text="WELLNEST"
+            android:textColor="#8010B981"
+            android:textSize="9sp"
             android:textStyle="bold"
-            android:letterSpacing="0.1" />
+            android:letterSpacing="0.12" />
     </LinearLayout>
 
     <!-- 4-Quadrant Vitals Grid -->
@@ -44,11 +44,11 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="5dp"
             android:layout_weight="1"
-            android:background="#22EF4444"
+            android:background="@drawable/widget_subcard_pulse"
             android:orientation="vertical"
-            android:padding="6dp">
+            android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -68,7 +68,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="BPM"
-                android:textColor="#88EF4444"
+                android:textColor="#B0EF4444"
                 android:textSize="8sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -77,11 +77,11 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="5dp"
             android:layout_weight="1"
-            android:background="#222EB5FA"
+            android:background="@drawable/widget_subcard_water"
             android:orientation="vertical"
-            android:padding="6dp">
+            android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -101,7 +101,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="GOAL"
-                android:textColor="#882EB5FA"
+                android:textColor="#B02EB5FA"
                 android:textSize="8sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -110,11 +110,11 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="5dp"
             android:layout_weight="1"
-            android:background="#22FF9442"
+            android:background="@drawable/widget_subcard_steps"
             android:orientation="vertical"
-            android:padding="6dp">
+            android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -134,7 +134,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="84%"
-                android:textColor="#88FF9442"
+                android:textColor="#B0FF9442"
                 android:textSize="8sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -144,9 +144,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="#22818CF8"
+            android:background="@drawable/widget_subcard_sleep"
             android:orientation="vertical"
-            android:padding="6dp">
+            android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -166,7 +166,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="92%"
-                android:textColor="#88818CF8"
+                android:textColor="#B0818CF8"
                 android:textSize="8sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -178,7 +178,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="● Continuous Sensor Fusion • 88% Vitality Index"
-        android:textColor="#B0C2B6"
+        android:textColor="#94A3B8"
         android:textSize="10sp"
         android:textStyle="bold" />
 </LinearLayout>

@@ -53,7 +53,7 @@ class MetricSummaryGrid extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Step to\nwalk',
+                          'Daily\nSteps',
                           style: AppTypography.bodyMedium(isDark).copyWith(
                             fontWeight: FontWeight.w600,
                             height: 1.25,
@@ -68,7 +68,7 @@ class MetricSummaryGrid extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
@@ -94,6 +94,12 @@ class MetricSummaryGrid extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    _buildProgressBar(
+                      progress: (steps / 10000.0).clamp(0.0, 1.0),
+                      color: AppColors.stepsOrange,
+                      isDark: isDark,
+                    ),
                   ],
                 ),
               ),
@@ -112,7 +118,7 @@ class MetricSummaryGrid extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Drink\nWater',
+                          'Daily\nHydration',
                           style: AppTypography.bodyMedium(isDark).copyWith(
                             fontWeight: FontWeight.w600,
                             height: 1.25,
@@ -127,7 +133,7 @@ class MetricSummaryGrid extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
@@ -143,7 +149,7 @@ class MetricSummaryGrid extends StatelessWidget {
                             ),
                           ),
                           TextSpan(
-                            text: ' glass',
+                            text: ' glasses',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -152,6 +158,12 @@ class MetricSummaryGrid extends StatelessWidget {
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildProgressBar(
+                      progress: (waterGlasses / 8.0).clamp(0.0, 1.0),
+                      color: AppColors.waterBlue,
+                      isDark: isDark,
                     ),
                   ],
                 ),
@@ -176,7 +188,7 @@ class MetricSummaryGrid extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Sleep &\nRest',
+                          'Rest &\nRecovery',
                           style: AppTypography.bodyMedium(isDark).copyWith(
                             fontWeight: FontWeight.w600,
                             height: 1.25,
@@ -191,7 +203,7 @@ class MetricSummaryGrid extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
@@ -217,6 +229,12 @@ class MetricSummaryGrid extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    _buildProgressBar(
+                      progress: (sleepHours / 8.0).clamp(0.0, 1.0),
+                      color: AppColors.sleepPurple,
+                      isDark: isDark,
+                    ),
                   ],
                 ),
               ),
@@ -235,7 +253,7 @@ class MetricSummaryGrid extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Nutrition\nMeals',
+                          'Nutrition\nEnergy',
                           style: AppTypography.bodyMedium(isDark).copyWith(
                             fontWeight: FontWeight.w600,
                             height: 1.25,
@@ -250,7 +268,7 @@ class MetricSummaryGrid extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
@@ -276,6 +294,12 @@ class MetricSummaryGrid extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    _buildProgressBar(
+                      progress: (calories / 2000.0).clamp(0.0, 1.0),
+                      color: AppColors.nutritionGold,
+                      isDark: isDark,
+                    ),
                   ],
                 ),
               ),
@@ -292,5 +316,36 @@ class MetricSummaryGrid extends StatelessWidget {
       return '${s.substring(0, s.length - 3)},${s.substring(s.length - 3)}';
     }
     return number.toString();
+  }
+
+  Widget _buildProgressBar({
+    required double progress,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      height: 4,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF233025) : const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(2),
+      ),
+      child: FractionallySizedBox(
+        alignment: Alignment.centerLeft,
+        widthFactor: progress,
+        child: Container(
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.35),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

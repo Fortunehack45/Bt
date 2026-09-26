@@ -36,6 +36,16 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMotionUsageDescription</key>
+	<string>Wellnest uses motion sensors to accurately count your daily steps, walking cadence, and activity distance.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Wellnest connects to your smart watch, smart ring, and health sensors using Bluetooth Low Energy.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Wellnest connects to your smart watch, smart ring, and health sensors using Bluetooth Low Energy.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Wellnest synchronizes your steps, heart rate, blood pressure, and body temperature with Apple Health.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Wellnest records vital telemetry and wellness updates with Apple Health.</string>
 	<key>UIApplicationShortcutItems</key>
 	<array>
 		<dict>
