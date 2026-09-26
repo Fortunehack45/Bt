@@ -9,9 +9,10 @@ import '../../../domain/models/reproductive_health_models.dart';
 import '../../../domain/state/wellness_provider.dart';
 import 'log_period_sheet.dart';
 
-/// Interactive Menstrual Cycle Wheel Hero matching the reference design in Reference Image 1.
-/// Features a top week day strip with teardrop pointer, multi-segmented circular phase arcs,
-/// active cycle day position thumb, and live fertility window readout.
+/// Interactive Menstrual Cycle Wheel Hero matching the design in Reference Image 1.
+/// Features a top week day strip with organic pointer, a wide 22px solid cycle track,
+/// segmented phase arcs (Rose flow arc, Cyan fertile window), elevated floating Day thumb,
+/// dashed Ovulation peak indicator, and medical-grade center typography.
 class InteractiveCycleWheelHero extends StatefulWidget {
   final VoidCallback? onCycleDetailsTap;
 
@@ -24,7 +25,8 @@ class InteractiveCycleWheelHero extends StatefulWidget {
   State<InteractiveCycleWheelHero> createState() => _InteractiveCycleWheelHeroState();
 }
 
-class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> with SingleTickerProviderStateMixin {
+class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _progressAnim;
   DateTime _viewDate = DateTime.now();
@@ -119,7 +121,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
       padding: const EdgeInsets.only(top: 14, bottom: 18, left: 16, right: 16),
       child: Column(
         children: [
-          // 1. Horizontal Week Day Strip with Teardrop Drip Pointer
+          // 1. Horizontal Week Day Strip with Indicators
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: weekDays.map((d) {
@@ -171,7 +173,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
                       ),
                     ),
                     const SizedBox(height: 3),
-                    // Indicators under day (pink for period, cyan/violet for fertile)
+                    // Indicators under day (pink for period, cyan for fertile)
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -202,15 +204,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
               );
             }).toList(),
           ),
-
-          // Teardrop / droplet pointer connecting today to the wheel
-          CustomPaint(
-            size: const Size(20, 10),
-            painter: _TeardropPointerPainter(
-              color: isDark ? const Color(0xFF26332C) : const Color(0xFFDEE7E1),
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // 2. Main Circular Cycle Wheel with Multi-Segment Phase Arcs
           AnimatedBuilder(
@@ -244,39 +238,39 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
                               widget.onCycleDetailsTap!();
                             }
                           },
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 'Current cycle',
                                 style: TextStyle(
                                   fontFamily: AppTypography.fontFamily,
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? const Color(0xFFF43F5E) : const Color(0xFFE11D48),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFF43F5E),
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 3),
                               Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 10,
-                                color: isDark ? const Color(0xFFF43F5E) : const Color(0xFFE11D48),
+                                Icons.chevron_right_rounded,
+                                size: 16,
+                                color: Color(0xFFF43F5E),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 5),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 22),
                           child: Text(
                             statusHeadline,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: AppTypography.fontFamily,
-                              fontSize: 21,
+                              fontSize: 23,
                               fontWeight: FontWeight.w900,
-                              height: 1.15,
-                              letterSpacing: -0.5,
+                              height: 1.12,
+                              letterSpacing: -0.6,
                               color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                             ),
                           ),
@@ -286,14 +280,14 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
                           statusSubtitle,
                           style: TextStyle(
                             fontFamily: AppTypography.fontFamily,
-                            fontSize: 11,
+                            fontSize: 11.5,
                             fontWeight: FontWeight.w600,
                             color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
                           decoration: BoxDecoration(
                             color: fertilityColor.withOpacity(0.16),
                             borderRadius: AppRadii.roundedPill,
@@ -319,9 +313,9 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
               );
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // 3. Bottom Bar: "Today" Jump Pill & "Log Flow / Symptoms" Quick Action
+          // 3. Bottom Action Bar: "Today" Jump Pill & "Log Flow / Symptoms" CTA
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -333,27 +327,24 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
                 icon: const Icon(Icons.calendar_today_rounded, size: 13),
                 label: const Text('Today', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                 style: TextButton.styleFrom(
-                  foregroundColor: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  foregroundColor: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                   backgroundColor: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                  visualDensity: VisualDensity.compact,
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: () {
                   HapticService.selection();
-                  showLogPeriodSheet(context, provider);
+                  showLogPeriodSheet(context, provider, initialDate: _viewDate);
                 },
-                icon: const Icon(Icons.water_drop_rounded, size: 14, color: Colors.white),
-                label: const Text(
-                  'Log Flow / Symptoms',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
-                ),
+                icon: const Icon(Icons.water_drop_rounded, size: 14),
+                label: const Text('Log Flow / Symptoms', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF43F5E),
+                  foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
                 ),
               ),
@@ -365,32 +356,10 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
   }
 }
 
-/// Custom painter for the teardrop pointer from the week strip down to the wheel
-class _TeardropPointerPainter extends CustomPainter {
-  final Color color;
-  _TeardropPointerPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path()
-      ..moveTo(size.width / 2, size.height)
-      ..lineTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(_TeardropPointerPainter oldDelegate) => oldDelegate.color != color;
-}
-
-/// Custom painter rendering the segmented biological phase arcs (Menstrual Rose arc,
-/// Fertile Cyan/Violet arc, background dotted track, Day 14 ovulation badge, and Day thumb).
+/// Custom painter rendering the wide luxury Menstrual Cycle Wheel.
+/// Features a broad 22px solid background channel with embedded interval markers,
+/// segmented phase arcs (Menstrual Rose arc, Fertile Cyan arc), clean Dashed Ovulation indicator,
+/// and an elevated floating active-day thumb badge.
 class _CycleWheelPainter extends CustomPainter {
   final int cycleLength;
   final int periodDuration;
@@ -409,27 +378,26 @@ class _CycleWheelPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - 24) / 2;
-    const strokeWidth = 14.0;
+    const strokeWidth = 22.0;
+    final radius = (size.width - strokeWidth - 8) / 2;
 
-    // 1. Background Track (Subtle circular track with minute interval dots)
+    // 1. Broad solid background track channel
     final trackPaint = Paint()
-      ..color = isDark ? const Color(0xFF1E2822) : const Color(0xFFE5EDE8)
+      ..color = isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
+      ..strokeWidth = strokeWidth;
     canvas.drawCircle(center, radius, trackPaint);
 
-    // Draw small track dots for all days of the cycle
+    // Subtle interval tick dots embedded inside the track channel
     final dotPaint = Paint()
-      ..color = isDark ? const Color(0xFF2C3931) : const Color(0xFFCBD6CF)
+      ..color = isDark ? const Color(0xFF2C3931) : const Color(0xFFDEE7E1)
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < cycleLength; i++) {
       final angle = -math.pi / 2 + (i / cycleLength) * 2 * math.pi;
       final dx = center.dx + radius * math.cos(angle);
       final dy = center.dy + radius * math.sin(angle);
-      canvas.drawCircle(Offset(dx, dy), 1.8, dotPaint);
+      canvas.drawCircle(Offset(dx, dy), 1.6, dotPaint);
     }
 
     // 2. Period Menstrual Phase Arc (Rose / Pink from Day 1 to periodDuration)
@@ -448,8 +416,7 @@ class _CycleWheelPainter extends CustomPainter {
       periodPaint,
     );
 
-    // 3. Fertile Window & Ovulation Arc (Cyan / Violet)
-    // Ovulation occurs approximately 14 days before end of cycle
+    // 3. Fertile Window Arc (Vivid Cyan / Turquoise)
     final ovulationDay = cycleLength - 14;
     final fertileStartDay = ovulationDay - 4;
     final fertileEndDay = ovulationDay + 1;
@@ -472,73 +439,99 @@ class _CycleWheelPainter extends CustomPainter {
       fertilePaint,
     );
 
-    // 4. Ovulation Peak Indicator (Day 14 circular dashed badge)
+    // 4. Ovulation Peak Indicator (Dashed circular badge on the fertile arc)
     final ovAngle = -math.pi / 2 + (ovulationDay / cycleLength) * 2 * math.pi;
     final ovX = center.dx + radius * math.cos(ovAngle);
     final ovY = center.dy + radius * math.sin(ovAngle);
 
+    final ovFillPaint = Paint()
+      ..color = Colors.black.withOpacity(0.18)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(ovX, ovY), 13.0, ovFillPaint);
+
     final ovBadgePaint = Paint()
-      ..color = const Color(0xFFA855F7)
+      ..color = Colors.white.withOpacity(0.9)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
+      ..strokeWidth = 1.6;
+    canvas.drawCircle(Offset(ovX, ovY), 13.0, ovBadgePaint);
 
-    canvas.drawCircle(Offset(ovX, ovY), 10.0, ovBadgePaint);
-
-    final textPainter = TextPainter(
+    final ovTop = TextPainter(
       text: const TextSpan(
-        text: '14',
+        text: 'Day',
         style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w900,
-          color: Color(0xFFA855F7),
+          fontSize: 7.5,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    textPainter.paint(
-      canvas,
-      Offset(ovX - textPainter.width / 2, ovY - textPainter.height / 2),
-    );
+    ovTop.paint(canvas, Offset(ovX - ovTop.width / 2, ovY - 9));
 
-    // 5. Active Current Day Thumb Indicator
+    final ovBottom = TextPainter(
+      text: const TextSpan(
+        text: '14',
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    ovBottom.paint(canvas, Offset(ovX - ovBottom.width / 2, ovY));
+
+    // 5. Active Current Day Elevated Floating Thumb Badge
     final currentDayFraction = (currentDay / cycleLength).clamp(0.0, 1.0);
     final thumbAngle = -math.pi / 2 + currentDayFraction * 2 * math.pi;
     final thumbX = center.dx + radius * math.cos(thumbAngle);
     final thumbY = center.dy + radius * math.sin(thumbAngle);
 
-    // Glow under thumb
-    final thumbGlowPaint = Paint()
-      ..color = (isDark ? AppColors.primaryDark : AppColors.primary).withOpacity(0.35)
+    // Soft drop shadow under thumb
+    final thumbShadow = Paint()
+      ..color = Colors.black.withOpacity(0.20)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawCircle(Offset(thumbX, thumbY), 12.0, thumbGlowPaint);
+    canvas.drawCircle(Offset(thumbX, thumbY + 1.5), 15.0, thumbShadow);
 
-    // Solid thumb badge with current day label
+    // Elevated white circular disc
     final thumbFill = Paint()
-      ..color = isDark ? const Color(0xFF1E2822) : Colors.white
+      ..color = isDark ? const Color(0xFF233129) : Colors.white
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(thumbX, thumbY), 10.0, thumbFill);
+    canvas.drawCircle(Offset(thumbX, thumbY), 15.0, thumbFill);
 
+    // Crisp border matching theme
     final thumbBorder = Paint()
-      ..color = isDark ? AppColors.primary : AppColors.primaryDark
+      ..color = isDark ? const Color(0xFF3B4E42) : const Color(0xFFDEE7E1)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-    canvas.drawCircle(Offset(thumbX, thumbY), 10.0, thumbBorder);
+      ..strokeWidth = 1.6;
+    canvas.drawCircle(Offset(thumbX, thumbY), 15.0, thumbBorder);
 
-    final dayText = TextPainter(
+    // Clean two-line label: 'Day' on top, '$currentDay' below
+    final dayTop = TextPainter(
+      text: TextSpan(
+        text: 'Day',
+        style: TextStyle(
+          fontSize: 7.5,
+          fontWeight: FontWeight.w700,
+          color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    dayTop.paint(canvas, Offset(thumbX - dayTop.width / 2, thumbY - 10));
+
+    final dayBottom = TextPainter(
       text: TextSpan(
         text: '$currentDay',
         style: TextStyle(
-          fontSize: 9,
+          fontSize: 12,
           fontWeight: FontWeight.w900,
           color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    dayText.paint(
-      canvas,
-      Offset(thumbX - dayText.width / 2, thumbY - dayText.height / 2),
-    );
+    dayBottom.paint(canvas, Offset(thumbX - dayBottom.width / 2, thumbY - 1));
   }
 
   @override
