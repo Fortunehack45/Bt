@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/glass/platform_glass_bottom_sheet.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radii.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -12,11 +11,20 @@ import '../../../domain/state/wellness_provider.dart';
 
 /// Opens the Executive Health Record & Telemetry Export sheet.
 void showExportReportSheet(BuildContext context, WellnessProvider provider) {
-  showPlatformGlassBottomSheet<void>(
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withOpacity(0.55),
     builder: (sheetContext) {
-      return ExportReportSheet(provider: provider);
+      return Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF141C17) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: ExportReportSheet(provider: provider),
+      );
     },
   );
 }
@@ -653,7 +661,7 @@ class ExportReportSheet extends StatelessWidget {
           // Drag handle
           Center(
             child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(top: 2, bottom: 14),
               width: 38,
               height: 4.5,
               decoration: BoxDecoration(

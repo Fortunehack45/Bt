@@ -54,37 +54,19 @@ class FourRingHeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Top Section Header with status badge & total percentage
+          // 1. Top Section Header with clean title & total percentage
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF26332A) : AppColors.primaryTint,
-                      borderRadius: AppRadii.roundedPill,
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.bolt_rounded, size: 13, color: AppColors.primaryDark),
-                        SizedBox(width: 4),
-                        Text(
-                          '4-DIMENSION VITALITY RINGS',
-                          style: TextStyle(
-                            fontFamily: AppTypography.fontFamily,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primaryDark,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              Text(
+                'Activity',
+                style: TextStyle(
+                  fontFamily: AppTypography.fontFamily,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  letterSpacing: -0.3,
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
@@ -104,22 +86,23 @@ class FourRingHeroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // 2. Middle Row: Concentric Rings on Left, 4 Dimensions on Right
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Concentric 4-Ring Visual Engine
               ConcentricActivityRings(
                 data: ringsData,
-                size: 138,
-                strokeWidth: 10.5,
-                ringGap: 4.2,
+                size: 130,
+                strokeWidth: 9.2,
+                ringGap: 3.8,
                 showIcons: true,
               ),
-              const SizedBox(width: 18),
+              const SizedBox(width: 16),
 
-              // 4 Dimension Telemetry Readouts
+              // 4 Dimension Telemetry Readouts (No Line Breaking)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,13 +110,13 @@ class FourRingHeroCard extends StatelessWidget {
                     _buildDimensionRow(
                       color: ConcentricActivityRings.stepsColor,
                       label: 'Steps',
-                      value: '${provider.steps}',
-                      goal: '${provider.stepGoal}',
+                      value: _formatNumber(provider.steps),
+                      goal: _formatNumber(provider.stepGoal),
                       unit: 'steps',
                       ratio: ringsData.stepsRatio,
                       isDark: isDark,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 7),
                     _buildDimensionRow(
                       color: ConcentricActivityRings.waterColor,
                       label: 'Water',
@@ -143,7 +126,7 @@ class FourRingHeroCard extends StatelessWidget {
                       ratio: ringsData.waterRatio,
                       isDark: isDark,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 7),
                     _buildDimensionRow(
                       color: ConcentricActivityRings.sleepColor,
                       label: 'Sleep',
@@ -153,12 +136,12 @@ class FourRingHeroCard extends StatelessWidget {
                       ratio: ringsData.sleepRatio,
                       isDark: isDark,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 7),
                     _buildDimensionRow(
                       color: ConcentricActivityRings.nutritionColor,
                       label: 'Nutrition',
-                      value: '${provider.calories}',
-                      goal: '${provider.targetCalories}',
+                      value: _formatNumber(provider.calories),
+                      goal: _formatNumber(provider.targetCalories),
                       unit: 'kcal',
                       ratio: ringsData.nutritionRatio,
                       isDark: isDark,
@@ -198,7 +181,7 @@ class FourRingHeroCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Icon(
                     Icons.arrow_forward_ios_rounded,
-                    size: 11,
+                    size: 10,
                     color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
                   ),
                 ],
@@ -221,57 +204,88 @@ class FourRingHeroCard extends StatelessWidget {
   }) {
     final pct = (ratio * 100).toInt();
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Colored dot
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 8),
-
-        // Label
-        SizedBox(
-          width: 58,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppTypography.fontFamily,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+        // Top Line: Dot + Label (left) & Percentage (right)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ),
-
-        // Numerical Value & Goal
-        Expanded(
-          child: Text(
-            '$value / $goal $unit',
-            style: TextStyle(
-              fontFamily: AppTypography.fontFamily,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+            Text(
+              '$pct%',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
             ),
-          ),
+          ],
         ),
+        const SizedBox(height: 1.5),
 
-        // Percent
-        Text(
-          '$pct%',
-          style: TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: color,
+        // Bottom Line: Value / Goal Unit (aligned, no wrap)
+        Padding(
+          padding: const EdgeInsets.only(left: 13.0),
+          child: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  ),
+                ),
+                TextSpan(
+                  text: ' / $goal $unit',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
     );
+  }
+
+  static String _formatNumber(int val) {
+    if (val >= 1000) {
+      final s = val.toString();
+      final thousands = s.substring(0, s.length - 3);
+      final rest = s.substring(s.length - 3);
+      return '$thousands,$rest';
+    }
+    return val.toString();
   }
 }

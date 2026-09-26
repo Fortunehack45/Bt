@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/glass/platform_glass_bottom_sheet.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
@@ -9,10 +8,11 @@ import '../../../domain/state/wellness_provider.dart';
 
 /// Shows the slide-up 4-Ring Activity & Biometric Details sheet.
 void showFourRingActivityDetailsSheet(BuildContext context, WellnessProvider provider) {
-  showPlatformGlassBottomSheet<void>(
+  showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withOpacity(0.55),
     builder: (sheetContext) {
       return FourRingActivityDetailsSheet(provider: provider);
     },
@@ -149,58 +149,65 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
 
     final selectedDayIndex = _selectedDate.difference(_weekStart).inDays.clamp(0, 6);
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.90,
-      minChildSize: 0.50,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF141C17) : const Color(0xFFF7FBF8),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              // 1. Top Header Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, size: 22),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    Text(
-                      'Activity Details',
-                      style: AppTypography.h3(isDark).copyWith(fontSize: 18),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.share_outlined, size: 20),
-                      onPressed: () {
-                        HapticService.selection();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Activity telemetry exported to clipboard'),
-                            behavior: SnackBarBehavior.floating,
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.90,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF141C17) : const Color(0xFFF7FBF8),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        children: [
+          // Single, perfectly centered Drag Handle
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 4),
+              width: 38,
+              height: 4.5,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF33423A) : const Color(0xFFD2DCD5),
+                borderRadius: BorderRadius.circular(3),
               ),
-              const Divider(height: 1, thickness: 0.5),
+            ),
+          ),
 
-              // 2. Scrollable Body
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                  children: [
+          // 1. Top Header Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded, size: 22),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                Text(
+                  'Activity Details',
+                  style: AppTypography.h3(isDark).copyWith(fontSize: 18),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.share_outlined, size: 20),
+                  onPressed: () {
+                    HapticService.selection();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Activity telemetry exported to clipboard'),
+                        behavior: SnackBarBehavior.floating,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 0.5),
+
+          // 2. Scrollable Body
+          Expanded(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+              children: [
                     // Week Navigator Header: < Sep 20 - Sep 26 >
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -443,9 +450,7 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
             ],
           ),
         );
-      },
-    );
-  }
+      }
 
   bool _isToday(DateTime d) {
     final now = DateTime.now();
