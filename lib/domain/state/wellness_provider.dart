@@ -20,6 +20,9 @@ class WellnessProvider extends ChangeNotifier {
   }
 
   // Biometrics & Personal Health Profile
+  DateTime _dateOfBirth = DateTime(1998, 6, 14);
+  DateTime get dateOfBirth => _dateOfBirth;
+
   int _age = 26;
   int get age => _age;
 
@@ -37,6 +40,17 @@ class WellnessProvider extends ChangeNotifier {
 
   String _activityLevel = 'Moderate Activity';
   String get activityLevel => _activityLevel;
+
+  void setDateOfBirth(DateTime dob) {
+    _dateOfBirth = dob;
+    final now = DateTime.now();
+    int calculatedAge = now.year - dob.year;
+    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+      calculatedAge--;
+    }
+    _age = calculatedAge.clamp(1, 120);
+    notifyListeners();
+  }
 
   void setAge(int age) {
     _age = age;
@@ -69,6 +83,7 @@ class WellnessProvider extends ChangeNotifier {
   }
 
   void updateBiometrics({
+    DateTime? dateOfBirth,
     int? age,
     String? gender,
     double? heightCm,
@@ -77,7 +92,17 @@ class WellnessProvider extends ChangeNotifier {
     String? primaryGoal,
     String? activityLevel,
   }) {
-    if (age != null) _age = age;
+    if (dateOfBirth != null) {
+      _dateOfBirth = dateOfBirth;
+      final now = DateTime.now();
+      int calculatedAge = now.year - dateOfBirth.year;
+      if (now.month < dateOfBirth.month || (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
+        calculatedAge--;
+      }
+      _age = calculatedAge.clamp(1, 120);
+    } else if (age != null) {
+      _age = age;
+    }
     if (gender != null) _gender = gender;
     if (heightCm != null) _heightCm = heightCm;
     if (weightKg != null) _weightKg = weightKg;

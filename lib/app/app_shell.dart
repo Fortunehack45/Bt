@@ -8,6 +8,7 @@ import '../core/utils/haptic_service.dart';
 import '../domain/state/wellness_provider.dart';
 import '../features/activity/activity_screen.dart';
 import '../features/activity/widgets/log_activity_sheet.dart';
+import '../features/chat/ai_wellness_chatbot_sheet.dart';
 import '../features/habits/habits_screen.dart';
 import '../features/habits/widgets/add_habit_sheet.dart';
 import '../features/home/home_screen.dart';
@@ -174,6 +175,7 @@ class _AppShellState extends State<AppShell> {
                 setState(() => _currentIndex = newIndex);
               },
               onCentralActionPressed: () => _onCentralActionPressed(context),
+              onOpenAiChatbot: () => showAiWellnessChatbotSheet(context, provider),
             ),
           ),
         ],

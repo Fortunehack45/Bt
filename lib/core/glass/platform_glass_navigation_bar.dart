@@ -21,17 +21,21 @@ class NavItemData {
 /// Floating Platform-Adaptive Navigation Bar matching the user's reference:
 /// - Oblong capsule on the left containing the 4 primary tabs (Home, Statistics, Habits, Profile)
 /// - Active tab highlighted with a rounded pill background
-/// - Standalone floating circular action button (+) positioned beside the main capsule
+/// - Standalone floating circular action button (+) beside the main capsule
+/// - Vertical swipe (up/down) on the FAB smoothly morphs between Quick Action (+) mode
+///   and Biothrix AI Chatbot mode with rotation and gradient feedback
 class PlatformGlassNavigationBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onIndexChanged;
   final VoidCallback onCentralActionPressed;
+  final VoidCallback? onOpenAiChatbot;
 
   const PlatformGlassNavigationBar({
     super.key,
     required this.currentIndex,
     required this.onIndexChanged,
     required this.onCentralActionPressed,
+    this.onOpenAiChatbot,
   });
 
   @override
@@ -40,9 +44,14 @@ class PlatformGlassNavigationBar extends StatefulWidget {
 }
 
 class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _fabAnimController;
   late Animation<double> _fabScaleAnimation;
+
+  late AnimationController _morphAnimController;
+  late Animation<double> _rotationAnimation;
+
+  bool _isChatbotMode = false;
 
   final List<NavItemData> _items = const [
     NavItemData(
@@ -77,19 +86,44 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
     _fabScaleAnimation = Tween<double>(begin: 1.0, end: 0.88).animate(
       CurvedAnimation(parent: _fabAnimController, curve: Curves.easeInOut),
     );
+
+    _morphAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+    _rotationAnimation = Tween<double>(begin: 0.0, end: 0.5).animate(
+      CurvedAnimation(parent: _morphAnimController, curve: Curves.easeInOutBack),
+    );
   }
 
   @override
   void dispose() {
     _fabAnimController.dispose();
+    _morphAnimController.dispose();
     super.dispose();
+  }
+
+  void _toggleFabMode() {
+    HapticService.selection();
+    setState(() {
+      _isChatbotMode = !_isChatbotMode;
+    });
+    if (_isChatbotMode) {
+      _morphAnimController.forward();
+    } else {
+      _morphAnimController.reverse();
+    }
   }
 
   void _onFabTap() async {
     HapticService.mediumImpact();
     await _fabAnimController.forward();
     await _fabAnimController.reverse();
-    widget.onCentralActionPressed();
+    if (_isChatbotMode) {
+      widget.onOpenAiChatbot?.call();
+    } else {
+      widget.onCentralActionPressed();
+    }
   }
 
   @override
@@ -125,7 +159,7 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
 
               const SizedBox(width: 12),
 
-              // 2. Standalone Floating Circular Action Button (+) beside the bar
+              // 2. Standalone Floating Circular Action Button (+ / AI Chatbot) beside the bar
               _buildBesideFab(isDark),
             ],
           ),
@@ -195,39 +229,74 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
     return ScaleTransition(
       scale: _fabScaleAnimation,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onVerticalDragEnd: (details) {
+          if (details.primaryVelocity != null && details.primaryVelocity!.abs() > 60) {
+            _toggleFabMode();
+          }
+        },
         onTap: _onFabTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 260),
           width: 58,
           height: 58,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isDark ? const Color(0xFF1E2824) : AppColors.lightSurface,
-            boxShadow: AppShadows.floating(isDark),
+            boxShadow: _isChatbotMode
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF2EB5FA).withOpacity(0.35),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : AppShadows.floating(isDark),
             border: Border.all(
-              color: isDark ? const Color(0xFF2E3D36) : AppColors.lightBorder,
+              color: _isChatbotMode
+                  ? const Color(0xFF2EB5FA).withOpacity(0.7)
+                  : (isDark ? const Color(0xFF2E3D36) : AppColors.lightBorder),
               width: 1.2,
             ),
           ),
           child: Center(
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primary,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.35),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
+            child: RotationTransition(
+              turns: _rotationAnimation,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 260),
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: _isChatbotMode
+                      ? const LinearGradient(
+                          colors: [Color(0xFFCCFF00), Color(0xFF2EB5FA)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: _isChatbotMode ? null : AppColors.primary,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isChatbotMode ? const Color(0xFF2EB5FA) : AppColors.primary)
+                          .withOpacity(0.4),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, anim) =>
+                        ScaleTransition(scale: anim, child: child),
+                    child: Icon(
+                      _isChatbotMode ? Icons.auto_awesome_rounded : Icons.add_rounded,
+                      key: ValueKey(_isChatbotMode),
+                      color: AppColors.textPrimaryLight,
+                      size: _isChatbotMode ? 20 : 24,
+                    ),
                   ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.add_rounded,
-                  color: AppColors.textPrimaryLight,
-                  size: 24,
                 ),
               ),
             ),

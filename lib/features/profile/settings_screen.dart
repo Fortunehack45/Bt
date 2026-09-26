@@ -9,6 +9,7 @@ import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
 import '../../core/widgets/wellness_bottom_sheet.dart';
 import '../../domain/state/wellness_provider.dart';
+import 'widgets/export_report_sheet.dart';
 import '../widgets/widget_studio_screen.dart';
 
 /// Settings Screen organized into distinct sections: Investor Pitch Demo Mode,
@@ -458,13 +459,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: const Icon(Icons.file_download_outlined, size: 20),
                             ),
                             title: Text('Export Wellness Data', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
-                            subtitle: Text('Download JSON report of all logs', style: AppTypography.caption(isDark)),
+                            subtitle: Text('Clinical PDF Dossier & JSON Archive', style: AppTypography.caption(isDark)),
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: () {
                               HapticService.selection();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Exported Biothrix wellness report to on-device storage.'), duration: Duration(seconds: 2)),
-                              );
+                              showExportReportSheet(context, provider);
                             },
                           ),
                           const Divider(height: 1),

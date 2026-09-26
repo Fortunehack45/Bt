@@ -87,12 +87,13 @@ class PlatformGlassSurface extends StatelessWidget {
           colors: isDark
               ? GlassTokens.iosDarkGradient
               : GlassTokens.iosLightGradient,
+          stops: const [0.0, 0.40, 0.75, 1.0],
         ),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.18)
-              : Colors.white.withOpacity(0.70),
-          width: 0.8,
+              ? Colors.white.withOpacity(0.22)
+              : Colors.white.withOpacity(0.75),
+          width: 0.85,
         ),
       );
     } else {

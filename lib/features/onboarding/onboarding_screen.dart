@@ -26,10 +26,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Biometric state gathered during onboarding
   String _selectedGender = 'Male';
+  DateTime _selectedDob = DateTime(1998, 6, 14);
   int _selectedAge = 26;
   double _selectedHeightCm = 178.0;
   double _selectedWeightKg = 70.0;
   String _selectedGoal = 'Vitality & Daily Energy';
+
+  static const List<String> _monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  static const List<String> _fullMonthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  void _onDobChanged(DateTime newDob) {
+    HapticService.selection();
+    setState(() {
+      _selectedDob = newDob;
+      final now = DateTime.now();
+      int age = now.year - newDob.year;
+      if (now.month < newDob.month || (now.month == newDob.month && now.day < newDob.day)) {
+        age--;
+      }
+      _selectedAge = age.clamp(1, 120);
+    });
+  }
 
   @override
   void dispose() {
@@ -45,6 +69,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       provider.setUserName(name);
     }
     provider.updateBiometrics(
+      dateOfBirth: _selectedDob,
       age: _selectedAge,
       gender: _selectedGender,
       heightCm: _selectedHeightCm,
@@ -314,66 +339,256 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 28),
 
-          // Biological Age Stepper
+          // Date of Birth & Biological Age Selector
           Align(
             alignment: Alignment.centerLeft,
-            child: Text('Biological Age', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+            child: Text('Date of Birth', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
           ),
           const SizedBox(height: 10),
-          SolidWellnessCard(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    if (_selectedAge > 14) {
-                      HapticService.selection();
-                      setState(() => _selectedAge--);
-                    }
-                  },
-                  child: Container(
-                    width: 44,
-                    height: 44,
+          _buildDobSelector(isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDobSelector(bool isDark) {
+    final daysInCurrentMonth = DateUtils.getDaysInMonth(_selectedDob.year, _selectedDob.month);
+
+    return SolidWellnessCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Banner with formatted date & calculated age
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceElevated,
-                      shape: BoxShape.circle,
+                      color: isDark ? const Color(0xFF26332C) : AppColors.primaryTint,
+                      borderRadius: AppRadii.roundedSm,
                     ),
-                    child: const Icon(Icons.remove_rounded, size: 22),
+                    child: const Icon(Icons.cake_rounded, color: AppColors.primaryDark, size: 20),
                   ),
-                ),
-                Column(
-                  children: [
-                    Text(
-                      '$_selectedAge',
-                      style: TextStyle(
-                        fontFamily: AppTypography.fontFamily,
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${_fullMonthNames[_selectedDob.month - 1]} ${_selectedDob.day}, ${_selectedDob.year}',
+                        style: AppTypography.h3(isDark).copyWith(fontSize: 15),
                       ),
-                    ),
-                    Text('years old', style: AppTypography.caption(isDark)),
-                  ],
+                      Text(
+                        'Biological Date of Birth',
+                        style: AppTypography.caption(isDark).copyWith(fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: AppRadii.roundedPill,
                 ),
-                GestureDetector(
-                  onTap: () {
-                    if (_selectedAge < 100) {
-                      HapticService.selection();
-                      setState(() => _selectedAge++);
-                    }
-                  },
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceElevated,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.add_rounded, size: 22),
+                child: Text(
+                  '$_selectedAge yrs old',
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // 3 Segmented Pickers (Month, Day, Year)
+          Row(
+            children: [
+              // Month Selector
+              Expanded(
+                flex: 4,
+                child: _buildPickerDropdown<int>(
+                  isDark: isDark,
+                  label: 'Month',
+                  value: _selectedDob.month,
+                  items: List.generate(12, (index) => index + 1),
+                  itemLabel: (m) => _monthNames[m - 1],
+                  onChanged: (newMonth) {
+                    if (newMonth != null) {
+                      final maxDays = DateUtils.getDaysInMonth(_selectedDob.year, newMonth);
+                      final safeDay = _selectedDob.day.clamp(1, maxDays);
+                      _onDobChanged(DateTime(_selectedDob.year, newMonth, safeDay));
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Day Selector
+              Expanded(
+                flex: 3,
+                child: _buildPickerDropdown<int>(
+                  isDark: isDark,
+                  label: 'Day',
+                  value: _selectedDob.day.clamp(1, daysInCurrentMonth),
+                  items: List.generate(daysInCurrentMonth, (index) => index + 1),
+                  itemLabel: (d) => d.toString().padLeft(2, '0'),
+                  onChanged: (newDay) {
+                    if (newDay != null) {
+                      _onDobChanged(DateTime(_selectedDob.year, _selectedDob.month, newDay));
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Year Selector
+              Expanded(
+                flex: 4,
+                child: _buildPickerDropdown<int>(
+                  isDark: isDark,
+                  label: 'Year',
+                  value: _selectedDob.year,
+                  items: List.generate(85, (index) => DateTime.now().year - 10 - index),
+                  itemLabel: (y) => y.toString(),
+                  onChanged: (newYear) {
+                    if (newYear != null) {
+                      final maxDays = DateUtils.getDaysInMonth(newYear, _selectedDob.month);
+                      final safeDay = _selectedDob.day.clamp(1, maxDays);
+                      _onDobChanged(DateTime(newYear, _selectedDob.month, safeDay));
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Calendar Modal Quick Launcher
+          GestureDetector(
+            onTap: () async {
+              HapticService.selection();
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _selectedDob,
+                firstDate: DateTime(1930),
+                lastDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
+                builder: (context, child) {
+                  return Theme(
+                    data: isDark
+                        ? ThemeData.dark().copyWith(
+                            colorScheme: const ColorScheme.dark(
+                              primary: AppColors.primary,
+                              onPrimary: Colors.black,
+                              surface: Color(0xFF141A17),
+                            ),
+                          )
+                        : ThemeData.light().copyWith(
+                            colorScheme: const ColorScheme.light(
+                              primary: AppColors.primaryDark,
+                              onPrimary: Colors.white,
+                              surface: Colors.white,
+                            ),
+                          ),
+                    child: child!,
+                  );
+                },
+              );
+              if (picked != null) {
+                _onDobChanged(picked);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_month_rounded,
+                    size: 15,
+                    color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Pick from visual calendar',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPickerDropdown<T>({
+    required bool isDark,
+    required String label,
+    required T value,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF19221D) : const Color(0xFFF2F6F3),
+        borderRadius: AppRadii.roundedSm,
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C3C32) : const Color(0xFFDAE2DC),
+          width: 0.8,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+            ),
+          ),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              value: value,
+              isExpanded: true,
+              isDense: true,
+              icon: const Icon(Icons.arrow_drop_down_rounded, size: 20),
+              dropdownColor: isDark ? const Color(0xFF1E2823) : Colors.white,
+              items: items.map((item) {
+                return DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(
+                    itemLabel(item),
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: onChanged,
             ),
           ),
         ],

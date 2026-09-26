@@ -110,6 +110,7 @@ class HomeScreen extends StatelessWidget {
                 onNextWeek: () => provider.nextWeek(),
                 onOpenDatePicker: () => _openDatePicker(context, provider),
                 telemetryProvider: (date) => provider.getDayTelemetry(date),
+                snapshotProvider: (date) => provider.getMetricsForDate(date),
               ),
               const SizedBox(height: AppSpacing.lg),
 

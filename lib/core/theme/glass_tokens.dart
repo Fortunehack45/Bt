@@ -20,13 +20,17 @@ class GlassTokens {
 
   // iOS Liquid Glass Gradient Stops & Surface Tints
   static List<Color> iosLightGradient = [
-    Colors.white.withOpacity(0.88),
-    Colors.white.withOpacity(0.68),
+    Colors.white.withOpacity(0.92),
+    Colors.white.withOpacity(0.78),
+    Colors.white.withOpacity(0.65),
+    Colors.white.withOpacity(0.72),
   ];
 
   static List<Color> iosDarkGradient = [
-    const Color(0xFF202824).withOpacity(0.88),
-    const Color(0xFF141A17).withOpacity(0.72),
+    const Color(0xFF26332C).withOpacity(0.92),
+    const Color(0xFF1E2822).withOpacity(0.82),
+    const Color(0xFF141A17).withOpacity(0.70),
+    const Color(0xFF1B231F).withOpacity(0.80),
   ];
 
   // iOS Specular Highlight Border

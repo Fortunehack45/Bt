@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:biothrix/core/utils/wellness_report_exporter.dart';
 import 'package:biothrix/domain/state/wellness_provider.dart';
 
 void main() {
@@ -212,6 +214,42 @@ void main() {
       // BMI = 60 / (1.65 * 1.65) = 22.03 -> 22.0
       expect(provider.bmi, 22.0);
       expect(provider.bmiCategory, 'Optimal Normal');
+    });
+
+    test('Date of Birth calculates biological age accurately', () {
+      provider.setDateOfBirth(DateTime(2000, 1, 1));
+      final now = DateTime.now();
+      int expectedAge = now.year - 2000;
+      if (now.month < 1 || (now.month == 1 && now.day < 1)) {
+        expectedAge--;
+      }
+      expect(provider.age, expectedAge);
+      expect(provider.dateOfBirth, DateTime(2000, 1, 1));
+
+      // Test updateBiometrics with dateOfBirth
+      provider.updateBiometrics(dateOfBirth: DateTime(1995, 5, 20));
+      expect(provider.dateOfBirth, DateTime(1995, 5, 20));
+    });
+
+    test('WellnessReportExporter produces valid JSON archive and %PDF-1.4 file', () {
+      provider.toggleDemoMode(true);
+      provider.setUserName('Fortune');
+
+      // 1. JSON Export Verification
+      final jsonStr = WellnessReportExporter.generateJsonArchive(provider);
+      expect(jsonStr.isNotEmpty, true);
+      final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
+      expect(decoded['patient_profile']['name'], 'Fortune');
+      expect(decoded['today_telemetry']['steps_logged'], 8420);
+      expect(decoded['today_telemetry']['hydration_glasses'], 7);
+
+      // 2. Pure Dart PDF Generation Verification
+      final pdfBytes = WellnessReportExporter.generatePdfBytes(provider);
+      expect(pdfBytes.isNotEmpty, true);
+      final pdfString = utf8.decode(pdfBytes, allowMalformed: true);
+      expect(pdfString.startsWith('%PDF-1.4'), true);
+      expect(pdfString.contains('BIOTHRIX WELLNESS CLINICAL DOSSIER'), true);
+      expect(pdfString.contains('%%EOF'), true);
     });
   });
 }
