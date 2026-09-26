@@ -400,13 +400,22 @@ class WellnessProvider extends ChangeNotifier {
   // Sleep State (Starts Fresh at 0)
   double _sleepHours = 0.0;
   double get sleepHours => _sleepHours;
+  double _sleepGoalHours = 8.0;
+  double get sleepGoalHours => _sleepGoalHours;
   int _sleepScore = 0;
   int get sleepScore => _sleepScore;
 
   void logSleep(double hours) {
     _sleepHours = hours;
-    _sleepScore = ((hours / 8.0) * 100).clamp(0, 100).toInt();
+    _sleepScore = ((hours / (_sleepGoalHours > 0 ? _sleepGoalHours : 8.0)) * 100).clamp(0, 100).toInt();
     notifyListeners();
+  }
+
+  void setSleepGoalHours(double hours) {
+    if (hours > 0) {
+      _sleepGoalHours = hours;
+      notifyListeners();
+    }
   }
 
   void removeMeal(String id) {

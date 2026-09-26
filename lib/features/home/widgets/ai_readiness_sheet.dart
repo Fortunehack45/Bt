@@ -23,7 +23,6 @@ void showAiWellnessInsightsSheet(BuildContext context, WellnessProvider provider
     backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
     shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedSheet),
     builder: (sheetContext) {
-      bool isSyncing = false;
       return StatefulBuilder(
         builder: (ctx, setState) {
           return Padding(
@@ -116,7 +115,7 @@ void showAiWellnessInsightsSheet(BuildContext context, WellnessProvider provider
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     color: AppColors.primaryTint,
                                     borderRadius: AppRadii.roundedPill,
                                   ),
@@ -211,19 +210,17 @@ void showAiWellnessInsightsSheet(BuildContext context, WellnessProvider provider
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton.icon(
-                    onPressed: isSyncing
-                        ? null
-                        : () {
-                            HapticService.mediumImpact();
-                            Navigator.of(sheetContext).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Biothrix AI & Sensor Telemetry Synchronized'),
-                                duration: Duration(seconds: 2),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
+                    onPressed: () {
+                      HapticService.mediumImpact();
+                      Navigator.of(sheetContext).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Biothrix AI & Sensor Telemetry Synchronized'),
+                          duration: Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.sync_rounded, size: 18),
                     label: const Text(
                       'Sync Health Telemetry',

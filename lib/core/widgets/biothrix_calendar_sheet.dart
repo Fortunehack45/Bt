@@ -3,7 +3,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_radii.dart';
 import '../theme/app_typography.dart';
 import '../utils/haptic_service.dart';
-import 'solid_wellness_card.dart';
 import 'wellness_bottom_sheet.dart';
 import '../../domain/state/wellness_provider.dart';
 
@@ -310,24 +309,6 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
     );
   }
 
-  Widget _buildLegendItem(String label, Color color, bool isDark) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppTypography.fontFamily,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildSummaryCol(String title, String val, bool isDark) {
     return Column(

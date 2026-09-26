@@ -392,7 +392,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                       child: const Icon(Icons.favorite_rounded, color: AppColors.heartRed, size: 14),
                     ),
                     const SizedBox(width: 7),
-                    Text(
+                    const Text(
                       'HEART RATE',
                       style: TextStyle(
                         fontFamily: AppTypography.fontFamily,
@@ -489,7 +489,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                       child: const Icon(Icons.water_drop_rounded, color: AppColors.waterBlue, size: 14),
                     ),
                     const SizedBox(width: 7),
-                    Text(
+                    const Text(
                       'HYDRATION',
                       style: TextStyle(
                         fontFamily: AppTypography.fontFamily,
@@ -517,7 +517,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  '${(provider.waterGlasses * 0.25).toStringAsFixed(1)}',
+                  (provider.waterGlasses * 0.25).toStringAsFixed(1),
                   style: TextStyle(
                     fontFamily: AppTypography.fontFamily,
                     fontWeight: FontWeight.w900,
@@ -573,7 +573,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  const Text(
                     'CALORIC METABOLISM',
                     style: TextStyle(
                       fontFamily: AppTypography.fontFamily,
@@ -833,7 +833,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                       child: const Icon(Icons.hub_rounded, color: AppColors.primaryDark, size: 14),
                     ),
                     const SizedBox(width: 6),
-                    Text(
+                    const Text(
                       'MASTER VITALS MATRIX',
                       style: TextStyle(
                         fontFamily: AppTypography.fontFamily,
@@ -861,7 +861,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                 Expanded(child: _buildMiniVital('PULSE', '${provider.bpm > 0 ? provider.bpm : 74}', 'BPM', AppColors.heartRed, textColor)),
                 Expanded(child: _buildMiniVital('WATER', '${provider.waterGlasses}', 'GLS', AppColors.waterBlue, textColor)),
                 Expanded(child: _buildMiniVital('STEPS', '${provider.steps > 0 ? (provider.steps / 1000).toStringAsFixed(1) : "8.4"}k', 'STP', AppColors.stepsOrange, textColor)),
-                Expanded(child: _buildMiniVital('SLEEP', '${provider.sleepHours > 0 ? provider.sleepHours.toStringAsFixed(1) : "7.8"}', 'HRS', const Color(0xFF818CF8), textColor)),
+                Expanded(child: _buildMiniVital('SLEEP', provider.sleepHours > 0 ? provider.sleepHours.toStringAsFixed(1) : '7.8', 'HRS', const Color(0xFF818CF8), textColor)),
               ],
             ),
           ],

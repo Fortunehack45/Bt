@@ -8,6 +8,7 @@ class AppRadii {
   static const double xs = 8.0;
   static const double sm = 12.0;
   static const double md = 16.0;
+  static const double lg = 20.0;
   static const double card = 24.0;
   static const double cardLarge = 28.0;
   static const double navigation = 32.0;
@@ -18,6 +19,7 @@ class AppRadii {
   static const BorderRadius roundedXs = BorderRadius.all(Radius.circular(xs));
   static const BorderRadius roundedSm = BorderRadius.all(Radius.circular(sm));
   static const BorderRadius roundedMd = BorderRadius.all(Radius.circular(md));
+  static const BorderRadius roundedLg = BorderRadius.all(Radius.circular(lg));
   static const BorderRadius roundedCard = BorderRadius.all(Radius.circular(card));
   static const BorderRadius roundedCardLarge = BorderRadius.all(Radius.circular(cardLarge));
   static const BorderRadius roundedNav = BorderRadius.all(Radius.circular(navigation));

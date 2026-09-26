@@ -214,7 +214,7 @@ class _SpotlightTourOverlayState extends State<SpotlightTourOverlay> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: AppColors.primary,
                               borderRadius: AppRadii.roundedPill,
                             ),
@@ -363,7 +363,7 @@ class _SpotlightTourOverlayState extends State<SpotlightTourOverlay> {
                         onTap: _nextStep,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8.5),
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppColors.primary,
                             borderRadius: AppRadii.roundedPill,
                           ),

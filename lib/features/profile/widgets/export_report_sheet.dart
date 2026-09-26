@@ -96,7 +96,7 @@ void showExportSuccessDialog(
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 16),
+                      const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 16),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(

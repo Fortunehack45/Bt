@@ -88,7 +88,7 @@ class FourRingHeroCard extends StatelessWidget {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: AppRadii.roundedPill,
                 ),
