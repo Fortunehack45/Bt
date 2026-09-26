@@ -48,7 +48,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
     if (angle < 0) angle += 2 * math.pi;
 
     final frac = angle / (2 * math.pi);
-    final newDay = (frac * cycleLength).round().clamp(1, cycleLength);
+    final newDay = ((frac * cycleLength).floor() + 1).clamp(1, cycleLength);
 
     if (newDay != _inspectedCycleDay) {
       HapticService.tick();
@@ -96,7 +96,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
       statusHeadline = 'Period: Day $activeCycleDay';
       statusSubtitle = 'Active Menstruation Flow';
       fertilityLabel = 'Active Flow';
-      biologicalGuidance = 'Uterine lining shedding. Estrogen and progesterone at baseline. Rest and gentle hydration prioritized.';
+      biologicalGuidance = 'Uterine lining shedding. Rest, hydration, and soothing warmth prioritized.';
     } else if (activeCycleDay < fertileStart) {
       // 2. Follicular Phase (periodDur+1 to fertileStart-1)
       phaseName = 'Follicular Phase';
@@ -105,7 +105,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
       statusHeadline = 'Cycle Day $activeCycleDay of $cycleLen';
       statusSubtitle = 'Estrogen Rising & Renewal';
       fertilityLabel = 'Low Conception';
-      biologicalGuidance = 'Follicles maturing in ovaries. Rising estrogen boosts physical stamina, cognitive sharpness, and mood.';
+      biologicalGuidance = 'Estrogen rising. High physical stamina, mental clarity, and renewal.';
     } else if (activeCycleDay >= fertileStart && activeCycleDay <= fertileEnd) {
       // 3. Fertile Window & Ovulation (fertileStart to fertileEnd)
       if (activeCycleDay == ovulationDay) {
@@ -115,7 +115,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
         statusHeadline = 'Ovulation Day $activeCycleDay';
         statusSubtitle = 'LH Surge & Egg Release';
         fertilityLabel = 'Peak Fertility';
-        biologicalGuidance = 'Luteinizing Hormone peak triggers ovum release. Maximum probability of conception in this 24h window.';
+        biologicalGuidance = 'LH peak triggers egg release. Peak fertility and conception probability.';
       } else {
         phaseName = 'Fertile Window';
         phaseColor = const Color(0xFF06B6D4); // Cyan
@@ -123,7 +123,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
         statusHeadline = 'Cycle Day $activeCycleDay of $cycleLen';
         statusSubtitle = 'High Fertility Window';
         fertilityLabel = 'High Fertility';
-        biologicalGuidance = 'Sperm can survive up to 5 days in fertile cervical fluid. High conception window leading to ovulation.';
+        biologicalGuidance = 'High conception probability leading to ovulation. Cervical fluid optimal.';
       }
     } else {
       // 4. Luteal Phase (fertileEnd+1 to cycleLen)
@@ -134,7 +134,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
       statusHeadline = 'Period in $daysUntilNext ${daysUntilNext == 1 ? 'day' : 'days'}';
       statusSubtitle = 'Progesterone Dominant';
       fertilityLabel = 'Low Fertility';
-      biologicalGuidance = 'Corpus luteum secretes progesterone. Basal body temperature elevates. Nourish body with magnesium and sleep.';
+      biologicalGuidance = 'Progesterone dominant. Basal temperature elevates. Prioritize magnesium and restorative sleep.';
     }
 
     // Generate 7-day strip centered on today
@@ -249,6 +249,8 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
                   width: dialSize,
                   height: dialSize,
                   child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapDown: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize), cycleLen, todayCycleDay),
                     onPanStart: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize), cycleLen, todayCycleDay),
                     onPanUpdate: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize), cycleLen, todayCycleDay),
                     child: Stack(
@@ -415,23 +417,31 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
                 )
               else
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
+                    color: phaseColor.withOpacity(0.08),
                     borderRadius: AppRadii.roundedPill,
+                    border: Border.all(color: phaseColor.withOpacity(0.2), width: 0.8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.touch_app_rounded, size: 14, color: phaseColor),
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: phaseColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                       const SizedBox(width: 6),
                       Text(
-                        'Touch or drag wheel to explore cycle days',
+                        'Today • Day $todayCycleDay of $cycleLen',
                         style: TextStyle(
                           fontFamily: AppTypography.fontFamily,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: phaseColor,
                         ),
                       ),
                     ],
@@ -660,20 +670,24 @@ class _TrulyInteractiveCyclePainter extends CustomPainter {
     );
 
     // 6. Ovulation Peak Indicator (Day 14 Beacon)
-    final ovAngle = -math.pi / 2 + ((ovulationDay - 1) / cycleLength) * 2 * math.pi;
-    final ovX = center.dx + radius * math.cos(ovAngle);
-    final ovY = center.dy + radius * math.sin(ovAngle);
+    // Only render the beacon if not actively inspecting ovulation day,
+    // as the active thumb already highlights and centers on that exact position.
+    if (activeCycleDay != ovulationDay) {
+      final ovAngle = -math.pi / 2 + ((ovulationDay - 0.5) / cycleLength) * 2 * math.pi;
+      final ovX = center.dx + radius * math.cos(ovAngle);
+      final ovY = center.dy + radius * math.sin(ovAngle);
 
-    final ovBeaconPaint = Paint()
-      ..color = const Color(0xFFA855F7)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(ovX, ovY), 5.5, ovBeaconPaint);
+      final ovBeaconPaint = Paint()
+        ..color = const Color(0xFFA855F7)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(ovX, ovY), 5.5, ovBeaconPaint);
 
-    final ovBeaconBorder = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-    canvas.drawCircle(Offset(ovX, ovY), 5.5, ovBeaconBorder);
+      final ovBeaconBorder = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0;
+      canvas.drawCircle(Offset(ovX, ovY), 5.5, ovBeaconBorder);
+    }
 
     // 7. Luteal Phase Arc (Warm Amber #F59E0B)
     final lutealStartAngle = -math.pi / 2 + (fertileEnd / cycleLength) * 2 * math.pi;

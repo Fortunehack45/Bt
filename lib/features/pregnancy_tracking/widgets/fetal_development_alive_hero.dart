@@ -71,7 +71,7 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
     if (angle < 0) angle += 2 * math.pi;
 
     final weekFrac = angle / (2 * math.pi);
-    final newWeek = (weekFrac * 40).round().clamp(1, 40);
+    final newWeek = ((weekFrac * 40).floor() + 1).clamp(1, 40);
 
     if (newWeek != _inspectedWeek) {
       HapticService.tick();
@@ -162,6 +162,8 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
                   width: dialSize,
                   height: dialSize,
                   child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTapDown: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize)),
                     onPanStart: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize)),
                     onPanUpdate: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize)),
                     child: Stack(
@@ -297,23 +299,31 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
                 )
               else
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
+                    color: trimesterColor.withOpacity(0.08),
                     borderRadius: AppRadii.roundedPill,
+                    border: Border.all(color: trimesterColor.withOpacity(0.2), width: 0.8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.touch_app_rounded, size: 14, color: trimesterColor),
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: trimesterColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                       const SizedBox(width: 6),
                       Text(
-                        'Touch or drag dial to explore weeks',
+                        'Current • Week $actualWeek of 40',
                         style: TextStyle(
                           fontFamily: AppTypography.fontFamily,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: trimesterColor,
                         ),
                       ),
                     ],
@@ -730,7 +740,7 @@ class _GestationalDialPainter extends CustomPainter {
     }
 
     // 4. Active Floating Week Thumb Badge
-    final thumbAngle = -math.pi / 2 + (currentWeek / 40.0) * 2 * math.pi;
+    final thumbAngle = -math.pi / 2 + ((currentWeek - 0.5) / 40.0) * 2 * math.pi;
     final thumbX = center.dx + radius * math.cos(thumbAngle);
     final thumbY = center.dy + radius * math.sin(thumbAngle);
 

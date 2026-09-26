@@ -96,7 +96,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
 
   void _initGreeting() {
     final p = widget.provider;
-    final greeting = StringBuffer('Hello ${p.userName}! I\'m your Wellnest AI Health Companion, synced to your profile and live biometric telemetry.\n\n');
+    final greeting = StringBuffer('Hello ${p.userName}! I\'m your Wellnest AI Companion.\n\n');
 
     if (p.isPeriodTrackingEnabled) {
       final pred = p.periodPrediction;
@@ -104,34 +104,18 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
       final currentDay = p.currentCycleDay.clamp(1, cycleLen);
       final phaseName = pred.currentPhase.displayName;
       final fertility = p.isFertileWindowDay(DateTime.now())
-          ? 'High (Fertile Window)'
+          ? 'High Fertility'
           : (pred.currentPhase == PeriodPhase.ovulation ? 'Peak Fertility' : 'Low Fertility');
-      final daysUntilNext = pred.estimatedNextPeriodDate != null
-          ? pred.estimatedNextPeriodDate!.difference(DateTime.now()).inDays.clamp(0, 45)
-          : (cycleLen - currentDay).clamp(0, 45);
 
-      greeting.writeln('🌸 **Reproductive Cycle Status:**');
-      greeting.writeln('• Cycle Day: Day $currentDay of $cycleLen ($phaseName)');
-      greeting.writeln('• Fertility Window: $fertility');
-      greeting.writeln('• Next Period Expected: In $daysUntilNext days\n');
+      greeting.writeln('🌸 **Cycle Status:** Day **$currentDay** of $cycleLen • **$phaseName** ($fertility)');
     } else if (p.isPregnancyTrackingEnabled && p.pregnancyData != null) {
       final preg = p.pregnancyData!;
       final fetalData = GestationalDatabase.getWeekInfo(preg.currentWeek);
-      greeting.writeln('🤰 **Gestational Status:**');
-      greeting.writeln('• Progress: Week ${preg.currentWeek} • ${preg.trimesterLabel}');
-      greeting.writeln('• Baby Size: ${fetalData.babySizeFruit} (~${fetalData.estimatedLengthCm} cm, ${fetalData.estimatedWeightGrams.toInt()} g)');
-      greeting.writeln('• Due Date: In ${preg.daysUntilDueDate} days\n');
+      greeting.writeln('🤰 **Pregnancy:** Week **${preg.currentWeek}** • Baby size of a **${fetalData.babySizeFruit}**');
     }
 
-    greeting.writeln('📈 **Biometrics & Clinical Baselines:**');
-    greeting.writeln('• Steps: ${p.steps} / ${p.stepGoal} (${((p.steps / (p.stepGoal > 0 ? p.stepGoal : 1)) * 100).toInt()}% completed)');
-    greeting.writeln('• Hydration: ${p.waterGlasses} / ${p.recommendedHydrationGlasses} glasses (${(p.waterGlasses * 0.25).toStringAsFixed(1)}L logged)');
-    greeting.writeln('• Basal Metabolic Rate (BMR): ${p.bmr.toStringAsFixed(0)} kcal/day');
-    greeting.writeln('• Target Daily Calories: ${p.recommendedDailyCalories} kcal/day (${p.calories} kcal logged)');
-    if (p.bpm > 0) greeting.writeln('• Resting Heart Rate: ${p.bpm} BPM');
-    if (p.sleepHours > 0) greeting.writeln('• Last Sleep: ${p.sleepHours} hrs (${p.sleepScore}% quality score)');
-
-    greeting.write('\nWhat aspect of your health would you like to explore or optimize right now?');
+    greeting.writeln('📊 **Today\'s Vitals:** **${p.steps}** steps • **${p.waterGlasses}** glasses • **${p.bpm > 0 ? p.bpm : 72}** BPM\n');
+    greeting.write('What aspect of your health would you like to explore today?');
 
     _messages.add(
       ChatMessage(
@@ -204,20 +188,19 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
 
     // Period / Menstrual Cycle Questions
     if (query.contains('cramp') || query.contains('symptom') || query.contains('period pain')) {
-      return '🩸 **Clinical Protocol for Menstrual Cramp Relief:**\n\n'
-          'Menstrual cramps (dysmenorrhea) are caused by uterine contractions triggered by prostaglandins (PGF2α). Here are evidence-based relief strategies:\n\n'
-          '1. **Localized Heat Therapy:** Apply a heating pad or warm compress (approx. 40°C / 104°F) across the lower abdomen for 20 minutes to relax myometrial tension.\n'
-          '2. **Magnesium & Anti-Inflammatory Nutrients:** Magnesium glycinate (200–300 mg) helps relax smooth muscle tissue. Hydrate with warm herbal chamomile or peppermint tea.\n'
-          '3. **Gentle Pelvic Mobility:** Child\'s Pose, Cat-Cow, and light walking improve pelvic vascular flow and stimulate endogenous endorphin release.\n'
-          '4. **Hydration Pacing:** Aim for your recommended **${p.recommendedHydrationGlasses} glasses** of water to counter fluid retention and bloating.';
+      return '🩸 **Menstrual Cramp Relief Protocol:**\n\n'
+          '• **Heat Therapy:** 20 min warm compress (40°C) across lower abdomen.\n'
+          '• **Magnesium:** 200–300mg magnesium glycinate relaxes smooth muscle tissue.\n'
+          '• **Gentle Mobility:** Child\'s Pose & Cat-Cow enhance pelvic vascular flow.\n'
+          '• **Hydration:** Sip warm herbal tea and keep up your **${p.recommendedHydrationGlasses} glasses** water goal.';
     }
 
     if (query.contains('cycle') || query.contains('menstrual') || query.contains('period') || query.contains('ovulat') || query.contains('fertile')) {
       if (!p.isPeriodTrackingEnabled) {
         if (p.isPregnancyTrackingEnabled) {
-          return '🤰 **Clinical Note:**\n\nYou currently have **Pregnancy Tracking** enabled. During gestation, true menstrual cycles do not occur because sustained progesterone halts the endometrial shed cycle. If you ever experience vaginal spotting or cramping during pregnancy, always consult your obstetrician promptly.';
+          return '🤰 **Clinical Note:**\n\nYou currently have **Pregnancy Tracking** enabled. True menstrual cycles pause during pregnancy due to sustained progesterone.';
         }
-        return '🌸 **Menstrual Tracking:**\n\nPeriod tracking is currently inactive. If eligible, you can enable Period Tracking in Settings to receive cycle phase forecasts, ovulation windows, and symptom logging.';
+        return '🌸 **Menstrual Tracking:**\n\nPeriod tracking is inactive. You can enable it in Settings anytime.';
       }
 
       final pred = p.periodPrediction;
@@ -225,7 +208,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
       final currentDay = p.currentCycleDay.clamp(1, cycleLen);
       final phaseName = pred.currentPhase.displayName;
       final fertility = p.isFertileWindowDay(DateTime.now())
-          ? 'High (Fertile Window)'
+          ? 'High Fertility'
           : (pred.currentPhase == PeriodPhase.ovulation ? 'Peak Fertility' : 'Low Fertility');
       final daysUntilNext = pred.estimatedNextPeriodDate != null
           ? pred.estimatedNextPeriodDate!.difference(DateTime.now()).inDays.clamp(0, 45)
@@ -234,15 +217,15 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
       return '🌸 **Menstrual Cycle Telemetry:**\n\n'
           '• **Current Day:** Day **$currentDay** of $cycleLen\n'
           '• **Cycle Phase:** **$phaseName**\n'
-          '• **Fertile Window:** **$fertility**\n'
+          '• **Conception Probability:** **$fertility**\n'
           '• **Next Period:** Expected in **$daysUntilNext days**\n\n'
-          '💡 *Phase Guidance:* During the ${phaseName.toLowerCase()}, your body experiences distinct hormonal shifts. In the follicular phase, rising estrogen supports higher strength training intensity and cognitive sharpness; in the luteal phase, rising progesterone elevates your resting body temperature and metabolic rate, making magnesium and steady hydration essential.';
+          '💡 *Tip:* During $phaseName, balance your workouts and maintain consistent hydration.';
     }
 
     // Pregnancy Questions
     if (query.contains('baby') || query.contains('fetal') || query.contains('fetus') || query.contains('trimester') || query.contains('pregnant') || query.contains('pregnancy') || query.contains('due date')) {
       if (!p.isPregnancyTrackingEnabled) {
-        return '🤰 **Pregnancy Tracking:**\n\nPregnancy tracking is currently disabled. You can activate it in Settings to access weekly gestational milestones, baby size fruit comparisons, and trimester-specific guidance.';
+        return '🤰 **Pregnancy Tracking:**\n\nPregnancy mode is inactive. Activate it in Settings to track weekly fetal development.';
       }
 
       final preg = p.pregnancyData;
@@ -253,81 +236,77 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
       return '🤰 **Gestational Milestone (Week $currentWeek):**\n\n'
           '• **Trimester:** ${fetalData.trimesterLabel}\n'
           '• **Baby Size:** Size of a **${fetalData.babySizeFruit}**\n'
-          '• **Approx. Length:** ~${fetalData.estimatedLengthCm} cm (crown to heel)\n'
-          '• **Approx. Weight:** ~${fetalData.estimatedWeightGrams.toInt()} g\n'
-          '• **Due Date Countdown:** **$daysLeft days remaining**\n\n'
-          '🔬 **Development Highlights:**\n${fetalData.fetalMilestone}\n\n'
-          '👩‍⚕️ **Clinical Focus:**\n${fetalData.clinicalTip}';
+          '• **Dimensions:** ~${fetalData.estimatedLengthCm} cm • ~${fetalData.estimatedWeightGrams.toInt()} g\n'
+          '• **Countdown:** **$daysLeft days until due date**\n\n'
+          '🔬 *Development:* ${fetalData.fetalMilestone}\n'
+          '👩‍⚕️ *Clinical Focus:* ${fetalData.clinicalTip}';
     }
 
     if (query.contains('progress') || query.contains('analyze') || query.contains('summary')) {
       final stepPct = ((p.steps / (p.stepGoal > 0 ? p.stepGoal : 10000)) * 100).toInt();
       final waterPct = ((p.waterGlasses / (p.recommendedHydrationGlasses > 0 ? p.recommendedHydrationGlasses : 8)) * 100).toInt();
       return '📊 **Biometric Analysis for ${p.userName}:**\n\n'
-          '• **Movement:** $stepPct% of your daily step goal achieved (${p.steps} / ${p.stepGoal} steps).\n'
-          '• **Hydration:** $waterPct% of personalized clinical goal (${p.waterGlasses} / ${p.recommendedHydrationGlasses} glasses).\n'
-          '• **Metabolism:** ${p.calories} kcal logged vs ${p.recommendedDailyCalories} kcal clinical target (BMR: ${p.bmr.toStringAsFixed(0)} kcal).\n'
-          '• **Cardiovascular:** ${p.bpm > 0 ? 'Resting heart rate at ${p.bpm} BPM.' : 'No recent BPM spike detected.'}\n\n'
-          '💡 *Recommendation:* You have strong consistency today! A light 15-minute evening stroll will easily push your step count toward your goal.';
+          '• **Movement:** $stepPct% goal (${p.steps} / ${p.stepGoal} steps)\n'
+          '• **Hydration:** $waterPct% goal (${p.waterGlasses} / ${p.recommendedHydrationGlasses} glasses)\n'
+          '• **Metabolism:** ${p.calories} / ${p.recommendedDailyCalories} kcal (BMR: ${p.bmr.toStringAsFixed(0)} kcal)\n'
+          '• **Heart Rate:** ${p.bpm > 0 ? '${p.bpm} BPM resting' : 'Resting rhythm optimal'}\n\n'
+          '💡 *Tip:* Great consistency today! A brief 15-minute walk will close your step goal.';
     }
 
     if (query.contains('water') || query.contains('hydration') || query.contains('drink')) {
       final goal = p.recommendedHydrationGlasses;
       final remaining = (goal - p.waterGlasses).clamp(0, 30);
       if (remaining == 0) {
-        return '💧 **Hydration Status: Fully Optimized!**\n\nYou have completed your clinically calculated hydration target of $goal glasses (${(goal * 0.25).toStringAsFixed(1)}L), perfectly matching your body mass of ${p.weightKg.toStringAsFixed(1)} kg. Cellular hydration and kidney filtration are optimal. Continue sipping as thirst indicates.';
+        return '💧 **Hydration Status: Goal Achieved!**\n\nYou reached your clinical target of **$goal glasses** (${(goal * 0.25).toStringAsFixed(1)}L) for your ${p.weightKg.toStringAsFixed(1)} kg body weight. Cellular hydration is optimal!';
       }
-      return '💧 **Personalized Hydration Pacing:**\n\nBased on your body weight of ${p.weightKg.toStringAsFixed(1)} kg (35ml/kg clinical guideline), your clinical goal is **$goal glasses** (${(goal * 0.25).toStringAsFixed(1)}L).\n\n'
-          '• **Logged:** ${p.waterGlasses} glasses\n'
-          '• **Remaining:** $remaining glasses (${(remaining * 0.25).toStringAsFixed(1)}L)\n\n'
-          '💡 *Tip:* Drink one 250ml glass within the next 45 minutes to maintain steady blood volume and cognitive alertness.';
+      return '💧 **Hydration Pacing:**\n\n'
+          '• **Target:** **$goal glasses** (${(goal * 0.25).toStringAsFixed(1)}L)\n'
+          '• **Logged:** **${p.waterGlasses}** glasses\n'
+          '• **Remaining:** **$remaining** glasses\n\n'
+          '💡 *Tip:* Drink one 250ml glass in the next hour to maintain mental focus.';
     }
 
     if (query.contains('heart') || query.contains('bpm') || query.contains('cardio')) {
       final bpm = p.bpm > 0 ? p.bpm : 72;
       return '🏃 **Cardiovascular Readiness:**\n\n'
-          '• Resting Heart Rate: **$bpm BPM**\n'
-          '• Target Zone: Aerobic Base (Zone 2: 110–135 BPM)\n\n'
-          'Your resting pulse of $bpm BPM indicates balanced autonomic tone. For building aerobic mitochondria without central nervous system fatigue, aim for 30 minutes in Zone 2 where you can hold a steady nasal conversation.';
+          '• **Resting Heart Rate:** **$bpm BPM**\n'
+          '• **Target Training Zone:** Aerobic Base (Zone 2: 110–135 BPM)\n\n'
+          '💡 *Tip:* Your resting pulse indicates balanced autonomic recovery. 30 minutes of conversational-pace exercise builds aerobic endurance without central fatigue.';
     }
 
     if (query.contains('bmr') || query.contains('calorie') || query.contains('deficit') || query.contains('metabolism') || query.contains('weight') || query.contains('bmi')) {
-      return '⚖️ **Clinical Energy & Metabolic Profile:**\n\n'
-          'Calculated using the validated **Mifflin-St Jeor equation** with your profile (${p.gender}, ${p.age} yrs, ${p.heightCm.toInt()} cm, ${p.weightKg.toStringAsFixed(1)} kg):\n\n'
-          '• **Basal Metabolic Rate (BMR):** **${p.bmr} kcal/day** (energy expended at complete rest)\n'
-          '• **Daily Target with Activity:** **${p.recommendedDailyCalories} kcal/day**\n'
-          '• **Current Logged Intake:** **${p.calories} kcal**\n'
-          '• **Body Mass Index (BMI):** **${p.bmi}** (${p.bmiCategory})\n'
-          '• **Target Weight:** **${p.targetWeightKg.toStringAsFixed(1)} kg**\n\n'
-          '💡 *Guidance:* To support healthy body recomposition without suppressing thyroid activity, keep your caloric deficit to no more than 300–400 kcal below your daily target while consuming 1.6–2.0g protein per kg of body weight.';
+      return '⚖️ **Metabolic Profile:**\n\n'
+          '• **Basal Metabolic Rate:** **${p.bmr} kcal/day** (rest energy)\n'
+          '• **Daily Target:** **${p.recommendedDailyCalories} kcal/day**\n'
+          '• **Logged Today:** **${p.calories} kcal**\n'
+          '• **BMI:** **${p.bmi}** (${p.bmiCategory}) • Goal: **${p.targetWeightKg.toStringAsFixed(1)} kg**\n\n'
+          '💡 *Tip:* Keep your caloric deficit moderate (300–400 kcal) with 1.6g protein per kg to protect lean muscle mass.';
     }
 
     if (query.contains('dinner') || query.contains('food') || query.contains('meal') || query.contains('nutrition')) {
       final calLeft = (p.recommendedDailyCalories - p.calories).clamp(0, 3500);
-      return '🥗 **Nutritional Prescription:**\n\n'
-          'You have approximately **$calLeft kcal** remaining in your recommended daily budget of ${p.recommendedDailyCalories} kcal.\n\n'
-          'Recommended meal composition:\n'
-          '• **Lean Protein:** 30–35g (e.g. Wild Salmon, Chicken Breast, Eggs, or Tofu)\n'
-          '• **Complex Fibrous Carbs:** 35–45g (Quinoa, Sweet Potato, or Brown Rice)\n'
-          '• **Healthy Lipids:** 10–12g (Extra Virgin Olive Oil or Avocado)\n'
-          '• **Cruciferous Greens:** Steamed Broccoli, Asparagus, or Spinach\n\n'
-          'This macronutrient balance stabilizes glycemic response, reduces midnight cortisol, and supports deep restorative slow-wave sleep.';
+      return '🥗 **Nutritional Guidance:**\n\n'
+          'Budget remaining: **$calLeft kcal** of ${p.recommendedDailyCalories} kcal.\n\n'
+          '• **Lean Protein:** 30–35g (salmon, chicken breast, tofu, or eggs)\n'
+          '• **Complex Carbs:** 35–45g (quinoa, sweet potato, brown rice)\n'
+          '• **Healthy Fats:** 10–12g (avocado or extra virgin olive oil)\n'
+          '• **Greens:** Steamed broccoli, asparagus, or leafy spinach\n\n'
+          '💡 *Tip:* This balance stabilizes overnight blood sugar and cortisol for deep sleep.';
     }
 
     if (query.contains('sleep') || query.contains('bed') || query.contains('rest')) {
       final sleepHrs = p.sleepHours > 0 ? p.sleepHours : 7.5;
       return '🌙 **Circadian Sleep Protocol:**\n\n'
-          'Last recorded sleep: **${sleepHrs}h** (Score: ${p.sleepScore > 0 ? '${p.sleepScore}%' : 'Optimal'}).\n\n'
-          '3 Clinical Steps for Restorative Deep Sleep Tonight:\n'
-          '1. **Digital Sunset:** Discontinue LED screens and high-intensity blue light 45–60 minutes before bed.\n'
-          '2. **Thermal Drop:** Cool your sleeping room to 18–19°C (64–67°F); your core temperature must drop ~1°C to initiate deep slow-wave sleep.\n'
-          '3. **Nutritional Wind-Down:** Avoid heavy carbohydrates within 2 hours of sleep; Chamomile or tart cherry extract supports endogenous melatonin.';
+          'Last sleep: **${sleepHrs}h** (Score: ${p.sleepScore > 0 ? '${p.sleepScore}%' : 'Optimal'})\n\n'
+          '• **Digital Sunset:** Turn off bright screens 45 min before sleep.\n'
+          '• **Cool Environment:** Keep bedroom at 18–19°C (64–67°F) for deep sleep.\n'
+          '• **Relaxation:** Chamomile tea or magnesium supports natural melatonin.';
     }
 
     // Default intelligent clinical response
-    return '🧠 **Wellnest Clinical Insight:**\n\n'
-        'Under your primary focus of **"${p.primaryGoal}"**, your biometrics (${p.steps} steps, ${p.waterGlasses} glasses water, ${p.calories} kcal) work as an interconnected system.\n\n'
-        'Ask me anything about your cycle phases, pregnancy milestones, BMR caloric budgeting, hydration timing, or sleep optimization!';
+    return '🧠 **Wellnest Intelligence:**\n\n'
+        'Under **"${p.primaryGoal}"**, your vitals (${p.steps} steps, ${p.waterGlasses} glasses, ${p.calories} kcal) are syncing well.\n\n'
+        'Ask about your cycle phases, pregnancy milestones, BMR budgeting, hydration, or sleep!';
   }
 
   @override
@@ -551,16 +530,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
               bottomRight: Radius.circular(4),
             ),
           ),
-          child: Text(
-            msg.text,
-            style: TextStyle(
-              fontFamily: AppTypography.fontFamily,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : AppColors.textPrimaryLight,
-              height: 1.35,
-            ),
-          ),
+          child: _buildFormattedMessageText(msg.text, isDark, isUser: true),
         ),
       );
     }
@@ -604,20 +574,169 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              msg.text,
-              style: TextStyle(
-                fontFamily: AppTypography.fontFamily,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w400,
-                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                height: 1.45,
-              ),
-            ),
+            _buildFormattedMessageText(msg.text, isDark, isUser: false),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildFormattedMessageText(String text, bool isDark, {bool isUser = false}) {
+    final baseColor = isUser
+        ? (isDark ? Colors.white : AppColors.textPrimaryLight)
+        : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight);
+    final boldColor = isUser
+        ? (isDark ? Colors.white : const Color(0xFF0F2015))
+        : (isDark ? Colors.white : const Color(0xFF10281A));
+    final bulletColor = isDark ? AppColors.primaryLight : AppColors.primaryDark;
+
+    final lines = text.split('\n');
+    final List<Widget> lineWidgets = [];
+
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      if (line.trim().isEmpty) {
+        lineWidgets.add(const SizedBox(height: 6));
+        continue;
+      }
+
+      final trimmed = line.trim();
+      final isBullet = trimmed.startsWith('• ') || trimmed.startsWith('- ') || trimmed.startsWith('* ');
+      final isNumbered = RegExp(r'^\d+\.\s').hasMatch(trimmed);
+
+      if (isBullet || isNumbered) {
+        String bulletPrefix = '•';
+        String content = trimmed;
+        if (isBullet) {
+          content = trimmed.substring(2).trim();
+        } else {
+          final match = RegExp(r'^(\d+\.)\s*(.*)$').firstMatch(trimmed);
+          if (match != null) {
+            bulletPrefix = match.group(1)!;
+            content = match.group(2)!;
+          }
+        }
+
+        lineWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isBullet ? '• ' : '$bulletPrefix ',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: bulletColor,
+                    height: 1.45,
+                  ),
+                ),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w400,
+                        color: baseColor,
+                        height: 1.45,
+                      ),
+                      children: _parseInlineFormatting(content, baseColor, boldColor, isDark),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        lineWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(
+                  fontFamily: AppTypography.fontFamily,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w400,
+                  color: baseColor,
+                  height: 1.45,
+                ),
+                children: _parseInlineFormatting(trimmed, baseColor, boldColor, isDark),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: lineWidgets,
+    );
+  }
+
+  List<InlineSpan> _parseInlineFormatting(
+    String text,
+    Color baseColor,
+    Color boldColor,
+    bool isDark,
+  ) {
+    final spans = <InlineSpan>[];
+    // Matches **bold** or *italic*
+    final regex = RegExp(r'(\*\*([^*]+)\*\*|\*([^*]+)\*)');
+    int lastEnd = 0;
+
+    for (final match in regex.allMatches(text)) {
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(
+          text: text.substring(lastEnd, match.start),
+          style: TextStyle(
+            color: baseColor,
+            fontWeight: FontWeight.w400,
+          ),
+        ));
+      }
+
+      final fullMatch = match.group(0)!;
+      if (fullMatch.startsWith('**') && fullMatch.endsWith('**')) {
+        final boldText = match.group(2) ?? '';
+        spans.add(TextSpan(
+          text: boldText,
+          style: TextStyle(
+            color: boldColor,
+            fontWeight: FontWeight.w800,
+          ),
+        ));
+      } else if (fullMatch.startsWith('*') && fullMatch.endsWith('*')) {
+        final italicText = match.group(3) ?? '';
+        spans.add(TextSpan(
+          text: italicText,
+          style: TextStyle(
+            color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w700,
+          ),
+        ));
+      }
+
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastEnd),
+        style: TextStyle(
+          color: baseColor,
+          fontWeight: FontWeight.w400,
+        ),
+      ));
+    }
+
+    return spans;
   }
 
   Widget _buildTypingIndicator(bool isDark) {
