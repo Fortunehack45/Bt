@@ -40,7 +40,7 @@ class WellnessProvider extends ChangeNotifier {
   int _age = 26;
   int get age => _age;
 
-  String _gender = 'Male';
+  String _gender = 'Female';
   String get gender => _gender;
 
   double _heightCm = 178.0;

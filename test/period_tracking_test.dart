@@ -154,5 +154,12 @@ void main() {
       final telemetry = provider.getDayTelemetry(today);
       expect(telemetry.hasPeriod, isTrue);
     });
+
+    test('Male profiles cannot activate period tracking and are guarded', () {
+      provider.setGender('Male');
+      expect(provider.isReproductiveTrackingEligible, isFalse);
+      provider.setPeriodTrackingEnabled(true);
+      expect(provider.isPeriodTrackingEnabled, isFalse);
+    });
   });
 }
