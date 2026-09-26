@@ -54,7 +54,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
           children: [
             ScreenHeader(
               title: 'Widget Studio',
-              subtitle: '7 Android Home Widgets',
+              subtitle: '7 Executive Android & iOS Widgets',
               onBack: widget.onBack,
               trailing: PlatformGlassButton(
                 icon: Icons.info_outline_rounded,
@@ -85,9 +85,9 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Widget Picker Tabs
+                    // Widget Picker Horizontal Chips
                     SizedBox(
-                      height: 40,
+                      height: 42,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
@@ -96,9 +96,18 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                         itemBuilder: (context, i) {
                           final isSel = _selectedWidgetIndex == i;
                           return ChoiceChip(
-                            label: Text(_widgetNames[i]),
+                            label: Text(
+                              _widgetNames[i],
+                              style: TextStyle(
+                                fontFamily: AppTypography.fontFamily,
+                                fontSize: 12,
+                                fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                color: isSel ? Colors.black : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
+                              ),
+                            ),
                             selected: isSel,
                             selectedColor: AppColors.primary,
+                            backgroundColor: isDark ? const Color(0xFF1E2721) : const Color(0xFFE8EFEA),
                             onSelected: (val) {
                               if (val) {
                                 HapticService.selection();
@@ -109,91 +118,88 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.lg),
 
-                    // Live Interactive Preview Box
+                    // Live Interactive Preview Canvas
                     Center(
                       child: _buildLiveWidgetCard(provider),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // Controls: Theme Selector
-                    Text('Widget Theme', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildThemeOption('Obsidian Dark', WidgetPreviewTheme.dark, const Color(0xFF141A13)),
-                        const SizedBox(width: 10),
-                        _buildThemeOption('Solar Light', WidgetPreviewTheme.light, const Color(0xFFFFFFFF)),
-                        const SizedBox(width: 10),
-                        _buildThemeOption('Mint Accent', WidgetPreviewTheme.mint, const Color(0xFFE2F7D6)),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // Controls: Size Selector
-                    Text('Responsive Widget Size', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildSizeOption('2x2 Square', WidgetPreviewSize.compact2x2),
-                        const SizedBox(width: 8),
-                        _buildSizeOption('4x2 Banner', WidgetPreviewSize.banner4x2),
-                        const SizedBox(width: 8),
-                        _buildSizeOption('4x4 Hub', WidgetPreviewSize.executive4x4),
-                      ],
-                    ),
                     const SizedBox(height: AppSpacing.lg),
 
-                    // Add to Android Home Screen Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          HapticService.mediumImpact();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Pinned "${_widgetNames[_selectedWidgetIndex]}" to your Android launcher!'),
-                              behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.add_to_home_screen_rounded, size: 20),
-                        label: Text(
-                          'Add "${_widgetNames[_selectedWidgetIndex]}" to Home Screen',
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.textPrimaryLight,
-                          elevation: 0,
-                          shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                        ),
+                    // Controls: Theme Selector
+                    Text('Widget Surface Theme', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                    const SizedBox(height: AppSpacing.sm),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          _buildThemeOption('Obsidian Dark', WidgetPreviewTheme.dark, const Color(0xFF161F18)),
+                          const SizedBox(width: 8),
+                          _buildThemeOption('Porcelain Light', WidgetPreviewTheme.light, Colors.white),
+                          const SizedBox(width: 8),
+                          _buildThemeOption('Electric Mint', WidgetPreviewTheme.mint, const Color(0xFFD6F5C6)),
+                        ],
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
 
-                    // Description Card
+                    // Controls: Size Selector
+                    Text('Widget Dimensions & Grid Format', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                    const SizedBox(height: AppSpacing.sm),
                     SolidWellnessCard(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          _buildSizeOption('Compact 2x2', WidgetPreviewSize.compact2x2),
+                          const SizedBox(width: 8),
+                          _buildSizeOption('Banner 4x2', WidgetPreviewSize.banner4x2),
+                          const SizedBox(width: 8),
+                          _buildSizeOption('Executive 4x4', WidgetPreviewSize.executive4x4),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Pro Tip Banner
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF16231A) : const Color(0xFFEDF7EE),
+                        borderRadius: AppRadii.roundedMd,
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.35),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.auto_awesome_rounded, color: AppColors.primaryDark, size: 18),
-                              const SizedBox(width: 8),
-                              Text('Real-Time Android OS Sync', style: AppTypography.h3(isDark).copyWith(fontSize: 14)),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'All 7 Biothrix widgets update automatically when you log hydration, steps, or bpm, and respond seamlessly to Android dark/light mode switches.',
-                            style: AppTypography.caption(isDark).copyWith(fontSize: 12),
+                          const Icon(Icons.auto_awesome_rounded, color: AppColors.primaryDark, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Continuous Background Telemetry',
+                                  style: TextStyle(
+                                    fontFamily: AppTypography.fontFamily,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Widgets auto-synchronize with your device sensor cache every 15 minutes, preserving battery while delivering up-to-the-minute metabolic telemetry.',
+                                  style: TextStyle(
+                                    fontFamily: AppTypography.fontFamily,
+                                    fontSize: 11,
+                                    color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -222,8 +228,8 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
             color: isSel ? AppColors.primary.withOpacity(0.15) : Colors.transparent,
             borderRadius: AppRadii.roundedSm,
             border: Border.all(
-              color: isSel ? AppColors.primary : Colors.grey.withOpacity(0.3),
-              width: isSel ? 2 : 1,
+              color: isSel ? AppColors.primary : Colors.grey.withOpacity(0.25),
+              width: isSel ? 1.8 : 0.8,
             ),
           ),
           child: Row(
@@ -242,7 +248,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
               Flexible(
                 child: Text(
                   label,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -269,15 +275,17 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
             color: isSel ? AppColors.primary : Colors.transparent,
             borderRadius: AppRadii.roundedSm,
             border: Border.all(
-              color: isSel ? AppColors.primary : Colors.grey.withOpacity(0.3),
+              color: isSel ? AppColors.primary : Colors.grey.withOpacity(0.25),
+              width: isSel ? 1.8 : 0.8,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
               fontWeight: FontWeight.w700,
-              fontSize: 12,
-              color: isSel ? AppColors.textPrimaryLight : null,
+              fontSize: 11,
+              color: isSel ? Colors.black : null,
             ),
           ),
         ),
@@ -286,55 +294,72 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
   }
 
   Widget _buildLiveWidgetCard(WellnessProvider provider) {
-    Color bg;
+    LinearGradient bgGradient;
     Color textColor;
     Color subTextColor;
+    Color borderColor;
 
     switch (_selectedTheme) {
       case WidgetPreviewTheme.dark:
-        bg = const Color(0xFF161F15);
+        bgGradient = const LinearGradient(
+          colors: [Color(0xFF19251E), Color(0xFF0F1712)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
         textColor = Colors.white;
-        subTextColor = Colors.white70;
+        subTextColor = const Color(0xFF9FB2A5);
+        borderColor = AppColors.primary.withOpacity(0.35);
         break;
       case WidgetPreviewTheme.light:
-        bg = Colors.white;
-        textColor = Colors.black87;
-        subTextColor = Colors.black54;
+        bgGradient = const LinearGradient(
+          colors: [Colors.white, Color(0xFFF2F7F4)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+        textColor = const Color(0xFF101913);
+        subTextColor = const Color(0xFF5E6E63);
+        borderColor = const Color(0xFFD4E2D8);
         break;
       case WidgetPreviewTheme.mint:
-        bg = const Color(0xFFE5F7DC);
-        textColor = const Color(0xFF142911);
-        subTextColor = const Color(0xFF33582D);
+        bgGradient = const LinearGradient(
+          colors: [Color(0xFFE8F8DE), Color(0xFFD4F3C4)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+        textColor = const Color(0xFF122310);
+        subTextColor = const Color(0xFF3B5738);
+        borderColor = AppColors.primaryDark.withOpacity(0.4);
         break;
     }
 
-    double width = 340;
-    double height = 140;
+    double width = 345;
+    double height = 158;
 
     if (_selectedSize == WidgetPreviewSize.compact2x2) {
-      width = 170;
-      height = 170;
+      width = 175;
+      height = 175;
     } else if (_selectedSize == WidgetPreviewSize.executive4x4) {
-      width = 340;
-      height = 280;
+      width = 345;
+      height = 290;
     }
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 240),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
       width: width,
       height: height,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(24),
+        gradient: bgGradient,
+        borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: AppColors.primary.withOpacity(0.25), width: 1.5),
+        border: Border.all(color: borderColor, width: 1.2),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -344,76 +369,202 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
   }
 
   Widget _renderWidgetContent(WellnessProvider provider, Color textColor, Color subColor) {
+    final isCompact = _selectedSize == WidgetPreviewSize.compact2x2;
+
     switch (_selectedWidgetIndex) {
       case 0: // Heart Rate
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.favorite_rounded, color: AppColors.heartRed, size: 20),
-                const SizedBox(width: 8),
-                Text('Heart Rate', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: textColor)),
+                Row(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: AppColors.heartRed.withOpacity(0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.favorite_rounded, color: AppColors.heartRed, size: 14),
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      'HEART RATE',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 0.6,
+                        color: AppColors.heartRed,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  'BIOTHRIX',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.0,
+                    color: subColor.withOpacity(0.5),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
                   '${provider.bpm > 0 ? provider.bpm : (provider.isDemoMode ? 74 : 72)}',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: textColor),
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontWeight: FontWeight.w900,
+                    fontSize: isCompact ? 32 : 36,
+                    color: textColor,
+                    letterSpacing: -1.0,
+                  ),
                 ),
                 const SizedBox(width: 6),
-                const Text('BPM', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.heartRed)),
+                const Text(
+                  'BPM',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: AppColors.heartRed,
+                  ),
+                ),
               ],
             ),
-            Text('Normal Resting • Synced', style: TextStyle(fontSize: 11, color: subColor)),
-          ],
-        );
-
-      case 1: // Hydration
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.water_drop_rounded, color: AppColors.waterBlue, size: 20),
-                const SizedBox(width: 8),
-                Text('Hydration', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: textColor)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${provider.waterGlasses} / ${provider.waterGoal} glasses',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: textColor),
-            ),
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: (provider.waterGlasses / provider.waterGoal).clamp(0.0, 1.0),
-                backgroundColor: AppColors.waterBlue.withOpacity(0.2),
-                valueColor: const AlwaysStoppedAnimation(AppColors.waterBlue),
-                minHeight: 6,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.heartRed.withOpacity(0.12),
+                borderRadius: AppRadii.roundedPill,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Optimal Resting • 56-118 BPM Range',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         );
 
-      case 2: // Calorie
+      case 1: // Hydration
+        final ratio = (provider.waterGlasses / provider.waterGoal).clamp(0.0, 1.0);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: AppColors.waterBlue.withOpacity(0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.water_drop_rounded, color: AppColors.waterBlue, size: 14),
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      'HYDRATION',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 0.6,
+                        color: AppColors.waterBlue,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${(ratio * 100).toInt()}% MET',
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.waterBlue,
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '${(provider.waterGlasses * 0.25).toStringAsFixed(1)}',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontWeight: FontWeight.w900,
+                    fontSize: isCompact ? 30 : 34,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  ' / ${(provider.waterGoal * 0.25).toStringAsFixed(1)}L',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: subColor,
+                  ),
+                ),
+              ],
+            ),
+            // 8 Segments Water Glass Bar
+            Row(
+              children: List.generate(8, (i) {
+                final isFilled = i < provider.waterGlasses;
+                return Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: isFilled ? AppColors.waterBlue : subColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        );
+
+      case 2: // Calorie & Nutrition
         return Row(
           children: [
             CircularProgressRing(
               progress: 0.88,
-              size: 58,
+              size: isCompact ? 54 : 64,
               strokeWidth: 6,
               progressColor: AppColors.primary,
-              trackColor: Colors.grey.withOpacity(0.2),
-              centerPrimaryText: '1775',
+              trackColor: subColor.withOpacity(0.2),
+              centerPrimaryText: '${provider.calories > 0 ? provider.calories : 1775}',
               centerSecondaryText: 'kcal',
             ),
             const SizedBox(width: 14),
@@ -422,95 +573,295 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Nutrition Burn', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: textColor)),
+                  Text(
+                    'CALORIC METABOLISM',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryDark,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text('Target: 2,000 kcal', style: TextStyle(fontSize: 12, color: subColor)),
-                  const Text('225 kcal remaining', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primaryDark)),
+                  Text(
+                    'Target: ${provider.targetCalories} kcal',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Deficit: -325 kcal (On Track)',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 10,
+                      color: subColor,
+                    ),
+                  ),
                 ],
               ),
             ),
           ],
         );
 
-      case 3: // Sleep
+      case 3: // Sleep Architecture
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.bedtime_rounded, color: Color(0xFF818CF8), size: 20),
-                const SizedBox(width: 8),
-                Text('Sleep Architecture', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: textColor)),
+                Row(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF818CF8).withOpacity(0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.bedtime_rounded, color: Color(0xFF818CF8), size: 14),
+                    ),
+                    const SizedBox(width: 7),
+                    const Text(
+                      'SLEEP RECOVERY',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 0.6,
+                        color: Color(0xFF818CF8),
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF818CF8).withOpacity(0.2),
+                    borderRadius: AppRadii.roundedPill,
+                  ),
+                  child: const Text(
+                    '92 SCORE',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF818CF8),
+                    ),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
             Text(
-              provider.isDemoMode ? '7.8 hrs • 92% Score' : '8.0 hrs • Target met',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: textColor),
+              '${provider.sleepHours > 0 ? provider.sleepHours.toStringAsFixed(1) : "7.8"} hrs',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontWeight: FontWeight.w900,
+                fontSize: isCompact ? 28 : 32,
+                color: textColor,
+              ),
             ),
-            Text('Optimal REM & deep recovery', style: TextStyle(fontSize: 11, color: subColor)),
+            Text(
+              'Deep: 1h 45m • REM: 2h 10m • 94% Efficiency',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: subColor,
+              ),
+            ),
           ],
         );
 
       case 4: // Habits
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.task_alt_rounded, color: Color(0xFF10B981), size: 20),
-                const SizedBox(width: 8),
-                Text('Daily Habits', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: textColor)),
+                Row(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.task_alt_rounded, color: Color(0xFF10B981), size: 14),
+                    ),
+                    const SizedBox(width: 7),
+                    const Text(
+                      'DAILY PROTOCOLS',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 0.6,
+                        color: Color(0xFF10B981),
+                      ),
+                    ),
+                  ],
+                ),
+                const Text(
+                  '4 / 5 DONE',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF10B981),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text('4 of 5 Completed Today', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: textColor)),
-            Text('🔥 14-day streak on morning sunlight', style: TextStyle(fontSize: 11, color: subColor)),
+            Row(
+              children: [
+                const Icon(Icons.local_fire_department_rounded, color: Colors.orange, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  '14-Day Morning Sunlight Streak',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              'Next: Evening Wind-down protocol (Pending)',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 10,
+                color: subColor,
+              ),
+            ),
           ],
         );
 
       case 5: // Steps
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.directions_walk_rounded, color: AppColors.stepsOrange, size: 20),
-                const SizedBox(width: 8),
-                Text('Daily Steps', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: textColor)),
+                Row(
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: AppColors.stepsOrange.withOpacity(0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.directions_walk_rounded, color: AppColors.stepsOrange, size: 14),
+                    ),
+                    const SizedBox(width: 7),
+                    const Text(
+                      'CADENCE & STEPS',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 0.6,
+                        color: AppColors.stepsOrange,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${((provider.steps / provider.stepGoal) * 100).toInt()}% OF GOAL',
+                  style: const TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.stepsOrange,
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
             Text(
-              '${provider.steps > 0 ? provider.steps : (provider.isDemoMode ? 8420 : 7500)} steps',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: textColor),
+              '${provider.steps > 0 ? provider.steps : 8420}',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontWeight: FontWeight.w900,
+                fontSize: isCompact ? 30 : 34,
+                color: textColor,
+                letterSpacing: -1.0,
+              ),
             ),
-            Text('6.6 km • 420 active kcal', style: TextStyle(fontSize: 11, color: subColor)),
+            Text(
+              '6.4 km • 420 active kcal • 42 active mins',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: subColor,
+              ),
+            ),
           ],
         );
 
       case 6: // Master Vitals
       default:
         return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.hub_rounded, color: AppColors.primaryDark, size: 18),
-                const SizedBox(width: 8),
-                Text('Biothrix Master Vitals', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: textColor)),
+                Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.hub_rounded, color: AppColors.primaryDark, size: 14),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'MASTER VITALS MATRIX',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 0.6,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const Text(
+                  'LIVE SYNC',
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF10B981),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 10),
             Row(
               children: [
-                Expanded(child: _buildMiniVital('Heart', '${provider.bpm > 0 ? provider.bpm : (provider.isDemoMode ? 74 : 72)} bpm', AppColors.heartRed, textColor)),
-                Expanded(child: _buildMiniVital('Water', '${provider.waterGlasses} gl', AppColors.waterBlue, textColor)),
-                Expanded(child: _buildMiniVital('Steps', '${provider.steps > 0 ? provider.steps : (provider.isDemoMode ? 8420 : 7500)}', AppColors.stepsOrange, textColor)),
-                Expanded(child: _buildMiniVital('Sleep', '7.8 hrs', const Color(0xFF818CF8), textColor)),
+                Expanded(child: _buildMiniVital('PULSE', '${provider.bpm > 0 ? provider.bpm : 74}', 'BPM', AppColors.heartRed, textColor)),
+                Expanded(child: _buildMiniVital('WATER', '${provider.waterGlasses}', 'GLS', AppColors.waterBlue, textColor)),
+                Expanded(child: _buildMiniVital('STEPS', '${provider.steps > 0 ? (provider.steps / 1000).toStringAsFixed(1) : "8.4"}k', 'STP', AppColors.stepsOrange, textColor)),
+                Expanded(child: _buildMiniVital('SLEEP', '${provider.sleepHours > 0 ? provider.sleepHours.toStringAsFixed(1) : "7.8"}', 'HRS', const Color(0xFF818CF8), textColor)),
               ],
             ),
           ],
@@ -518,18 +869,47 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
     }
   }
 
-  Widget _buildMiniVital(String label, String value, Color accent, Color textColor) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey)),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: textColor),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
+  Widget _buildMiniVital(String label, String value, String unit, Color accent, Color textColor) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      decoration: BoxDecoration(
+        color: accent.withOpacity(0.1),
+        borderRadius: AppRadii.roundedSm,
+        border: Border.all(color: accent.withOpacity(0.3), width: 0.8),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+              color: accent,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+              color: textColor,
+            ),
+          ),
+          Text(
+            unit,
+            style: TextStyle(
+              fontFamily: AppTypography.fontFamily,
+              fontSize: 7,
+              fontWeight: FontWeight.w700,
+              color: accent.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

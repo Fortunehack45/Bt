@@ -21,6 +21,7 @@ import '../features/profile/settings_screen.dart';
 import '../features/sleep/sleep_screen.dart';
 import '../features/sleep/widgets/log_sleep_sheet.dart';
 import '../features/statistics/statistics_screen.dart';
+import '../features/tour/spotlight_tour_overlay.dart';
 import '../features/vitality/bpm_screen.dart';
 import '../features/vitality/weight_screen.dart';
 
@@ -114,6 +115,7 @@ class _AppShellState extends State<AppShell> {
       // 0: Home
       HomeScreen(
         onNavigateToStats: () => setState(() => _currentIndex = 1),
+        onNavigateToProfile: () => setState(() => _currentIndex = 3),
         onNavigateToHydration: () => _navigateToSubpage(context, HydrationScreen(onBack: () => Navigator.of(context).pop())),
         onNavigateToActivity: () => _navigateToSubpage(context, ActivityScreen(onBack: () => Navigator.of(context).pop())),
         onNavigateToSleep: () => _navigateToSubpage(context, SleepScreen(onBack: () => Navigator.of(context).pop())),
@@ -178,6 +180,15 @@ class _AppShellState extends State<AppShell> {
               onOpenAiChatbot: () => showAiWellnessChatbotSheet(context, provider),
             ),
           ),
+
+          // Guided Spotlight Tour Overlay (Automatic on first run & on-demand from Settings)
+          if (!provider.hasSeenSpotlightTour)
+            SpotlightTourOverlay(
+              onDismiss: () {
+                provider.markSpotlightTourSeen();
+              },
+              onOpenAiChatbot: () => showAiWellnessChatbotSheet(context, provider),
+            ),
         ],
       ),
     );

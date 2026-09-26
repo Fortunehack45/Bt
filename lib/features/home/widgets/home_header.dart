@@ -13,11 +13,13 @@ import '../../../domain/state/wellness_provider.dart';
 class HomeHeader extends StatelessWidget {
   final VoidCallback onCalendarTap;
   final VoidCallback onRefreshTap;
+  final VoidCallback? onProfileTap;
 
   const HomeHeader({
     super.key,
     required this.onCalendarTap,
     required this.onRefreshTap,
+    this.onProfileTap,
   });
 
   @override
@@ -27,44 +29,56 @@ class HomeHeader extends StatelessWidget {
 
     return Row(
       children: [
-        // User Profile Avatar
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurfaceSubtle : AppColors.primaryTint,
-            borderRadius: AppRadii.roundedPill,
-            border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-              width: 1.5,
+        // User Profile Avatar (Tapping navigates directly to Profile screen)
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            onProfileTap?.call();
+          },
+          child: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurfaceSubtle : AppColors.primaryTint,
+              borderRadius: AppRadii.roundedPill,
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                width: 1.5,
+              ),
             ),
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.person_rounded,
-              color: AppColors.primaryDark,
-              size: 26,
+            child: const Center(
+              child: Icon(
+                Icons.person_rounded,
+                color: AppColors.primaryDark,
+                size: 26,
+              ),
             ),
           ),
         ),
         const SizedBox(width: 12),
 
-        // Greeting and User Name
+        // Greeting and User Name (Tapping also navigates to Profile screen)
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Good morning!',
-                style: AppTypography.caption(isDark).copyWith(fontSize: 12),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                provider.userName,
-                style: AppTypography.h2(isDark).copyWith(fontSize: 18),
-              ),
-            ],
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              onProfileTap?.call();
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Good morning!',
+                  style: AppTypography.caption(isDark).copyWith(fontSize: 12),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  provider.userName,
+                  style: AppTypography.h2(isDark).copyWith(fontSize: 18),
+                ),
+              ],
+            ),
           ),
         ),
 

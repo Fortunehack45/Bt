@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
@@ -32,10 +33,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   double _selectedWeightKg = 70.0;
   String _selectedGoal = 'Vitality & Daily Energy';
 
-  static const List<String> _monthNames = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
 
   static const List<String> _fullMonthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -352,8 +349,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildDobSelector(bool isDark) {
-    final daysInCurrentMonth = DateUtils.getDaysInMonth(_selectedDob.year, _selectedDob.month);
-
     return SolidWellnessCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -408,187 +403,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // 3 Segmented Pickers (Month, Day, Year)
-          Row(
-            children: [
-              // Month Selector
-              Expanded(
-                flex: 4,
-                child: _buildPickerDropdown<int>(
-                  isDark: isDark,
-                  label: 'Month',
-                  value: _selectedDob.month,
-                  items: List.generate(12, (index) => index + 1),
-                  itemLabel: (m) => _monthNames[m - 1],
-                  onChanged: (newMonth) {
-                    if (newMonth != null) {
-                      final maxDays = DateUtils.getDaysInMonth(_selectedDob.year, newMonth);
-                      final safeDay = _selectedDob.day.clamp(1, maxDays);
-                      _onDobChanged(DateTime(_selectedDob.year, newMonth, safeDay));
-                    }
-                  },
-                ),
+          // Interactive Cupertino Date Picker Wheel (Tactile, Mechanical Inertia, Zero Screen Overlay)
+          Container(
+            height: 145,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF141C18) : const Color(0xFFF3F7F4),
+              borderRadius: AppRadii.roundedMd,
+              border: Border.all(
+                color: isDark ? const Color(0xFF26362D) : const Color(0xFFDEE7E1),
+                width: 0.8,
               ),
-              const SizedBox(width: 8),
-
-              // Day Selector
-              Expanded(
-                flex: 3,
-                child: _buildPickerDropdown<int>(
-                  isDark: isDark,
-                  label: 'Day',
-                  value: _selectedDob.day.clamp(1, daysInCurrentMonth),
-                  items: List.generate(daysInCurrentMonth, (index) => index + 1),
-                  itemLabel: (d) => d.toString().padLeft(2, '0'),
-                  onChanged: (newDay) {
-                    if (newDay != null) {
-                      _onDobChanged(DateTime(_selectedDob.year, _selectedDob.month, newDay));
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              // Year Selector
-              Expanded(
-                flex: 4,
-                child: _buildPickerDropdown<int>(
-                  isDark: isDark,
-                  label: 'Year',
-                  value: _selectedDob.year,
-                  items: List.generate(85, (index) => DateTime.now().year - 10 - index),
-                  itemLabel: (y) => y.toString(),
-                  onChanged: (newYear) {
-                    if (newYear != null) {
-                      final maxDays = DateUtils.getDaysInMonth(newYear, _selectedDob.month);
-                      final safeDay = _selectedDob.day.clamp(1, maxDays);
-                      _onDobChanged(DateTime(newYear, _selectedDob.month, safeDay));
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Calendar Modal Quick Launcher
-          GestureDetector(
-            onTap: () async {
-              HapticService.selection();
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: _selectedDob,
-                firstDate: DateTime(1930),
-                lastDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
-                builder: (context, child) {
-                  return Theme(
-                    data: isDark
-                        ? ThemeData.dark().copyWith(
-                            colorScheme: const ColorScheme.dark(
-                              primary: AppColors.primary,
-                              onPrimary: Colors.black,
-                              surface: Color(0xFF141A17),
-                            ),
-                          )
-                        : ThemeData.light().copyWith(
-                            colorScheme: const ColorScheme.light(
-                              primary: AppColors.primaryDark,
-                              onPrimary: Colors.white,
-                              surface: Colors.white,
-                            ),
-                          ),
-                    child: child!,
-                  );
-                },
-              );
-              if (picked != null) {
-                _onDobChanged(picked);
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.calendar_month_rounded,
-                    size: 15,
-                    color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Pick from visual calendar',
-                    style: TextStyle(
+            ),
+            child: ClipRRect(
+              borderRadius: AppRadii.roundedMd,
+              child: CupertinoTheme(
+                data: CupertinoThemeData(
+                  brightness: isDark ? Brightness.dark : Brightness.light,
+                  textTheme: CupertinoTextThemeData(
+                    dateTimePickerTextStyle: TextStyle(
                       fontFamily: AppTypography.fontFamily,
-                      fontSize: 12,
+                      fontSize: 17,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.primaryLight : AppColors.primaryDark,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPickerDropdown<T>({
-    required bool isDark,
-    required String label,
-    required T value,
-    required List<T> items,
-    required String Function(T) itemLabel,
-    required ValueChanged<T?> onChanged,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF19221D) : const Color(0xFFF2F6F3),
-        borderRadius: AppRadii.roundedSm,
-        border: Border.all(
-          color: isDark ? const Color(0xFF2C3C32) : const Color(0xFFDAE2DC),
-          width: 0.8,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppTypography.fontFamily,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
-            ),
-          ),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<T>(
-              value: value,
-              isExpanded: true,
-              isDense: true,
-              icon: const Icon(Icons.arrow_drop_down_rounded, size: 20),
-              dropdownColor: isDark ? const Color(0xFF1E2823) : Colors.white,
-              items: items.map((item) {
-                return DropdownMenuItem<T>(
-                  value: item,
-                  child: Text(
-                    itemLabel(item),
-                    style: TextStyle(
-                      fontFamily: AppTypography.fontFamily,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
                       color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                     ),
                   ),
-                );
-              }).toList(),
-              onChanged: onChanged,
+                ),
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: _selectedDob,
+                  minimumDate: DateTime(1930, 1, 1),
+                  maximumDate: DateTime(DateTime.now().year - 10, 12, 31),
+                  onDateTimeChanged: (newDate) {
+                    _onDobChanged(newDate);
+                  },
+                ),
+              ),
             ),
           ),
         ],

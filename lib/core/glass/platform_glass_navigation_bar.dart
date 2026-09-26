@@ -243,19 +243,9 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isDark ? const Color(0xFF1E2824) : AppColors.lightSurface,
-            boxShadow: _isChatbotMode
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF2EB5FA).withOpacity(0.35),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : AppShadows.floating(isDark),
+            boxShadow: AppShadows.floating(isDark),
             border: Border.all(
-              color: _isChatbotMode
-                  ? const Color(0xFF2EB5FA).withOpacity(0.7)
-                  : (isDark ? const Color(0xFF2E3D36) : AppColors.lightBorder),
+              color: isDark ? const Color(0xFF2E3D36) : AppColors.lightBorder,
               width: 1.2,
             ),
           ),
@@ -268,20 +258,12 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
                 height: 38,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: _isChatbotMode
-                      ? const LinearGradient(
-                          colors: [Color(0xFFCCFF00), Color(0xFF2EB5FA)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                  color: _isChatbotMode ? null : AppColors.primary,
+                  color: AppColors.primary,
                   boxShadow: [
                     BoxShadow(
-                      color: (_isChatbotMode ? const Color(0xFF2EB5FA) : AppColors.primary)
-                          .withOpacity(0.4),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
+                      color: AppColors.primary.withOpacity(0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),

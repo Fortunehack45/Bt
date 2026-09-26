@@ -11,6 +11,19 @@ class WellnessProvider extends ChangeNotifier {
   bool _isProfileConfigured = false;
   bool get isProfileConfigured => _isProfileConfigured;
 
+  bool _hasSeenSpotlightTour = false;
+  bool get hasSeenSpotlightTour => _hasSeenSpotlightTour;
+
+  void markSpotlightTourSeen() {
+    _hasSeenSpotlightTour = true;
+    notifyListeners();
+  }
+
+  void replaySpotlightTour() {
+    _hasSeenSpotlightTour = false;
+    notifyListeners();
+  }
+
   void setUserName(String name) {
     if (name.trim().isNotEmpty) {
       _userName = name.trim();

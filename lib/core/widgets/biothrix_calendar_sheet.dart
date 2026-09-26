@@ -155,15 +155,15 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
         ),
         const SizedBox(height: 8),
 
-        // Monthly Day Grid
+        // Monthly Day Grid (Compact, High-Precision Ratio)
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 7,
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 4,
-            childAspectRatio: 0.9,
+            mainAxisSpacing: 3,
+            crossAxisSpacing: 3,
+            childAspectRatio: 1.18,
           ),
           itemCount: firstDayWeekday + daysInMonth,
           itemBuilder: (context, index) {
@@ -188,11 +188,11 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
                   color: isSelected
                       ? (isDark ? AppColors.primary.withOpacity(0.28) : const Color(0xFFD6F57D))
                       : Colors.transparent,
-                  borderRadius: AppRadii.roundedMd,
+                  borderRadius: AppRadii.roundedSm,
                   border: isSelected
                       ? Border.all(
                           color: isDark ? AppColors.primary : const Color(0xFFC4E968),
-                          width: 1.5,
+                          width: 1.2,
                         )
                       : (isToday
                           ? Border.all(
@@ -208,14 +208,14 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
                       '$dayNumber',
                       style: TextStyle(
                         fontFamily: AppTypography.fontFamily,
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                         color: isSelected
                             ? (isDark ? AppColors.primaryLight : AppColors.textPrimaryLight)
                             : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     // Telemetry Data Dots Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -230,7 +230,7 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
                         if (dayTel.hasSleep)
                           _buildDot(AppColors.sleepPurple),    // Sleep
                         if (!dayTel.hasAny)
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                       ],
                     ),
                   ],
@@ -239,34 +239,27 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
             );
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
-        // Telemetry Dots Legend
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildLegendItem('Nutrition', const Color(0xFF10B981), isDark),
-            const SizedBox(width: 12),
-            _buildLegendItem('Water', AppColors.waterBlue, isDark),
-            const SizedBox(width: 12),
-            _buildLegendItem('Activity', AppColors.stepsOrange, isDark),
-            const SizedBox(width: 12),
-            _buildLegendItem('Sleep', AppColors.sleepPurple, isDark),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Selected Day Summary Card
+        // Selected Day Compact Telemetry Bar
         Builder(
           builder: (_) {
             final metrics = widget.provider.getMetricsForDate(_selected);
-            final calStr = metrics.calories > 0 ? '${metrics.calories} kcal' : '0 kcal';
-            final waterStr = metrics.waterGlasses > 0 ? '${(metrics.waterGlasses * 0.25).toStringAsFixed(1)} L' : '0.0 L';
+            final calStr = metrics.calories > 0 ? '${metrics.calories}' : '0';
+            final waterStr = metrics.waterGlasses > 0 ? '${(metrics.waterGlasses * 0.25).toStringAsFixed(1)}L' : '0.0L';
             final stepStr = metrics.steps > 0 ? '${metrics.steps}' : '0';
-            final sleepStr = metrics.sleepHours > 0 ? '${metrics.sleepHours.toStringAsFixed(1)} hrs' : '0.0 hrs';
+            final sleepStr = metrics.sleepHours > 0 ? '${metrics.sleepHours.toStringAsFixed(1)}h' : '0h';
 
-            return SolidWellnessCard(
-              padding: const EdgeInsets.all(14.0),
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF17201B) : const Color(0xFFF2F6F3),
+                borderRadius: AppRadii.roundedMd,
+                border: Border.all(
+                  color: isDark ? const Color(0xFF26352C) : const Color(0xFFDBE5DE),
+                  width: 0.8,
+                ),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -280,23 +273,17 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
           },
         ),
 
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
 
-        // Action Button: Sync & Apply Date
+        // Action Button: Sync & Apply Date (Compact 44px)
         SizedBox(
           width: double.infinity,
-          height: 50,
+          height: 44,
           child: ElevatedButton(
             onPressed: () {
               HapticService.success();
               widget.provider.setSelectedDate(_selected);
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Synchronized to ${_selected.day} ${_months[_selected.month - 1]} ${_selected.year}'),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
@@ -306,7 +293,7 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
             ),
             child: Text(
               'Select ${_selected.day} $monthName',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             ),
           ),
         ),

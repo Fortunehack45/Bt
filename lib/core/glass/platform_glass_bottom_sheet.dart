@@ -11,6 +11,8 @@ Future<T?> showPlatformGlassBottomSheet<T>({
   bool isDismissible = true,
   bool enableDrag = true,
   bool isScrollControlled = true,
+  bool showDragHandle = true,
+  bool includeBottomPadding = true,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -31,23 +33,25 @@ Future<T?> showPlatformGlassBottomSheet<T>({
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Drag Handle
-              const SizedBox(height: AppSpacing.sm),
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4.5,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkBorderStrong
-                        : AppColors.lightBorderStrong,
-                    borderRadius: BorderRadius.circular(3),
+              if (showDragHandle) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4.5,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.darkBorderStrong
+                          : AppColors.lightBorderStrong,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.md),
+              ],
               Flexible(child: builder(context)),
-              SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
+              if (includeBottomPadding && bottomInset == 0)
+                SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
             ],
           ),
         ),

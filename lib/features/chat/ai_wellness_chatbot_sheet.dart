@@ -12,6 +12,8 @@ void showAiWellnessChatbotSheet(BuildContext context, WellnessProvider provider)
   showPlatformGlassBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    showDragHandle: true,
+    includeBottomPadding: false,
     builder: (sheetContext) {
       return AiWellnessChatbotSheet(provider: provider);
     },
@@ -43,6 +45,7 @@ class AiWellnessChatbotSheet extends StatefulWidget {
 
 class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
   final TextEditingController _textController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
@@ -60,6 +63,13 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
   void initState() {
     super.initState();
     _initGreeting();
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        Future.delayed(const Duration(milliseconds: 250), () {
+          if (mounted) _scrollToBottom();
+        });
+      }
+    });
   }
 
   void _initGreeting() {
@@ -92,6 +102,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
   @override
   void dispose() {
     _textController.dispose();
+    _focusNode.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -218,53 +229,26 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
+    final safeBottom = MediaQuery.of(context).padding.bottom;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.88,
-      ),
-      padding: EdgeInsets.only(bottom: bottomInset),
+    return SizedBox(
+      height: screenHeight * 0.84,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag Handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 8),
-              width: 38,
-              height: 4.5,
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF33423A) : const Color(0xFFD2DCD5),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-          ),
-
-          // Header
+          // Header (Drag handle is rendered cleanly by bottom sheet wrapper)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
               children: [
                 Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFCCFF00), Color(0xFF2EB5FA)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
                   child: const Center(
-                    child: Icon(Icons.auto_awesome_rounded, color: Colors.black, size: 22),
+                    child: Icon(Icons.auto_awesome_rounded, color: Colors.black, size: 20),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -375,7 +359,12 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
 
           // Message Input Field
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: EdgeInsets.fromLTRB(
+              14,
+              10,
+              14,
+              bottomInset == 0 ? (safeBottom + 12) : 10,
+            ),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF141A17) : Colors.white,
               border: Border(
@@ -390,7 +379,10 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
                 Expanded(
                   child: TextField(
                     controller: _textController,
+                    focusNode: _focusNode,
                     textCapitalization: TextCapitalization.sentences,
+                    maxLines: 4,
+                    minLines: 1,
                     onSubmitted: (_) => _handleSend(),
                     style: TextStyle(
                       fontFamily: AppTypography.fontFamily,

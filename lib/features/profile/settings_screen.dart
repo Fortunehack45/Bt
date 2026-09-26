@@ -356,6 +356,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
+                    const SizedBox(height: 12),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                      onTap: () {
+                        HapticService.selection();
+                        provider.replaySpotlightTour();
+                        Navigator.of(context).pop();
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF323B36) : AppColors.primaryTint,
+                                  borderRadius: AppRadii.roundedSm,
+                                ),
+                                child: const Icon(
+                                  Icons.explore_rounded,
+                                  color: AppColors.primaryDark,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Guided Spotlight Tour', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                                  Text('Replay 5-step clinical system walkthrough', style: AppTypography.caption(isDark)),
+                                ],
+                              ),
+                            ],
+                          ),
                           const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                         ],
                       ),

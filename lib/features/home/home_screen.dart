@@ -22,6 +22,7 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onNavigateToNutrition;
   final VoidCallback onAddMeal;
   final VoidCallback onWaterQuickAdd;
+  final VoidCallback? onNavigateToProfile;
 
   const HomeScreen({
     super.key,
@@ -32,6 +33,7 @@ class HomeScreen extends StatelessWidget {
     required this.onNavigateToNutrition,
     required this.onAddMeal,
     required this.onWaterQuickAdd,
+    this.onNavigateToProfile,
   });
 
   void _openDatePicker(BuildContext context, WellnessProvider provider) {
@@ -76,6 +78,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               // 1. Header (User avatar, greeting, name, glass utility buttons)
               HomeHeader(
+                onProfileTap: onNavigateToProfile,
                 onCalendarTap: () => _openDatePicker(context, provider),
                 onRefreshTap: () => showAiWellnessInsightsSheet(context, provider),
               ),
