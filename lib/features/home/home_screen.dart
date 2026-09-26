@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/tour_target_keys.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/responsive_layout.dart';
 import '../../domain/state/wellness_provider.dart';
@@ -86,6 +87,7 @@ class HomeScreen extends StatelessWidget {
 
               // 2. Weekly Progress Hero Card (Lime gradient, "Daily intake", ring)
               WeeklyProgressHeroCard(
+                key: TourTargetKeys.heroCardKey,
                 progress: overallProgress,
                 completedDays: completedDays,
                 onTap: onNavigateToStats,
@@ -94,6 +96,7 @@ class HomeScreen extends StatelessWidget {
 
               // 3. 2x2 Metric Grid (Steps, Water, Sleep, Nutrition)
               MetricSummaryGrid(
+                key: TourTargetKeys.metricGridKey,
                 steps: provider.steps,
                 waterGlasses: provider.waterGlasses,
                 sleepHours: provider.sleepHours,

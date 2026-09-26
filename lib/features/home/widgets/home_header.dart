@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/tour_target_keys.dart';
 import '../../../core/glass/platform_glass_button.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radii.dart';
@@ -31,6 +32,7 @@ class HomeHeader extends StatelessWidget {
       children: [
         // User Profile Avatar (Tapping navigates directly to Profile screen)
         GestureDetector(
+          key: TourTargetKeys.avatarKey,
           behavior: HitTestBehavior.opaque,
           onTap: () {
             onProfileTap?.call();

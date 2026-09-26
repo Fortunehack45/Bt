@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/tour_target_keys.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radii.dart';
 import '../theme/app_shadows.dart';
@@ -229,6 +230,7 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
     return ScaleTransition(
       scale: _fabScaleAnimation,
       child: GestureDetector(
+        key: TourTargetKeys.fabKey,
         behavior: HitTestBehavior.opaque,
         onVerticalDragEnd: (details) {
           if (details.primaryVelocity != null && details.primaryVelocity!.abs() > 60) {
