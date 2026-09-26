@@ -12,6 +12,7 @@ import '../../core/widgets/solid_wellness_card.dart';
 import '../../core/widgets/wellness_bottom_sheet.dart';
 import '../../domain/state/wellness_provider.dart';
 import '../widgets/widget_studio_screen.dart';
+import '../wearables/wearables_hub_screen.dart';
 import 'personal_profile_screen.dart';
 
 /// Profile Screen with health score, device sync, and account overview.
@@ -186,27 +187,32 @@ class ProfileScreen extends StatelessWidget {
                                   style: AppTypography.caption(isDark),
                                 ),
                                 const SizedBox(height: 8),
-                                Container(
+                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF2C382A) : AppColors.primaryTint,
+                                    color: provider.healthScoreColor.withOpacity(isDark ? 0.2 : 0.12),
                                     borderRadius: AppRadii.roundedPill,
+                                    border: Border.all(color: provider.healthScoreColor.withOpacity(0.3)),
                                   ),
-                                  child: const Text(
-                                    '🌟 Optimal Health Tier',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                                  child: Text(
+                                    provider.healthScoreTier,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: provider.healthScoreColor,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
                           CircularProgressRing(
-                            progress: 0.88,
+                            progress: provider.healthScoreProgress,
                             size: 60,
                             strokeWidth: 6.5,
-                            progressColor: AppColors.primary,
+                            progressColor: provider.healthScoreColor,
                             trackColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                            centerPrimaryText: '88',
+                            centerPrimaryText: '${provider.healthScore}',
                             centerSecondaryText: 'Score',
                           ),
                         ],
@@ -280,6 +286,67 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                     SolidWellnessCard(
                       padding: const EdgeInsets.all(16.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => WearablesHubScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: provider.activeDevice != null
+                                  ? const Color(0xFF10B981).withOpacity(0.18)
+                                  : (isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle),
+                              borderRadius: AppRadii.roundedMd,
+                            ),
+                            child: Icon(
+                              provider.activeDevice != null
+                                  ? provider.activeDevice!.type.icon
+                                  : Icons.watch_rounded,
+                              color: provider.activeDevice != null
+                                  ? const Color(0xFF10B981)
+                                  : (isDark ? Colors.white60 : Colors.black54),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  provider.activeDevice != null
+                                      ? provider.activeDevice!.name
+                                      : 'Smart Watches & Rings Hub',
+                                  style: AppTypography.h3(isDark).copyWith(fontSize: 15),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  provider.activeDevice != null
+                                      ? 'Connected • ${provider.activeDevice!.batteryLevel}% Battery'
+                                      : 'Pair Apple Watch, Wear OS, Oura & BLE Rings',
+                                  style: AppTypography.caption(isDark),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 16,
+                            color: isDark ? Colors.white38 : Colors.black38,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.all(16.0),
                       child: Row(
                         children: [
                           Container(
@@ -289,7 +356,7 @@ class ProfileScreen extends StatelessWidget {
                               color: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
                               borderRadius: AppRadii.roundedMd,
                             ),
-                            child: const Icon(Icons.watch_rounded, color: AppColors.primary, size: 24),
+                            child: const Icon(Icons.favorite_rounded, color: AppColors.primary, size: 24),
                           ),
                           const SizedBox(width: 14),
                           Expanded(

@@ -88,10 +88,9 @@ void main() {
     test('WellnessProvider manages vitals and smart wearables state', () {
       final provider = WellnessProvider();
 
-      // Check initial seeded ring
-      expect(provider.connectedDevices.isNotEmpty, true);
-      expect(provider.activeDevice, isNotNull);
-      expect(provider.activeDevice!.brand, DeviceBrand.oura);
+      // Check initial clean zero-state (no fake pre-seeded hardware)
+      expect(provider.connectedDevices.isEmpty, true);
+      expect(provider.activeDevice, isNull);
 
       // Record BP
       provider.recordBloodPressure(120, 78);
@@ -126,6 +125,23 @@ void main() {
       // Disconnect
       provider.disconnectDevice('apple-watch-ultra');
       expect(provider.activeDevice, isNull);
+    });
+
+    test('Clinical health score dynamic calculation and tier evaluation', () {
+      final provider = WellnessProvider();
+      expect(provider.healthScoreTier, '🎯 Foundation Phase Tier');
+
+      // Add biometrics to achieve optimal health tier
+      provider.addSteps(10000);
+      provider.addWaterGlass(8);
+      provider.logSleep(8.0);
+      provider.addMeal('Balanced Lunch', 'Lunch', 2000, 'Nutrient dense');
+      provider.recordBpm(65);
+      provider.recordBloodPressure(118, 76);
+
+      expect(provider.healthScore, greaterThanOrEqualTo(85));
+      expect(provider.healthScoreTier, '🌟 Optimal Health Tier');
+      expect(provider.healthScoreProgress, greaterThanOrEqualTo(0.85));
     });
   });
 }

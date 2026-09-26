@@ -4,6 +4,8 @@ import '../../domain/state/wellness_provider.dart';
 import '../../features/notifications/widgets/notification_toast_banner.dart';
 import '../../features/notifications/notification_center_sheet.dart';
 
+import 'native_platform_service.dart';
+
 /// Singleton service for managing and displaying in-app alerts and notifications.
 class NotificationService {
   NotificationService._();
@@ -46,7 +48,7 @@ class NotificationService {
     _currentBannerEntry = null;
   }
 
-  /// Dispatches an alert into provider and shows banner if permitted by user settings.
+  /// Dispatches an alert into provider, shows in-app banner, and triggers real system status-bar notification.
   void dispatchNotification(BuildContext context, WellnestNotification notification) {
     final provider = WellnessStateScope.of(context);
     provider.addNotification(notification);
@@ -54,6 +56,13 @@ class NotificationService {
     if (provider.isInAppBannersEnabled) {
       showInAppBanner(context, notification);
     }
+
+    // Trigger real Android & iOS system-level status-bar notification
+    NativePlatformService.instance.showSystemNotification(
+      title: notification.title,
+      body: notification.message,
+      id: notification.id.hashCode,
+    );
   }
 
   /// Quick action: Dispatches a hydration pacing reminder.

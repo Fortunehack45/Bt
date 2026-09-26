@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/constants/tour_target_keys.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/responsive_layout.dart';
-import '../../domain/models/smart_device_models.dart';
 import '../../domain/state/wellness_provider.dart';
 import '../../core/widgets/biothrix_calendar_sheet.dart';
-import '../wearables/wearables_hub_screen.dart';
 import 'widgets/ai_readiness_sheet.dart';
 import 'widgets/calendar_strip.dart';
 import 'widgets/four_ring_hero_card.dart';
@@ -89,10 +87,6 @@ class HomeScreen extends StatelessWidget {
                 onCalendarTap: () => _openDatePicker(context, provider),
                 onRefreshTap: () => showAiWellnessInsightsSheet(context, provider),
               ),
-              const SizedBox(height: AppSpacing.sm),
-
-              // Connected Smart Ring / Watch Status Capsule
-              _buildConnectedWearableCapsule(context, provider, isDark),
               const SizedBox(height: AppSpacing.md),
 
               // 2. 4-Dimension Concentric Activity Rings Hero Card (First Feature)
@@ -157,75 +151,6 @@ class HomeScreen extends StatelessWidget {
               const RecommendationsCarousel(),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConnectedWearableCapsule(
-    BuildContext context,
-    WellnessProvider provider,
-    bool isDark,
-  ) {
-    final activeDevice = provider.activeDevice;
-    const brandEmerald = Color(0xFF10B981);
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (ctx) => WearablesHubScreen(onBack: () => Navigator.of(ctx).pop()),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF161E18) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: activeDevice != null
-                ? brandEmerald.withValues(alpha: 0.3)
-                : (isDark ? const Color(0xFF233025) : const Color(0xFFE2E8F0)),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: brandEmerald.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                activeDevice != null ? activeDevice.type.icon : Icons.watch_rounded,
-                color: brandEmerald,
-                size: 14,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                activeDevice != null
-                    ? '${activeDevice.name} • ${activeDevice.batteryLevel}% Battery'
-                    : 'Connect Smart Watch or Ring for Live Telemetry',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : const Color(0xFF334155),
-                ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 16,
-              color: isDark ? Colors.white38 : Colors.black38,
-            ),
-          ],
         ),
       ),
     );

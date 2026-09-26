@@ -86,9 +86,9 @@ class _NotificationCenterSheetState extends State<NotificationCenterSheet> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: brandEmerald.withValues(alpha: 0.15),
+                          color: brandEmerald.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: brandEmerald.withValues(alpha: 0.4), width: 1),
+                          border: Border.all(color: brandEmerald.withOpacity(0.4), width: 1),
                         ),
                         child: Text(
                           '${provider.unreadNotificationCount} new',
@@ -100,25 +100,6 @@ class _NotificationCenterSheetState extends State<NotificationCenterSheet> {
                         ),
                       ),
                     const Spacer(),
-                    if (provider.unreadNotificationCount > 0)
-                      TextButton(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          provider.markAllNotificationsAsRead();
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        child: const Text(
-                          'Mark read',
-                          style: TextStyle(
-                            color: brandEmerald,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
                     IconButton(
                       icon: const Icon(Icons.tune_rounded, size: 20),
                       color: subtitleColor,
@@ -136,6 +117,54 @@ class _NotificationCenterSheetState extends State<NotificationCenterSheet> {
                   ],
                 ),
               ),
+
+              // Unread Action Strip (resilient to large notification counts)
+              if (provider.unreadNotificationCount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20, top: 4, bottom: 6),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${provider.unreadNotificationCount} unread alert${provider.unreadNotificationCount > 1 ? "s" : ""}',
+                        style: TextStyle(
+                          color: subtitleColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          provider.markAllNotificationsAsRead();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: brandEmerald.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: brandEmerald.withOpacity(0.25), width: 0.8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.done_all_rounded, size: 14, color: brandEmerald),
+                              SizedBox(width: 5),
+                              Text(
+                                'Mark all as read',
+                                style: TextStyle(
+                                  color: brandEmerald,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
               // Category Filter Chips
               Padding(

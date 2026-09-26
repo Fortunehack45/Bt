@@ -12,6 +12,7 @@ import '../../domain/state/wellness_provider.dart';
 import 'widgets/export_report_sheet.dart';
 import '../widgets/widget_studio_screen.dart';
 import '../wearables/wearables_hub_screen.dart';
+import '../../core/widgets/circular_theme_reveal.dart';
 
 /// Settings Screen organized into distinct sections: Investor Pitch Demo Mode,
 /// Appearance, Reminders, Goals, Data Management, and App Info.
@@ -529,7 +530,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             activeColor: AppColors.primary,
                             onChanged: (val) {
                               HapticService.selection();
-                              provider.toggleTheme();
+                              final themeReveal = ThemeReveal.of(context);
+                              final size = MediaQuery.of(context).size;
+                              // Top-right corner origin indicated in red reference drawing
+                              final origin = Offset(size.width, 0);
+
+                              if (themeReveal != null) {
+                                themeReveal.changeTheme(
+                                  origin: origin,
+                                  onApplyTheme: () => provider.setThemeMode(val ? ThemeMode.dark : ThemeMode.light),
+                                );
+                              } else {
+                                provider.setThemeMode(val ? ThemeMode.dark : ThemeMode.light);
+                              }
                             },
                           ),
                         ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../core/services/native_platform_service.dart';
 import '../core/theme/app_theme.dart';
+import '../core/widgets/circular_theme_reveal.dart';
 import '../domain/state/wellness_provider.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/onboarding/splash_screen.dart';
@@ -20,6 +22,21 @@ class _WellnestAppState extends State<WellnestApp> {
   final WellnessProvider _wellnessProvider = WellnessProvider();
   bool _showSplash = true;
   bool _showOnboarding = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPersistentOnboarding();
+  }
+
+  Future<void> _checkPersistentOnboarding() async {
+    final isDone = await NativePlatformService.instance.isOnboardingCompleted();
+    if (mounted && isDone) {
+      setState(() {
+        _showOnboarding = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -52,6 +69,9 @@ class _WellnestAppState extends State<WellnestApp> {
               theme: AppTheme.light(),
               darkTheme: AppTheme.dark(),
               themeMode: _wellnessProvider.themeMode,
+              builder: (ctx, child) {
+                return ThemeReveal(child: child ?? const SizedBox.shrink());
+              },
               home: _buildHomeView(),
             ),
           );
@@ -77,6 +97,7 @@ class _WellnestAppState extends State<WellnestApp> {
           setState(() {
             _showOnboarding = false;
           });
+          NativePlatformService.instance.setOnboardingCompleted(true);
         },
       );
     }

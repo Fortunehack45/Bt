@@ -96,10 +96,10 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
 
     // Retrieve metrics for the selected day
     final selectedSnap = p.getMetricsForDate(_selectedDate);
-    final selectedSteps = selectedSnap.steps > 0 ? selectedSnap.steps : (_isToday(_selectedDate) ? p.steps : 0);
-    final selectedWater = selectedSnap.waterGlasses > 0 ? selectedSnap.waterGlasses : (_isToday(_selectedDate) ? p.waterGlasses : 0);
-    final selectedSleep = selectedSnap.sleepHours > 0 ? selectedSnap.sleepHours : (_isToday(_selectedDate) ? p.sleepHours : 0.0);
-    final selectedCalories = selectedSnap.calories > 0 ? selectedSnap.calories : (_isToday(_selectedDate) ? p.calories : 0);
+    final selectedSteps = selectedSnap.steps > 0 ? selectedSnap.steps : (_isToday(_selectedDate) ? p.steps : (p.isDemoMode ? _getDemoSteps(_selectedDate) : 0));
+    final selectedWater = selectedSnap.waterGlasses > 0 ? selectedSnap.waterGlasses : (_isToday(_selectedDate) ? p.waterGlasses : (p.isDemoMode ? _getDemoWater(_selectedDate) : 0));
+    final selectedSleep = selectedSnap.sleepHours > 0 ? selectedSnap.sleepHours : (_isToday(_selectedDate) ? p.sleepHours : (p.isDemoMode ? _getDemoSleep(_selectedDate) : 0.0));
+    final selectedCalories = selectedSnap.calories > 0 ? selectedSnap.calories : (_isToday(_selectedDate) ? p.calories : (p.isDemoMode ? _getDemoCalories(_selectedDate) : 0));
 
     final selectedRingsData = ActivityRingsData.fromValues(
       steps: selectedSteps,
@@ -121,10 +121,10 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
 
     for (final day in weekDays) {
       final snap = p.getMetricsForDate(day);
-      final s = (snap.steps > 0 ? snap.steps : (_isToday(day) ? p.steps : _getDemoSteps(day))).toDouble();
-      final c = (snap.calories > 0 ? snap.calories : (_isToday(day) ? p.calories : _getDemoCalories(day))).toDouble();
-      final w = (snap.waterGlasses > 0 ? snap.waterGlasses : (_isToday(day) ? p.waterGlasses : _getDemoWater(day))).toDouble();
-      final sl = (snap.sleepHours > 0 ? snap.sleepHours : (_isToday(day) ? p.sleepHours : _getDemoSleep(day)));
+      final s = (snap.steps > 0 ? snap.steps : (_isToday(day) ? p.steps : (p.isDemoMode ? _getDemoSteps(day) : 0))).toDouble();
+      final c = (snap.calories > 0 ? snap.calories : (_isToday(day) ? p.calories : (p.isDemoMode ? _getDemoCalories(day) : 0))).toDouble();
+      final w = (snap.waterGlasses > 0 ? snap.waterGlasses : (_isToday(day) ? p.waterGlasses : (p.isDemoMode ? _getDemoWater(day) : 0))).toDouble();
+      final sl = (snap.sleepHours > 0 ? snap.sleepHours : (_isToday(day) ? p.sleepHours : (p.isDemoMode ? _getDemoSleep(day) : 0.0)));
 
       stepsList.add(s);
       caloriesList.add(c);

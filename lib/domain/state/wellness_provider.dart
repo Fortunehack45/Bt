@@ -10,7 +10,6 @@ import '../models/wellness_models.dart';
 class WellnessProvider extends ChangeNotifier {
   WellnessProvider() {
     _seedInitialNotifications();
-    _seedInitialWearables();
   }
 
   // User Profile
@@ -445,21 +444,46 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _seedInitialWearables() {
-    final ring = SmartDevice(
-      id: 'oura-gen3-01',
-      name: 'Oura Ring Horizon Gen 3',
-      type: DeviceType.smartRing,
-      brand: DeviceBrand.oura,
-      connectionState: DeviceConnectionState.connected,
-      batteryLevel: 86,
-      lastSyncedAt: DateTime.now().subtract(const Duration(minutes: 4)),
-      macAddressOrUuid: 'EC:24:B8:91:02:1F',
-      firmwareVersion: 'v2.9.44',
-      supportedMetrics: const ['Heart Rate', 'Body Temp', 'Sleep HRV', 'Steps', 'SpO2'],
-    );
-    _connectedDevices.add(ring);
-    _activeDevice = ring;
+  // --- Clinical Composite Health Score Engine ---
+  /// Computes a comprehensive 0-100 score based on 5 pillars:
+  /// Steps (25%), Hydration (20%), Sleep Rest (25%), Nutrition Pacing (15%), and Cardiovascular Vitals (15%).
+  int get healthScore {
+    final stepPart = _stepGoal > 0 ? (_steps / _stepGoal).clamp(0.0, 1.0) * 25.0 : 0.0;
+    final waterPart = _waterGoal > 0 ? (_waterGlasses / _waterGoal).clamp(0.0, 1.0) * 20.0 : 0.0;
+    final sleepPart = _sleepGoalHours > 0 ? (_sleepHours / _sleepGoalHours).clamp(0.0, 1.0) * 25.0 : 0.0;
+    final caloriePart = (_targetCalories > 0 && _calories > 0)
+        ? (1.0 - ((_calories - _targetCalories).abs() / _targetCalories)).clamp(0.0, 1.0) * 15.0
+        : 0.0;
+
+    double vitalsPart = 4.0;
+    if (_bpm > 0) {
+      vitalsPart += (_bpm >= 55 && _bpm <= 80) ? 6.0 : 3.0;
+    } else {
+      vitalsPart += 3.0;
+    }
+    if (_systolicBp > 0 && _diastolicBp > 0) {
+      vitalsPart += (_systolicBp < 120 && _diastolicBp < 80) ? 5.0 : 2.0;
+    }
+
+    return (stepPart + waterPart + sleepPart + caloriePart + vitalsPart).round().clamp(0, 100);
+  }
+
+  double get healthScoreProgress => healthScore / 100.0;
+
+  String get healthScoreTier {
+    final score = healthScore;
+    if (score >= 85) return '🌟 Optimal Health Tier';
+    if (score >= 70) return '⚡ Good Vitality Tier';
+    if (score >= 50) return '🌱 Building Momentum Tier';
+    return '🎯 Foundation Phase Tier';
+  }
+
+  Color get healthScoreColor {
+    final score = healthScore;
+    if (score >= 85) return const Color(0xFF10B981);
+    if (score >= 70) return const Color(0xFF14B8A6);
+    if (score >= 50) return const Color(0xFFF59E0B);
+    return const Color(0xFF64748B);
   }
 
   // Weekly Statistics Bar Data & Historical Storage
