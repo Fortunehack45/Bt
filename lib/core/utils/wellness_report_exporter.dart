@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import '../../domain/state/wellness_provider.dart';
 
@@ -315,4 +316,137 @@ class WellnessReportExporter {
     }
     return val.toString();
   }
+
+  /// Resolves the optimal directory for saving exported files.
+  /// Checks system Downloads / Documents, falling back safely to system temporary directory.
+  static Future<Directory> resolveExportDirectory() async {
+    try {
+      if (Platform.isAndroid) {
+        final downloadDir = Directory('/storage/emulated/0/Download');
+        if (await downloadDir.exists()) return downloadDir;
+        final docDir = Directory('/storage/emulated/0/Documents');
+        if (await docDir.exists()) return docDir;
+      } else if (Platform.isWindows) {
+        final userProfile = Platform.environment['USERPROFILE'];
+        if (userProfile != null) {
+          final winDownloads = Directory('$userProfile\\Downloads');
+          if (await winDownloads.exists()) return winDownloads;
+        }
+      } else if (Platform.isMacOS || Platform.isLinux) {
+        final home = Platform.environment['HOME'];
+        if (home != null) {
+          final unixDownloads = Directory('$home/Downloads');
+          if (await unixDownloads.exists()) return unixDownloads;
+        }
+      }
+    } catch (_) {
+      // In sandbox or permission-restricted environments, fallback gracefully
+    }
+    return Directory.systemTemp;
+  }
+
+  /// Persists the generated %PDF-1.4 Clinical Dossier bytes to on-device storage.
+  static Future<FileSaveResult> savePdfToFile(Uint8List bytes, {String? filename}) async {
+    try {
+      final dir = await resolveExportDirectory();
+      final now = DateTime.now();
+      final stamp = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+      final actualName = filename ?? 'Biothrix_Clinical_Dossier_$stamp.pdf';
+      final sep = Platform.pathSeparator;
+      final file = File('${dir.path}$sep$actualName');
+      await file.writeAsBytes(bytes, flush: true);
+
+      return FileSaveResult(
+        success: true,
+        filePath: file.path,
+        fileName: actualName,
+        byteCount: bytes.lengthInBytes,
+      );
+    } catch (e) {
+      // Fallback attempt to system temp
+      try {
+        final fallbackFile = File('${Directory.systemTemp.path}${Platform.pathSeparator}${filename ?? "Biothrix_Clinical_Dossier.pdf"}');
+        await fallbackFile.writeAsBytes(bytes, flush: true);
+        return FileSaveResult(
+          success: true,
+          filePath: fallbackFile.path,
+          fileName: fallbackFile.uri.pathSegments.last,
+          byteCount: bytes.lengthInBytes,
+        );
+      } catch (err) {
+        return FileSaveResult(
+          success: false,
+          filePath: '',
+          fileName: filename ?? 'Biothrix_Clinical_Dossier.pdf',
+          byteCount: 0,
+          errorMessage: err.toString(),
+        );
+      }
+    }
+  }
+
+  /// Persists the structured JSON wellness archive to on-device storage.
+  static Future<FileSaveResult> saveJsonToFile(String jsonString, {String? filename}) async {
+    try {
+      final dir = await resolveExportDirectory();
+      final now = DateTime.now();
+      final stamp = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+      final actualName = filename ?? 'Biothrix_Health_Archive_$stamp.json';
+      final sep = Platform.pathSeparator;
+      final file = File('${dir.path}$sep$actualName');
+      final bytes = utf8.encode(jsonString);
+      await file.writeAsBytes(bytes, flush: true);
+
+      return FileSaveResult(
+        success: true,
+        filePath: file.path,
+        fileName: actualName,
+        byteCount: bytes.length,
+      );
+    } catch (e) {
+      try {
+        final fallbackFile = File('${Directory.systemTemp.path}${Platform.pathSeparator}${filename ?? "Biothrix_Health_Archive.json"}');
+        final bytes = utf8.encode(jsonString);
+        await fallbackFile.writeAsBytes(bytes, flush: true);
+        return FileSaveResult(
+          success: true,
+          filePath: fallbackFile.path,
+          fileName: fallbackFile.uri.pathSegments.last,
+          byteCount: bytes.length,
+        );
+      } catch (err) {
+        return FileSaveResult(
+          success: false,
+          filePath: '',
+          fileName: filename ?? 'Biothrix_Health_Archive.json',
+          byteCount: 0,
+          errorMessage: err.toString(),
+        );
+      }
+    }
+  }
 }
+
+/// Result metadata model for exported file operations.
+class FileSaveResult {
+  final bool success;
+  final String filePath;
+  final String fileName;
+  final int byteCount;
+  final String? errorMessage;
+
+  const FileSaveResult({
+    required this.success,
+    required this.filePath,
+    required this.fileName,
+    required this.byteCount,
+    this.errorMessage,
+  });
+
+  String get formattedSize {
+    if (byteCount < 1024) return '$byteCount B';
+    final kb = (byteCount / 1024).toStringAsFixed(1);
+    return '$kb KB';
+  }
+}
+

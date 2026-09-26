@@ -10,6 +10,7 @@ import '../../domain/state/wellness_provider.dart';
 import 'widgets/calories_hero_card.dart';
 import 'widgets/metric_2x2_grid.dart';
 import 'widgets/statistics_header.dart';
+import '../profile/widgets/export_report_sheet.dart';
 
 /// Complete Statistics Screen directly matching Reference Image 1 Screen 2.
 class StatisticsScreen extends StatelessWidget {
@@ -56,12 +57,8 @@ class StatisticsScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).pop();
               HapticService.selection();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Weekly PDF Health Report saved to on-device storage.'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              final provider = WellnessStateScope.of(context);
+              showExportReportSheet(context, provider);
             },
           ),
           const Divider(height: 1),

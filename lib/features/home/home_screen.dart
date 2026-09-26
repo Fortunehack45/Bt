@@ -6,6 +6,7 @@ import '../../domain/state/wellness_provider.dart';
 import '../../core/widgets/biothrix_calendar_sheet.dart';
 import 'widgets/ai_readiness_sheet.dart';
 import 'widgets/calendar_strip.dart';
+import 'widgets/four_ring_hero_card.dart';
 import 'widgets/home_header.dart';
 import 'widgets/meal_tracker_section.dart';
 import 'widgets/metric_summary_grid.dart';
@@ -85,7 +86,13 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // 2. Weekly Progress Hero Card (Lime gradient, "Daily intake", ring)
+              // 2. 4-Dimension Concentric Activity Rings Hero Card (First Feature)
+              FourRingHeroCard(
+                key: TourTargetKeys.ringsHeroKey,
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // 3. Weekly Progress Hero Card (Lime gradient, "Daily intake", ring - Second Feature)
               WeeklyProgressHeroCard(
                 key: TourTargetKeys.heroCardKey,
                 progress: overallProgress,

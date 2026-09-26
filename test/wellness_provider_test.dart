@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:biothrix/core/utils/wellness_report_exporter.dart';
+import 'package:biothrix/core/widgets/concentric_activity_rings.dart';
 import 'package:biothrix/domain/state/wellness_provider.dart';
 
 void main() {
@@ -250,6 +251,48 @@ void main() {
       expect(pdfString.startsWith('%PDF-1.4'), true);
       expect(pdfString.contains('BIOTHRIX WELLNESS CLINICAL DOSSIER'), true);
       expect(pdfString.contains('%%EOF'), true);
+    });
+
+    test('ActivityRingsData accurately computes ratios and average progress', () {
+      final data = ActivityRingsData.fromValues(
+        steps: 5000,
+        stepGoal: 10000, // 50%
+        waterGlasses: 8,
+        waterGoal: 8, // 100%
+        sleepHours: 6.0,
+        sleepGoalHours: 8.0, // 75%
+        calories: 1500,
+        targetCalories: 2000, // 75%
+      );
+
+      expect(data.stepsRatio, 0.5);
+      expect(data.waterRatio, 1.0);
+      expect(data.sleepRatio, 0.75);
+      expect(data.nutritionRatio, 0.75);
+      expect(data.ratioForIndex(0), 0.5);
+      expect(data.ratioForIndex(1), 1.0);
+      expect(data.ratioForIndex(2), 0.75);
+      expect(data.ratioForIndex(3), 0.75);
+      // Average: (0.5 + 1.0 + 0.75 + 0.75) / 4 = 3.0 / 4 = 0.75
+      expect(data.averageProgress, 0.75);
+    });
+
+    test('WellnessReportExporter saves PDF and JSON files to device storage', () async {
+      final provider = WellnessProvider();
+      final pdfBytes = WellnessReportExporter.generatePdfBytes(provider);
+      final jsonStr = WellnessReportExporter.generateJsonArchive(provider);
+
+      final pdfResult = await WellnessReportExporter.savePdfToFile(pdfBytes);
+      expect(pdfResult.success, true);
+      expect(pdfResult.byteCount > 0, true);
+      expect(pdfResult.filePath.isNotEmpty, true);
+      expect(pdfResult.fileName.endsWith('.pdf'), true);
+
+      final jsonResult = await WellnessReportExporter.saveJsonToFile(jsonStr);
+      expect(jsonResult.success, true);
+      expect(jsonResult.byteCount > 0, true);
+      expect(jsonResult.filePath.isNotEmpty, true);
+      expect(jsonResult.fileName.endsWith('.json'), true);
     });
   });
 }

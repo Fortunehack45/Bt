@@ -45,25 +45,25 @@ class _SpotlightTourOverlayState extends State<SpotlightTourOverlay> {
   int _currentStep = 0;
 
   static final List<TourStepInfo> _steps = [
-    // Step 0: Vitality & Goal Engine (Weekly Progress Card)
+    // Step 0: 4-Ring Concentric Activity Engine (First Hero Card)
     TourStepInfo(
-      title: 'Vitality & Goal Progress',
-      category: 'CORE METABOLIC RING',
+      title: '4-Ring Concentric Activity Engine',
+      category: 'CONCENTRIC VITALITY RINGS',
       icon: Icons.donut_large_rounded,
       description:
-          'Your central metabolic engine. Synthesizes daily active calorie burn, hydration balance, and step volume against your personalized weekly goal.',
-      targetKey: TourTargetKeys.heroCardKey,
+          'Your 4 concentric activity rings monitor Steps, Hydration, Sleep, and Nutrition. Tap this card anytime to slide up your deep 7-day Activity Details & historical charts.',
+      targetKey: TourTargetKeys.ringsHeroKey,
       isCircle: false,
     ),
 
-    // Step 1: 2x2 Biometric Metric Summary Grid
+    // Step 1: Weekly Progress Engine (Second Card)
     TourStepInfo(
-      title: 'Biometric Telemetry Hub',
-      category: 'HEALTH DIMENSIONS',
-      icon: Icons.grid_view_rounded,
+      title: 'Weekly Progress & Daily Intake',
+      category: 'METABOLIC ADHERENCE',
+      icon: Icons.bolt_rounded,
       description:
-          'Tap any tile—Steps, Drink Water, Sleep & Rest, or Nutrition Meals—to open dedicated clinical trends, pacing targets, and historical logs.',
-      targetKey: TourTargetKeys.metricGridKey,
+          'Tracks your comprehensive metabolic intake, active caloric burn, and adherence streak across the current 7-day cycle.',
+      targetKey: TourTargetKeys.heroCardKey,
       isCircle: false,
     ),
 
