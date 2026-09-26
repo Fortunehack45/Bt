@@ -1,13 +1,19 @@
 import UIKit
 import Flutter
 import UserNotifications
+import CoreMotion
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
   private var shortcutsChannel: FlutterMethodChannel?
   private var notificationsChannel: FlutterMethodChannel?
   private var preferencesChannel: FlutterMethodChannel?
+  private var pedometerChannel: FlutterMethodChannel?
   private var initialAction: String?
+
+  private let pedometer = CMPedometer()
+  private let motionManager = CMMotionManager()
+  private var lastStepCount = 0
 
   override func application(
     _ application: UIApplication,
@@ -112,6 +118,62 @@ import UserNotifications
         }
       case "remove":
         defaults.removeObject(forKey: key)
+        result(true)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+
+    // 4. Onboard Device Hardware Pedometer Channel (CoreMotion)
+    let pedChannel = FlutterMethodChannel(name: "com.biothrix.app/pedometer", binaryMessenger: messenger)
+    pedometerChannel = pedChannel
+    pedChannel.setMethodCallHandler { [weak self] (call, result) in
+      guard let self = self else { return }
+      switch call.method {
+      case "isStepCountingAvailable":
+        let available = CMPedometer.isStepCountingAvailable() || self.motionManager.isAccelerometerAvailable
+        result(available)
+      case "startStepTracking":
+        self.lastStepCount = 0
+        if CMPedometer.isStepCountingAvailable() {
+          self.pedometer.startUpdates(from: Date()) { [weak self] data, error in
+            guard let self = self, let data = data else { return }
+            let totalSteps = data.numberOfSteps.intValue
+            let delta = totalSteps - self.lastStepCount
+            if delta > 0 {
+              self.lastStepCount = totalSteps
+              DispatchQueue.main.async {
+                self.pedometerChannel?.invokeMethod("onStepDetected", delta)
+              }
+            }
+          }
+          result(true)
+        } else if self.motionManager.isAccelerometerAvailable {
+          var lastMag: Double = 0
+          var lastTimestamp = Date().timeIntervalSince1970
+          self.motionManager.accelerometerUpdateInterval = 0.05
+          self.motionManager.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
+            guard let self = self, let data = data else { return }
+            let x = data.acceleration.x * 9.81
+            let y = data.acceleration.y * 9.81
+            let z = data.acceleration.z * 9.81
+            let mag = sqrt(x * x + y * y + z * z)
+            let now = Date().timeIntervalSince1970
+            if mag > 11.6 && lastMag <= 11.6 && (now - lastTimestamp) > 0.28 {
+              lastTimestamp = now
+              self?.pedometerChannel?.invokeMethod("onStepDetected", 1)
+            }
+            lastMag = mag
+          }
+          result(true)
+        } else {
+          result(false)
+        }
+      case "stopStepTracking":
+        if CMPedometer.isStepCountingAvailable() {
+          self.pedometer.stopUpdates()
+        }
+        self.motionManager.stopAccelerometerUpdates()
         result(true)
       default:
         result(FlutterMethodNotImplemented)

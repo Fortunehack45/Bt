@@ -6,6 +6,10 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
@@ -14,14 +18,24 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity: FlutterActivity() {
+class MainActivity: FlutterActivity(), SensorEventListener {
     private val SHORTCUTS_CHANNEL = "com.biothrix.app/shortcuts"
     private val NOTIFICATIONS_CHANNEL = "com.biothrix.app/notifications"
     private val PREFERENCES_CHANNEL = "com.biothrix.app/preferences"
+    private val PEDOMETER_CHANNEL = "com.biothrix.app/pedometer"
     private val NOTIFICATION_CHANNEL_ID = "wellnest_alerts"
 
     private var initialAction: String? = null
     private var methodChannel: MethodChannel? = null
+    private var pedometerChannel: MethodChannel? = null
+
+    // Hardware Sensor Properties
+    private var sensorManager: SensorManager? = null
+    private var stepSensor: Sensor? = null
+    private var accelerometerSensor: Sensor? = null
+    private var isUsingStepDetector = false
+    private var lastAccelMagnitude = 0.0f
+    private var lastStepTimestamp = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,11 +47,29 @@ class MainActivity: FlutterActivity() {
         }
 
         createNotificationChannel()
+        initHardwareSensors()
 
         // Handle app shortcut intent actions
         intent?.action?.let { action ->
             if (action.startsWith("com.biothrix.app.ACTION_")) {
                 initialAction = action
+            }
+        }
+    }
+
+    private fun initHardwareSensors() {
+        sensorManager = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+        val detector = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
+        if (detector != null) {
+            stepSensor = detector
+            isUsingStepDetector = true
+        } else {
+            val counter = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+            if (counter != null) {
+                stepSensor = counter
+                isUsingStepDetector = false
+            } else {
+                accelerometerSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
             }
         }
     }
@@ -172,5 +204,70 @@ class MainActivity: FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        // 4. Onboard Device Hardware Pedometer Channel
+        val pedChannel = MethodChannel(messenger, PEDOMETER_CHANNEL)
+        pedometerChannel = pedChannel
+        pedChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "isStepCountingAvailable" -> {
+                    val available = stepSensor != null || accelerometerSensor != null
+                    result.success(available)
+                }
+                "startStepTracking" -> {
+                    val sensorToListen = stepSensor ?: accelerometerSensor
+                    if (sensorToListen != null && sensorManager != null) {
+                        sensorManager?.registerListener(this, sensorToListen, SensorManager.SENSOR_DELAY_UI)
+                        result.success(true)
+                    } else {
+                        result.success(false)
+                    }
+                }
+                "stopStepTracking" -> {
+                    sensorManager?.unregisterListener(this)
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event == null) return
+
+        when (event.sensor.type) {
+            Sensor.TYPE_STEP_DETECTOR -> {
+                // Hardware step detector fires a 1.0 event per discrete step
+                if (event.values.isNotEmpty() && event.values[0] > 0.0f) {
+                    pedometerChannel?.invokeMethod("onStepDetected", 1)
+                }
+            }
+            Sensor.TYPE_STEP_COUNTER -> {
+                // Returns step count since device reboot
+                pedometerChannel?.invokeMethod("onStepDetected", 1)
+            }
+            Sensor.TYPE_ACCELEROMETER -> {
+                // Fallback high-fidelity dynamic peak detector for phones lacking dedicated step coprocessors
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+                val magnitude = Math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+                val now = System.currentTimeMillis()
+
+                // Walking motion produces acceleration peaks > 11.6 m/s^2 with >= 280ms human refractory period
+                if (magnitude > 11.6f && lastAccelMagnitude <= 11.6f && (now - lastStepTimestamp) > 280L) {
+                    lastStepTimestamp = now
+                    pedometerChannel?.invokeMethod("onStepDetected", 1)
+                }
+                lastAccelMagnitude = magnitude
+            }
+        }
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+    override fun onDestroy() {
+        sensorManager?.unregisterListener(this)
+        super.onDestroy()
     }
 }

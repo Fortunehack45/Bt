@@ -231,8 +231,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                     ),
                                     Text(
                                       isPedometerActive
-                                          ? 'Cadence: ${provider.cadenceSpm} SPM • ${PedometerService.instance.paceCategory.label}'
-                                          : 'Pedometer tracking is idle',
+                                          ? (PedometerService.instance.isHardwareSensorActive
+                                              ? '📱 Phone Sensor Active • ${provider.cadenceSpm} SPM'
+                                              : 'Cadence: ${provider.cadenceSpm} SPM • ${PedometerService.instance.paceCategory.label}')
+                                          : 'Uses Phone Motion Sensor to Count Steps',
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,
@@ -244,15 +246,20 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                   ],
                                 ),
                               ),
-                              ElevatedButton(
-                                onPressed: () {
+                              ElevatedButton.icon(
+                                onPressed: () async {
                                   if (isPedometerActive) {
-                                    PedometerService.instance.stopTracking(provider);
+                                    await PedometerService.instance.stopTracking(provider);
                                   } else {
-                                    PedometerService.instance.startTracking(provider, simulation: true);
+                                    await PedometerService.instance.startTracking(provider, simulation: false);
                                   }
                                   setState(() {});
                                 },
+                                icon: Icon(
+                                  isPedometerActive ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                  size: 16,
+                                ),
+                                label: Text(isPedometerActive ? 'Pause' : 'Start Sensor'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isPedometerActive
                                       ? const Color(0xFFEF4444)
@@ -264,7 +271,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                   ),
                                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                 ),
-                                child: Text(isPedometerActive ? 'Pause' : 'Start Walk'),
                               ),
                             ],
                           ),

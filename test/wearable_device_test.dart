@@ -73,7 +73,7 @@ void main() {
       expect(reading.bbtDeviationCelsius, closeTo(0.1, 0.05));
     });
 
-    test('PedometerService distance, calories, and cadence calculations', () {
+    test('PedometerService distance, calories, and cadence calculations', () async {
       expect(PedometerService.calculateDistanceKm(10000), 7.8);
       expect(PedometerService.calculateDistanceMiles(10000), 4.84);
       expect(PedometerService.calculateActiveCalories(10000), 400);
@@ -83,6 +83,11 @@ void main() {
 
       PedometerService.instance.simulateBurstWalk(provider, 300);
       expect(provider.steps, 300);
+
+      await PedometerService.instance.startTracking(provider, simulation: false);
+      expect(PedometerService.instance.isTracking, true);
+      await PedometerService.instance.stopTracking(provider);
+      expect(PedometerService.instance.isTracking, false);
     });
 
     test('WellnessProvider manages vitals and smart wearables state', () {
