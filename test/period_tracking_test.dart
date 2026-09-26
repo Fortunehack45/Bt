@@ -98,11 +98,11 @@ void main() {
       final now = DateTime.now();
       // Cycle 1: 58 days ago to 53 days ago (5 days duration)
       final c1Start = now.subtract(const Duration(days: 58));
-      final c1End = now.subtract(const Duration(days: 53));
+      final c1End = now.subtract(const Duration(days: 54));
 
-      // Cycle 2: 30 days ago to 25 days ago (5 days duration, 28 days interval)
+      // Cycle 2: 30 days ago to 26 days ago (5 days duration, 28 days interval)
       final c2Start = now.subtract(const Duration(days: 30));
-      final c2End = now.subtract(const Duration(days: 25));
+      final c2End = now.subtract(const Duration(days: 26));
 
       // Cycle 3: 2 days ago (ongoing)
       final c3Start = now.subtract(const Duration(days: 2));

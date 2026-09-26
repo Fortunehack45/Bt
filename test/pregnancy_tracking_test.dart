@@ -52,9 +52,9 @@ void main() {
       final preg = provider.pregnancyData;
       expect(preg, isNotNull);
       expect(preg!.referenceType, PregnancyReferenceType.estimatedDueDate);
-      expect(preg.trimester, 2); // Week 20 is Second Trimester
+      expect(preg.trimester, 2); // Week 21 is Second Trimester
       expect(preg.trimesterLabel, 'Second Trimester');
-      expect(preg.babySizeFruit, 'Banana');
+      expect(preg.babySizeFruit, 'Papaya');
       expect(preg.daysUntilDueDate, 140);
     });
 
