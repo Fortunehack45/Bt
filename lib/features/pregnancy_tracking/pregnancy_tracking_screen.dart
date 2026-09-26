@@ -8,7 +8,6 @@ import '../../core/utils/responsive_layout.dart';
 import '../../core/widgets/empty_state_view.dart';
 import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
-import '../../domain/models/reproductive_health_models.dart';
 import '../../domain/state/wellness_provider.dart';
 import 'widgets/add_prenatal_checkup_sheet.dart';
 import 'widgets/fetal_development_alive_hero.dart';

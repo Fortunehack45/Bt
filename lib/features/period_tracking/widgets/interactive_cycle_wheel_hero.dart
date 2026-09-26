@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radii.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../core/widgets/solid_wellness_card.dart';
@@ -58,14 +57,10 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
     final provider = WellnessStateScope.of(context);
     final prediction = provider.periodPrediction;
     final activePeriod = provider.activePeriod;
-    final lastPeriod = provider.lastRecordedPeriod;
 
     final cycleLen = provider.averageCycleLength.round();
     final periodDur = provider.averagePeriodDuration.round();
     final currentDay = provider.currentCycleDay;
-
-    // Relative day position on the wheel (0.0 to 1.0)
-    final dayRatio = (currentDay / cycleLen).clamp(0.0, 1.0);
 
     // Days calculation for status headline
     String statusHeadline;
@@ -278,7 +273,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: AppTypography.fontFamily,
-                              fontSize: 22,
+                              fontSize: 21,
                               fontWeight: FontWeight.w900,
                               height: 1.15,
                               letterSpacing: -0.5,
@@ -286,7 +281,17 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> w
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 3),
+                        Text(
+                          statusSubtitle,
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamily,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(

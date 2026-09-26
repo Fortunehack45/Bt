@@ -29,6 +29,7 @@ class PeriodTrackingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = WellnessStateScope.of(context);
+    final prediction = provider.periodPrediction;
     final lastPeriod = provider.lastRecordedPeriod;
 
     final cycleLen = provider.averageCycleLength.round();

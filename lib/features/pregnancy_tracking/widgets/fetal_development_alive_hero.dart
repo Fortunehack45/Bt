@@ -2,14 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radii.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../core/widgets/solid_wellness_card.dart';
-import '../../../domain/models/reproductive_health_models.dart';
 import '../../../domain/state/wellness_provider.dart';
 import 'log_pregnancy_wellness_sheet.dart';
-import 'pregnancy_setup_sheet.dart';
 
 /// Fetal Development "Alive" Hero Card matching Reference Image 4.
 /// Features a multi-arc gestational progression portal, animated "alive" floating/breathing fetus
@@ -105,7 +102,6 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
 
     final week = preg?.currentWeek ?? 21;
     final day = preg?.currentDayOfCurrentWeek ?? 0;
-    final trimester = preg?.trimester ?? 2;
     final due = preg?.dueDate ?? DateTime.now().add(const Duration(days: 133));
     final daysUntilDue = preg?.daysUntilDueDate ?? 133;
     final fruit = preg?.babySizeFruit ?? 'Papaya';
@@ -560,7 +556,7 @@ class _AliveFetusPainter extends CustomPainter {
     canvas.drawPath(armPath, Paint()..color = fetusShadeColor);
 
     // E. Eyelid with Natural Blinking Micro-Gesture
-    final eyeCenter = const Offset(26, -20);
+    const eyeCenter = Offset(26, -20);
     if (blinkRatio > 0.3) {
       // Eyelid line curved peacefully downward in sleep
       final eyeArcPaint = Paint()
@@ -591,7 +587,7 @@ class _AliveFetusPainter extends CustomPainter {
     }
 
     // F. Gentle Glowing Heartbeat Pulse in Chest
-    final heartCenter = const Offset(8, 14);
+    const heartCenter = Offset(8, 14);
     final heartGlow = Paint()
       ..color = const Color(0xFFF43F5E).withOpacity(0.55 * (breatheRatio - 0.94) / 0.1)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);

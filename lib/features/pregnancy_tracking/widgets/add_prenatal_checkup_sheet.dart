@@ -1,8 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radii.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../domain/models/reproductive_health_models.dart';
@@ -77,7 +75,6 @@ class _AddPrenatalCheckupSheetState extends State<AddPrenatalCheckupSheet> {
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 14));
   String _selectedTime = '10:00 AM';
   final Set<String> _selectedPrepTags = {};
-  bool _enableReminder = true;
 
   static const List<String> _months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -186,7 +183,7 @@ class _AddPrenatalCheckupSheetState extends State<AddPrenatalCheckupSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = const Color(0xFFA855F7);
+    const accent = Color(0xFFA855F7);
     final daysUntil = _selectedDate.difference(DateTime.now()).inDays + 1;
 
     return SingleChildScrollView(
@@ -291,7 +288,7 @@ class _AddPrenatalCheckupSheetState extends State<AddPrenatalCheckupSheet> {
                       ? Colors.white
                       : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
                 ),
-                shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
                 side: BorderSide.none,
               );
             }).toList(),
@@ -482,7 +479,7 @@ class _AddPrenatalCheckupSheetState extends State<AddPrenatalCheckupSheet> {
                 },
                 selectedColor: accent.withOpacity(0.2),
                 checkmarkColor: accent,
-                shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
               );
             }).toList(),
           ),
