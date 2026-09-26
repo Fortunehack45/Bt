@@ -148,6 +148,7 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
     final caloriesAvg = (caloriesList.reduce((a, b) => a + b) / 7).toInt();
     final waterAvg = (waterList.reduce((a, b) => a + b) / 7);
     final sleepAvg = (sleepList.reduce((a, b) => a + b) / 7);
+    final selectedDayIndex = _selectedDate.difference(_weekStart).inDays.clamp(0, 6);
 
     final mq = MediaQuery.of(context);
     final rawTop = math.max(mq.padding.top, mq.viewPadding.top);
