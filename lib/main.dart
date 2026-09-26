@@ -18,5 +18,5 @@ Future<void> main() async {
     ),
   );
 
-  runApp(const BiothrixApp());
+  runApp(const WellnestApp());
 }

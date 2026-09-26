@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:biothrix/core/theme/app_colors.dart';
-import 'package:biothrix/core/theme/app_radii.dart';
-import 'package:biothrix/core/theme/app_spacing.dart';
-import 'package:biothrix/core/theme/glass_tokens.dart';
+import 'package:wellnest/core/theme/app_colors.dart';
+import 'package:wellnest/core/theme/app_radii.dart';
+import 'package:wellnest/core/theme/app_spacing.dart';
+import 'package:wellnest/core/theme/glass_tokens.dart';
 
 void main() {
   group('Biothrix Design Tokens Verification', () {

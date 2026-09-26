@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_spacing.dart';
 
@@ -5,7 +6,7 @@ import '../theme/app_spacing.dart';
 /// - Margins: 16px
 /// - Gutters: 16px
 /// - Columns: Stretch
-/// - Dynamic platform safe-area handling
+/// - Dynamic platform safe-area handling with hardware cutout clearance
 class ResponsiveLayout {
   ResponsiveLayout._();
 
@@ -15,7 +16,8 @@ class ResponsiveLayout {
   /// Maximum readable content width on tablets and desktop screens
   static const double maxContentWidth = 640.0;
 
-  /// Wraps content in standard 16px margins, centered on wider viewports
+  /// Wraps content in standard 16px margins, centered on wider viewports,
+  /// with guaranteed status bar and camera punch-hole/cutout clearance.
   static Widget pageContainer({
     required BuildContext context,
     required Widget child,
@@ -37,9 +39,29 @@ class ResponsiveLayout {
     );
 
     if (topSafeArea || bottomSafeArea) {
+      // Determine physical hardware status bar height even if an ancestor Scaffold
+      // consumed MediaQuery.padding.top.
+      final paddingData = MediaQuery.paddingOf(context);
+      final viewPaddingData = MediaQuery.viewPaddingOf(context);
+      final rawHardwareTop = math.max(paddingData.top, viewPaddingData.top);
+
+      // On Android edge-to-edge and modern iOS dynamic island devices, status bars
+      // typically range from 28dp to 54dp. Guarantee safe clearance + comfortable breathing room.
+      final safeTopMinimum = topSafeArea
+          ? (rawHardwareTop > 0 ? (rawHardwareTop + 6.0) : 38.0)
+          : 0.0;
+
+      final safeBottomMinimum = bottomSafeArea
+          ? math.max(paddingData.bottom, viewPaddingData.bottom)
+          : 0.0;
+
       content = SafeArea(
         top: topSafeArea,
         bottom: bottomSafeArea,
+        minimum: EdgeInsets.only(
+          top: safeTopMinimum,
+          bottom: safeBottomMinimum,
+        ),
         child: content,
       );
     }

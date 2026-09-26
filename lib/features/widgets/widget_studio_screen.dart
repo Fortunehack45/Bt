@@ -64,7 +64,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Long-press your phone home screen to place Biothrix widgets.'),
+                      content: Text('Long-press your phone home screen to place Wellnest widgets.'),
                       behavior: SnackBarBehavior.floating,
                       duration: Duration(seconds: 3),
                     ),
@@ -405,7 +405,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                   ],
                 ),
                 Text(
-                  'BIOTHRIX',
+                  'WELLNEST',
                   style: TextStyle(
                     fontFamily: AppTypography.fontFamily,
                     fontSize: 8,

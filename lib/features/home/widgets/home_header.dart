@@ -4,6 +4,7 @@ import '../../../core/glass/platform_glass_button.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radii.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/time_of_day_helper.dart';
 import '../../../domain/state/wellness_provider.dart';
 
 /// Top header of the Home screen matching Reference Image 1 Screen 1:
@@ -71,7 +72,7 @@ class HomeHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Good morning!',
+                  TimeOfDayHelper.getGreeting(),
                   style: AppTypography.caption(isDark).copyWith(fontSize: 12),
                 ),
                 const SizedBox(height: 2),

@@ -61,7 +61,7 @@ class HomeScreen extends StatelessWidget {
 
     final overallProgress = ((calorieRatio * 0.4) + (waterRatio * 0.3) + (stepRatio * 0.3))
         .clamp(0.0, 1.0);
-    final completedDays = overallProgress >= 0.7 ? 1 : 0;
+    final completedDays = provider.completedDaysThisWeek;
 
     return Scaffold(
       body: ResponsiveLayout.pageContainer(

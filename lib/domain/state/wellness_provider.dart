@@ -318,6 +318,45 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Calculates the count of days in the current week where composite goal progress reached >= 70%
+  int get completedDaysThisWeek {
+    if (_isDemoMode && _weeklyStatDays.isNotEmpty) {
+      int count = 0;
+      for (final snap in _weeklyStatDays.values) {
+        final calRatio = _targetCalories > 0 ? (snap.calories / _targetCalories) : 0.0;
+        final stepRatio = _stepGoal > 0 ? (snap.steps / _stepGoal) : 0.0;
+        final waterRatio = _waterGoal > 0 ? (snap.waterGlasses / _waterGoal) : 0.0;
+        final score = (calRatio * 0.4) + (stepRatio * 0.3) + (waterRatio * 0.3);
+        if (score >= 0.7) count++;
+      }
+      return count.clamp(0, 7);
+    }
+
+    final now = DateTime.now();
+    final todayWeekday = now.weekday; // 1 = Mon ... 7 = Sun
+    int count = 0;
+    for (int i = 1; i < todayWeekday; i++) {
+      final pastDate = now.subtract(Duration(days: todayWeekday - i));
+      final key = '${pastDate.year}-${pastDate.month}-${pastDate.day}';
+      final snap = _pastDaysData[key];
+      if (snap != null) {
+        final calRatio = _targetCalories > 0 ? (snap.calories / _targetCalories) : 0.0;
+        final stepRatio = _stepGoal > 0 ? (snap.steps / _stepGoal) : 0.0;
+        final waterRatio = _waterGoal > 0 ? (snap.waterGlasses / _waterGoal) : 0.0;
+        final score = (calRatio * 0.4) + (stepRatio * 0.3) + (waterRatio * 0.3);
+        if (score >= 0.7) count++;
+      }
+    }
+
+    final todayCalRatio = _targetCalories > 0 ? (_calories / _targetCalories) : 0.0;
+    final todayStepRatio = _stepGoal > 0 ? (_steps / _stepGoal) : 0.0;
+    final todayWaterRatio = _waterGoal > 0 ? (_waterGlasses / _waterGoal) : 0.0;
+    final todayScore = (todayCalRatio * 0.4) + (todayStepRatio * 0.3) + (todayWaterRatio * 0.3);
+    if (todayScore >= 0.7) count++;
+
+    return count.clamp(0, 7);
+  }
+
   // Interactive metrics for the currently selected day on the Statistics screen
   int get statCalories {
     if (_isDemoMode && _weeklyStatDays.containsKey(_selectedStatDayIndex)) {
@@ -707,6 +746,39 @@ class WellnessProvider extends ChangeNotifier {
     if (periodDuration != null && periodDuration >= 2 && periodDuration <= 10) {
       _defaultPeriodDurationDays = periodDuration;
     }
+    notifyListeners();
+  }
+
+  /// Configures personalized menstrual tracking collected during Onboarding.
+  void configureInitialPeriodTracking({
+    required DateTime lastPeriodStartDate,
+    required int periodDurationDays,
+    required int cycleLengthDays,
+    String? regularity,
+    String? trackingGoal,
+  }) {
+    _isPeriodTrackingEnabled = true;
+    _isPregnancyTrackingEnabled = false;
+    _defaultCycleLengthDays = cycleLengthDays.clamp(20, 45);
+    _defaultPeriodDurationDays = periodDurationDays.clamp(2, 10);
+
+    final cleanStart = DateTime(lastPeriodStartDate.year, lastPeriodStartDate.month, lastPeriodStartDate.day);
+    final cleanEnd = cleanStart.add(Duration(days: periodDurationDays - 1));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final isStillOngoing = cleanEnd.isAfter(today) || cleanEnd.isAtSameMomentAs(today);
+
+    _periodCycles.clear();
+    _periodCycles.add(
+      PeriodCycleEntry(
+        id: 'initial_cycle_${DateTime.now().millisecondsSinceEpoch}',
+        startDate: cleanStart,
+        endDate: isStillOngoing ? null : cleanEnd,
+        flow: PeriodFlowLevel.medium,
+        notes: 'Onboarding setup (${regularity ?? 'Regular'}) • Goal: ${trackingGoal ?? 'Cycle Wellness'}',
+      ),
+    );
     notifyListeners();
   }
 

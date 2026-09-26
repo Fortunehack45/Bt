@@ -590,7 +590,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
 
-                    // Section 6: About Biothrix
+                    // Section 6: About Wellnest
                     SolidWellnessCard(
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
@@ -611,7 +611,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Biothrix Wellness', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                                Text('Wellnest Wellness', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
                                 const SizedBox(height: 2),
                                 Text('Version 1.0.2 • 100% On-Device Privacy Architecture', style: AppTypography.caption(isDark)),
                               ],

@@ -215,7 +215,7 @@ void showAiWellnessInsightsSheet(BuildContext context, WellnessProvider provider
                       Navigator.of(sheetContext).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Biothrix AI & Sensor Telemetry Synchronized'),
+                          content: Text('Wellnest AI & Sensor Telemetry Synchronized'),
                           duration: Duration(seconds: 2),
                           behavior: SnackBarBehavior.floating,
                         ),

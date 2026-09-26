@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
@@ -7,6 +8,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';
 import '../../core/widgets/solid_wellness_card.dart';
+import '../../domain/models/reproductive_health_models.dart';
 import '../../domain/state/wellness_provider.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -23,7 +25,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _nameController = TextEditingController(text: 'Fortune');
 
   int _currentPage = 0;
-  final int _totalPages = 5;
+
+  // Total pages expands dynamically from 5 to 6 when a female user chooses Period or Pregnancy tracking
+  int get _totalPages =>
+      (_selectedGender == 'Female' && (_trackPeriod || _trackPregnancy)) ? 6 : 5;
 
   // Biometric state gathered during onboarding
   String _selectedGender = 'Male';
@@ -35,13 +40,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _trackPeriod = false;
   bool _trackPregnancy = false;
 
+  // Specialized Period Tracking Questionnaire State
+  DateTime _periodLastStartDate = DateTime.now().subtract(const Duration(days: 14));
+  int _periodDurationDays = 5;
+  int _cycleLengthDays = 28;
+  String _cycleRegularity = 'Regular (26–32 days)';
+  String _periodGoal = 'Predict upcoming periods & avoid surprises';
+  bool _showPeriodDatePicker = false;
+
+  // Specialized Pregnancy Tracking Questionnaire State
+  PregnancyReferenceType _pregnancyReferenceType = PregnancyReferenceType.estimatedDueDate;
+  DateTime _pregnancyReferenceDate = DateTime.now().add(const Duration(days: 131));
+  bool _isFirstPregnancy = true;
+  String _pregnancyGoal = 'Week-by-week baby growth & size milestones';
+  bool _showPregnancyDatePicker = false;
+
   static const List<String> _fullMonthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
   void _onDobChanged(DateTime newDob) {
-    HapticService.selection();
+    HapticService.tick();
     setState(() {
       _selectedDob = newDob;
       final now = DateTime.now();
@@ -61,7 +81,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _finish(WellnessProvider provider) {
-    HapticService.mediumImpact();
+    HapticService.celebrate();
     final name = _nameController.text.trim();
     if (name.isNotEmpty) {
       provider.setUserName(name);
@@ -77,11 +97,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       isPeriodTrackingEnabled: _selectedGender == 'Female' && _trackPeriod,
       isPregnancyTrackingEnabled: _selectedGender == 'Female' && _trackPregnancy,
     );
+
+    // Persist rich answers from the reproductive health questionnaire
+    if (_selectedGender == 'Female' && _trackPeriod) {
+      provider.configureInitialPeriodTracking(
+        lastPeriodStartDate: _periodLastStartDate,
+        periodDurationDays: _periodDurationDays,
+        cycleLengthDays: _cycleLengthDays,
+        regularity: _cycleRegularity,
+        trackingGoal: _periodGoal,
+      );
+    } else if (_selectedGender == 'Female' && _trackPregnancy) {
+      provider.setupPregnancy(
+        type: _pregnancyReferenceType,
+        date: _pregnancyReferenceDate,
+        notes: 'Goal: $_pregnancyGoal • First-time mom: $_isFirstPregnancy',
+      );
+    }
+
     widget.onGetStarted();
   }
 
   void _nextPage(WellnessProvider provider) {
-    HapticService.selection();
+    HapticService.mediumImpact();
     if (_currentPage < _totalPages - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 280),
@@ -128,6 +166,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = WellnessStateScope.of(context);
 
+    final showReproductiveStep =
+        _selectedGender == 'Female' && (_trackPeriod || _trackPregnancy);
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       body: ResponsiveLayout.pageContainer(
@@ -160,7 +201,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     else
                       const SizedBox(width: 36),
 
-                    // Progress Dots
+                    // Progress Dots (dynamically 5 or 6)
                     Row(
                       children: List.generate(_totalPages, (index) {
                         final isSel = index == _currentPage;
@@ -200,13 +241,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Expanded(
                 child: PageView(
                   controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(), // Controlled via buttons for consistency
+                  physics: const NeverScrollableScrollPhysics(),
                   onPageChanged: (i) => setState(() => _currentPage = i),
                   children: [
                     _buildStep1Name(isDark),
                     _buildStep2Bio(isDark),
                     _buildStep3Composition(isDark),
                     _buildStep4Goals(isDark),
+                    if (showReproductiveStep) ...[
+                      if (_trackPeriod)
+                        _buildStep4bPeriodQuestionnaire(isDark)
+                      else
+                        _buildStep4bPregnancyQuestionnaire(isDark),
+                    ],
                     _buildStep5Blueprint(isDark),
                   ],
                 ),
@@ -243,6 +290,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // STEP 1: Name & Personal Welcome
   Widget _buildStep1Name(bool isDark) {
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       child: Column(
         children: [
           const SizedBox(height: 30),
@@ -296,6 +344,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // STEP 2: Biological Profile (Sex & Age)
   Widget _buildStep2Bio(bool isDark) {
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       child: Column(
         children: [
           const SizedBox(height: 20),
@@ -357,7 +406,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Banner with formatted date & calculated age
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -408,7 +456,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Interactive Cupertino Date Picker Wheel (Tactile, Mechanical Inertia, Zero Screen Overlay)
           Container(
             height: 145,
             decoration: BoxDecoration(
@@ -456,7 +503,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: GestureDetector(
         onTap: () {
           HapticService.selection();
-          setState(() => _selectedGender = label);
+          setState(() {
+            _selectedGender = label;
+            if (_selectedGender != 'Female') {
+              _trackPeriod = false;
+              _trackPregnancy = false;
+            }
+          });
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -495,9 +548,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // STEP 3: Height, Weight & Live BMI
+  // STEP 3: Body Composition (Height & Weight)
   Widget _buildStep3Composition(bool isDark) {
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       child: Column(
         children: [
           const SizedBox(height: 16),
@@ -514,7 +568,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Live Dynamic BMI Meter
           SolidWellnessCard(
             padding: const EdgeInsets.all(14),
             child: Row(
@@ -591,6 +644,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   activeColor: AppColors.primary,
                   inactiveColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   onChanged: (val) {
+                    if (val.toInt() != _selectedHeightCm.toInt()) HapticService.tick();
                     setState(() => _selectedHeightCm = val);
                   },
                 ),
@@ -622,7 +676,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   activeColor: AppColors.stepsOrange,
                   inactiveColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   onChanged: (val) {
-                    setState(() => _selectedWeightKg = double.parse(val.toStringAsFixed(1)));
+                    final rounded = double.parse(val.toStringAsFixed(1));
+                    if ((rounded * 2).toInt() != (_selectedWeightKg * 2).toInt()) HapticService.tick();
+                    setState(() => _selectedWeightKg = rounded);
                   },
                 ),
               ],
@@ -663,6 +719,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ];
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       child: Column(
         children: [
           const SizedBox(height: 16),
@@ -759,7 +816,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'Add specialized cycle or maternal health tracking to your dashboard',
+                    'Select to unlock deep cycle predictions or maternal pregnancy guidance',
                     style: AppTypography.caption(isDark).copyWith(fontSize: 12),
                   ),
                 ],
@@ -803,11 +860,871 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Note: Menstrual cycles naturally pause during pregnancy. You can switch between modes at any time in Settings.',
+              'Note: Selecting either mode unlocks a quick personalization step next.',
               style: AppTypography.caption(isDark).copyWith(fontSize: 11, fontStyle: FontStyle.italic),
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  // STEP 4b: In-Depth Period Tracking Questionnaire
+  Widget _buildStep4bPeriodQuestionnaire(bool isDark) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final daysSinceStart = today.difference(_periodLastStartDate).inDays;
+
+    final regularityOptions = [
+      (
+        title: 'Regular (26–32 days)',
+        desc: 'Consistent monthly cycle with predictable timing',
+        icon: Icons.sync_rounded,
+      ),
+      (
+        title: 'Somewhat irregular',
+        desc: 'Varies by 3 to 6 days from month to month',
+        icon: Icons.shuffle_rounded,
+      ),
+      (
+        title: 'Irregular or variable',
+        desc: 'Hard to anticipate; length fluctuates substantially',
+        icon: Icons.tune_rounded,
+      ),
+      (
+        title: 'I\'m not sure yet',
+        desc: 'Biothrix will analyze your logged cycles over time',
+        icon: Icons.auto_awesome_rounded,
+      ),
+    ];
+
+    final goalOptions = [
+      (
+        title: 'Predict upcoming periods & avoid surprises',
+        icon: Icons.water_drop_rounded,
+        color: const Color(0xFFF43F5E),
+      ),
+      (
+        title: 'Track fertile window & natural conception',
+        icon: Icons.favorite_rounded,
+        color: const Color(0xFFA855F7),
+      ),
+      (
+        title: 'Monitor PMS, cramps & hormonal mood changes',
+        icon: Icons.psychology_alt_rounded,
+        color: const Color(0xFF06B6D4),
+      ),
+      (
+        title: 'Holistic reproductive & menstrual vitality',
+        icon: Icons.spa_rounded,
+        color: const Color(0xFF10B981),
+      ),
+    ];
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF43F5E).withOpacity(0.16),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.water_drop_rounded, size: 36, color: Color(0xFFF43F5E)),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Center(
+            child: Text(
+              'Menstrual Cycle Profile',
+              textAlign: TextAlign.center,
+              style: AppTypography.displayMedium(isDark).copyWith(fontSize: 24),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(
+              'Calibrate accurate predictions, fertile windows, and hormonal health.',
+              textAlign: TextAlign.center,
+              style: AppTypography.caption(isDark).copyWith(fontSize: 12.5),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Question 1: When did your last period start?
+          Text('1. When did your last period start?', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+          const SizedBox(height: 8),
+          SolidWellnessCard(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF43F5E).withOpacity(0.14),
+                            borderRadius: AppRadii.roundedSm,
+                          ),
+                          child: const Icon(Icons.calendar_today_rounded, color: Color(0xFFF43F5E), size: 18),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${_fullMonthNames[_periodLastStartDate.month - 1]} ${_periodLastStartDate.day}, ${_periodLastStartDate.year}',
+                              style: AppTypography.h3(isDark).copyWith(fontSize: 15),
+                            ),
+                            Text(
+                              daysSinceStart == 0
+                                  ? 'Started today'
+                                  : '$daysSinceStart ${daysSinceStart == 1 ? 'day' : 'days'} ago',
+                              style: AppTypography.caption(isDark).copyWith(fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        HapticService.selection();
+                        setState(() => _showPeriodDatePicker = !_showPeriodDatePicker);
+                      },
+                      child: Text(
+                        _showPeriodDatePicker ? 'Done' : 'Change',
+                        style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFF43F5E)),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Quick selector buttons
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _buildQuickDateChip('Today', today, isDark),
+                    _buildQuickDateChip('3 days ago', today.subtract(const Duration(days: 3)), isDark),
+                    _buildQuickDateChip('1 week ago', today.subtract(const Duration(days: 7)), isDark),
+                    _buildQuickDateChip('2 weeks ago', today.subtract(const Duration(days: 14)), isDark),
+                  ],
+                ),
+
+                if (_showPeriodDatePicker) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 130,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141C18) : const Color(0xFFF3F7F4),
+                      borderRadius: AppRadii.roundedMd,
+                      border: Border.all(color: isDark ? const Color(0xFF26362D) : const Color(0xFFDEE7E1)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: AppRadii.roundedMd,
+                      child: CupertinoTheme(
+                        data: CupertinoThemeData(
+                          brightness: isDark ? Brightness.dark : Brightness.light,
+                          textTheme: CupertinoTextThemeData(
+                            dateTimePickerTextStyle: TextStyle(
+                              fontFamily: AppTypography.fontFamily,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                            ),
+                          ),
+                        ),
+                        child: CupertinoDatePicker(
+                          mode: CupertinoDatePickerMode.date,
+                          initialDateTime: _periodLastStartDate,
+                          minimumDate: today.subtract(const Duration(days: 120)),
+                          maximumDate: today,
+                          onDateTimeChanged: (d) {
+                            HapticService.tick();
+                            setState(() => _periodLastStartDate = d);
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Question 2: How long does your period usually last?
+          Text('2. How long does your period usually last?', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+          const SizedBox(height: 8),
+          SolidWellnessCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Period duration', style: AppTypography.bodyMedium(isDark)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF43F5E).withOpacity(0.15),
+                        borderRadius: AppRadii.roundedPill,
+                      ),
+                      child: Text(
+                        '$_periodDurationDays ${_periodDurationDays == 1 ? 'day' : 'days'}',
+                        style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFF43F5E), fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: List.generate(7, (idx) {
+                    final d = idx + 3; // 3 to 9 days
+                    final isSel = _periodDurationDays == d;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticService.selection();
+                          setState(() => _periodDurationDays = d);
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSel
+                                ? const Color(0xFFF43F5E)
+                                : (isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2)),
+                            borderRadius: AppRadii.roundedSm,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '$d',
+                            style: TextStyle(
+                              fontFamily: AppTypography.fontFamily,
+                              fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                              color: isSel ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Question 3: Typical cycle length & regularity
+          Text('3. How typical & regular is your cycle?', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+          const SizedBox(height: 8),
+          SolidWellnessCard(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Cycle length', style: AppTypography.bodyMedium(isDark)),
+                    Text(
+                      '$_cycleLengthDays days',
+                      style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFF43F5E), fontSize: 15),
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _cycleLengthDays.toDouble(),
+                  min: 21,
+                  max: 42,
+                  divisions: 21,
+                  activeColor: const Color(0xFFF43F5E),
+                  inactiveColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  onChanged: (val) {
+                    final rounded = val.round();
+                    if (rounded != _cycleLengthDays) HapticService.tick();
+                    setState(() => _cycleLengthDays = rounded);
+                  },
+                ),
+                const SizedBox(height: 8),
+                Text('Cycle Regularity Pattern', style: AppTypography.caption(isDark).copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                ...regularityOptions.map((reg) {
+                  final isSel = _cycleRegularity == reg.title;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticService.selection();
+                        setState(() => _cycleRegularity = reg.title);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSel
+                              ? const Color(0xFFF43F5E).withOpacity(0.12)
+                              : (isDark ? const Color(0xFF19231E) : const Color(0xFFF8FAF9)),
+                          borderRadius: AppRadii.roundedSm,
+                          border: Border.all(
+                            color: isSel ? const Color(0xFFF43F5E) : (isDark ? const Color(0xFF2B3A31) : const Color(0xFFDEE7E1)),
+                            width: isSel ? 1.5 : 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(reg.icon, size: 18, color: isSel ? const Color(0xFFF43F5E) : (isDark ? Colors.white60 : Colors.black54)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    reg.title,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                                    ),
+                                  ),
+                                  Text(reg.desc, style: AppTypography.caption(isDark).copyWith(fontSize: 11)),
+                                ],
+                              ),
+                            ),
+                            if (isSel)
+                              const Icon(Icons.check_circle_rounded, color: Color(0xFFF43F5E), size: 18),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Question 4: Primary cycle tracking intention
+          Text('4. What is your primary cycle tracking goal?', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+          const SizedBox(height: 8),
+          ...goalOptions.map((opt) {
+            final isSel = _periodGoal == opt.title;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: GestureDetector(
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _periodGoal = opt.title);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSel
+                        ? opt.color.withOpacity(0.14)
+                        : (isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceElevated),
+                    borderRadius: AppRadii.roundedMd,
+                    border: Border.all(
+                      color: isSel ? opt.color : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                      width: isSel ? 1.8 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: opt.color.withOpacity(0.16),
+                          borderRadius: AppRadii.roundedSm,
+                        ),
+                        child: Icon(opt.icon, color: opt.color, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          opt.title,
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamily,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                          ),
+                        ),
+                      ),
+                      if (isSel)
+                        Icon(Icons.check_circle_rounded, color: opt.color, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickDateChip(String label, DateTime targetDate, bool isDark) {
+    final isSel = _periodLastStartDate.year == targetDate.year &&
+        _periodLastStartDate.month == targetDate.month &&
+        _periodLastStartDate.day == targetDate.day;
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        setState(() {
+          _periodLastStartDate = targetDate;
+          _showPeriodDatePicker = false;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSel
+              ? const Color(0xFFF43F5E)
+              : (isDark ? const Color(0xFF223028) : const Color(0xFFE8F0EB)),
+          borderRadius: AppRadii.roundedPill,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+            color: isSel ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // STEP 4b: In-Depth Pregnancy Tracking Questionnaire
+  Widget _buildStep4bPregnancyQuestionnaire(bool isDark) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    DateTime calculatedDueDate;
+    DateTime lmpDate;
+
+    if (_pregnancyReferenceType == PregnancyReferenceType.estimatedDueDate) {
+      calculatedDueDate = DateTime(_pregnancyReferenceDate.year, _pregnancyReferenceDate.month, _pregnancyReferenceDate.day);
+      lmpDate = calculatedDueDate.subtract(const Duration(days: 280));
+    } else {
+      lmpDate = DateTime(_pregnancyReferenceDate.year, _pregnancyReferenceDate.month, _pregnancyReferenceDate.day);
+      calculatedDueDate = lmpDate.add(const Duration(days: 280));
+    }
+
+    final elapsedDays = today.difference(lmpDate).inDays.clamp(0, 300);
+    final week = ((elapsedDays ~/ 7) + 1).clamp(1, 42);
+    final day = elapsedDays % 7;
+    final daysUntilDue = calculatedDueDate.difference(today).inDays;
+    final trimester = week <= 12 ? 1 : (week <= 27 ? 2 : 3);
+    final trimesterLabel = trimester == 1 ? 'First Trimester' : (trimester == 2 ? 'Second Trimester' : 'Third Trimester');
+
+    final pregnancyGoals = [
+      (
+        title: 'Week-by-week baby size & fruit development',
+        icon: Icons.child_care_rounded,
+        color: const Color(0xFFA855F7),
+      ),
+      (
+        title: 'Trimester symptom tracking & kick counter',
+        icon: Icons.favorite_rounded,
+        color: const Color(0xFFF43F5E),
+      ),
+      (
+        title: 'Doctor appointments & prenatal checklist reminders',
+        icon: Icons.event_note_rounded,
+        color: const Color(0xFF06B6D4),
+      ),
+      (
+        title: 'Maternal nutrition & hydration guidance',
+        icon: Icons.local_dining_rounded,
+        color: const Color(0xFF10B981),
+      ),
+    ];
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: const Color(0xFFA855F7).withOpacity(0.16),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.child_care_rounded, size: 36, color: Color(0xFFA855F7)),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Center(
+            child: Text(
+              'Pregnancy Journey Setup',
+              textAlign: TextAlign.center,
+              style: AppTypography.displayMedium(isDark).copyWith(fontSize: 24),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(
+              'Track week-by-week fetal growth, estimated due date, and maternal telemetry.',
+              textAlign: TextAlign.center,
+              style: AppTypography.caption(isDark).copyWith(fontSize: 12.5),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Question 1: Calculation method
+          Text('1. How would you like to set your timeline?', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildPregnancyTypeTab(
+                  'Estimated Due Date',
+                  PregnancyReferenceType.estimatedDueDate,
+                  Icons.event_available_rounded,
+                  isDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildPregnancyTypeTab(
+                  'Last Period (LMP)',
+                  PregnancyReferenceType.lastMenstrualPeriod,
+                  Icons.calendar_month_rounded,
+                  isDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Question 2: Selected Date & Live Gestational Age
+          Text('2. Milestone Date', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+          const SizedBox(height: 8),
+          SolidWellnessCard(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFA855F7).withOpacity(0.14),
+                            borderRadius: AppRadii.roundedSm,
+                          ),
+                          child: const Icon(Icons.cake_rounded, color: Color(0xFFA855F7), size: 18),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${_fullMonthNames[_pregnancyReferenceDate.month - 1]} ${_pregnancyReferenceDate.day}, ${_pregnancyReferenceDate.year}',
+                              style: AppTypography.h3(isDark).copyWith(fontSize: 15),
+                            ),
+                            Text(
+                              _pregnancyReferenceType == PregnancyReferenceType.estimatedDueDate
+                                  ? 'Estimated Delivery Date'
+                                  : 'First day of last period',
+                              style: AppTypography.caption(isDark).copyWith(fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        HapticService.selection();
+                        setState(() => _showPregnancyDatePicker = !_showPregnancyDatePicker);
+                      },
+                      child: Text(
+                        _showPregnancyDatePicker ? 'Done' : 'Change Date',
+                        style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFA855F7)),
+                      ),
+                    ),
+                  ],
+                ),
+
+                if (_showPregnancyDatePicker) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 130,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141C18) : const Color(0xFFF3F7F4),
+                      borderRadius: AppRadii.roundedMd,
+                      border: Border.all(color: isDark ? const Color(0xFF26362D) : const Color(0xFFDEE7E1)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: AppRadii.roundedMd,
+                      child: CupertinoTheme(
+                        data: CupertinoThemeData(
+                          brightness: isDark ? Brightness.dark : Brightness.light,
+                          textTheme: CupertinoTextThemeData(
+                            dateTimePickerTextStyle: TextStyle(
+                              fontFamily: AppTypography.fontFamily,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                            ),
+                          ),
+                        ),
+                        child: CupertinoDatePicker(
+                          mode: CupertinoDatePickerMode.date,
+                          initialDateTime: _pregnancyReferenceDate,
+                          minimumDate: _pregnancyReferenceType == PregnancyReferenceType.estimatedDueDate
+                              ? today
+                              : today.subtract(const Duration(days: 280)),
+                          maximumDate: _pregnancyReferenceType == PregnancyReferenceType.estimatedDueDate
+                              ? today.add(const Duration(days: 280))
+                              : today,
+                          onDateTimeChanged: (d) {
+                            HapticService.tick();
+                            setState(() => _pregnancyReferenceDate = d);
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 12),
+
+                // Live Reactive Gestational Calculation Banner
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFA855F7).withOpacity(0.12),
+                    borderRadius: AppRadii.roundedSm,
+                    border: Border.all(color: const Color(0xFFA855F7).withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFA855F7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 14),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Week $week, Day $day • $trimesterLabel',
+                              style: const TextStyle(
+                                fontFamily: AppTypography.fontFamily,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                color: Color(0xFFA855F7),
+                              ),
+                            ),
+                            Text(
+                              daysUntilDue > 0
+                                  ? '$daysUntilDue ${daysUntilDue == 1 ? 'day' : 'days'} until estimated due date'
+                                  : 'Due window reached',
+                              style: AppTypography.caption(isDark).copyWith(fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Question 3: Is this your first pregnancy?
+          Text('3. Is this your first pregnancy?', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildFirstPregnancyOption('First-time Mother', true, Icons.sentiment_satisfied_alt_rounded, isDark),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildFirstPregnancyOption('Experienced Mother', false, Icons.family_restroom_rounded, isDark),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Question 4: Primary pregnancy intention
+          Text('4. What is your primary pregnancy focus?', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+          const SizedBox(height: 8),
+          ...pregnancyGoals.map((opt) {
+            final isSel = _pregnancyGoal == opt.title;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: GestureDetector(
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _pregnancyGoal = opt.title);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSel
+                        ? opt.color.withOpacity(0.14)
+                        : (isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceElevated),
+                    borderRadius: AppRadii.roundedMd,
+                    border: Border.all(
+                      color: isSel ? opt.color : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                      width: isSel ? 1.8 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: opt.color.withOpacity(0.16),
+                          borderRadius: AppRadii.roundedSm,
+                        ),
+                        child: Icon(opt.icon, color: opt.color, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          opt.title,
+                          style: TextStyle(
+                            fontFamily: AppTypography.fontFamily,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                          ),
+                        ),
+                      ),
+                      if (isSel)
+                        Icon(Icons.check_circle_rounded, color: opt.color, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPregnancyTypeTab(
+    String label,
+    PregnancyReferenceType type,
+    IconData icon,
+    bool isDark,
+  ) {
+    final isSel = _pregnancyReferenceType == type;
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        setState(() {
+          _pregnancyReferenceType = type;
+          if (type == PregnancyReferenceType.estimatedDueDate) {
+            _pregnancyReferenceDate = DateTime.now().add(const Duration(days: 131));
+          } else {
+            _pregnancyReferenceDate = DateTime.now().subtract(const Duration(days: 149));
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: isSel
+              ? const Color(0xFFA855F7)
+              : (isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceElevated),
+          borderRadius: AppRadii.roundedMd,
+          border: Border.all(
+            color: isSel ? const Color(0xFFA855F7) : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: isSel ? Colors.white : (isDark ? Colors.white70 : Colors.black87)),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                  color: isSel ? Colors.white : (isDark ? Colors.white : Colors.black),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFirstPregnancyOption(String label, bool isFirst, IconData icon, bool isDark) {
+    final isSel = _isFirstPregnancy == isFirst;
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        setState(() => _isFirstPregnancy = isFirst);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSel
+              ? const Color(0xFFA855F7).withOpacity(0.14)
+              : (isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceElevated),
+          borderRadius: AppRadii.roundedMd,
+          border: Border.all(
+            color: isSel ? const Color(0xFFA855F7) : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            width: isSel ? 1.8 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: isSel ? const Color(0xFFA855F7) : (isDark ? Colors.white70 : Colors.black87)),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -891,6 +1808,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // STEP 5: Calibrated Blueprint Summary
   Widget _buildStep5Blueprint(bool isDark) {
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       child: Column(
         children: [
           const SizedBox(height: 20),
@@ -928,11 +1846,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 _buildTargetSummaryTile('Nutrition Intake', '2,000 kcal daily balance', Icons.local_fire_department_rounded, AppColors.nutritionGold, isDark),
                 if (_selectedGender == 'Female' && _trackPeriod) ...[
                   const Divider(height: 20),
-                  _buildTargetSummaryTile('Cycle Tracking', 'Period & symptoms enabled', Icons.water_drop_outlined, const Color(0xFFF43F5E), isDark),
+                  _buildTargetSummaryTile(
+                    'Menstrual Cycle',
+                    '$_cycleLengthDays-day cycle • $_periodDurationDays days flow',
+                    Icons.water_drop_outlined,
+                    const Color(0xFFF43F5E),
+                    isDark,
+                  ),
+                  const Divider(height: 20),
+                  _buildTargetSummaryTile(
+                    'Cycle Strategy',
+                    _periodGoal,
+                    Icons.psychology_rounded,
+                    const Color(0xFFF43F5E),
+                    isDark,
+                  ),
                 ],
                 if (_selectedGender == 'Female' && _trackPregnancy) ...[
                   const Divider(height: 20),
-                  _buildTargetSummaryTile('Pregnancy Journey', 'Milestones & maternal wellness', Icons.child_care_rounded, const Color(0xFFA855F7), isDark),
+                  _buildTargetSummaryTile(
+                    'Pregnancy Journey',
+                    'Due ${_fullMonthNames[_pregnancyReferenceDate.month - 1]} ${_pregnancyReferenceDate.day}, ${_pregnancyReferenceDate.year}',
+                    Icons.child_care_rounded,
+                    const Color(0xFFA855F7),
+                    isDark,
+                  ),
+                  const Divider(height: 20),
+                  _buildTargetSummaryTile(
+                    'Maternal Focus',
+                    _pregnancyGoal,
+                    Icons.favorite_rounded,
+                    const Color(0xFFA855F7),
+                    isDark,
+                  ),
                 ],
               ],
             ),

@@ -48,8 +48,8 @@ jobs:
       - name: Rename Artifacts
         run: |
           mkdir -p release-artifacts
-          cp build/app/outputs/flutter-apk/app-release.apk release-artifacts/Biothrix-release.apk
-          cp build/app/outputs/bundle/release/app-release.aab release-artifacts/Biothrix-release.aab
+          cp build/app/outputs/flutter-apk/app-release.apk release-artifacts/Wellnest-release.apk
+          cp build/app/outputs/bundle/release/app-release.aab release-artifacts/Wellnest-release.aab
 
       - name: Upload Android Release Artifacts
         uses: actions/upload-artifact@v4
@@ -83,7 +83,7 @@ jobs:
           mkdir -p ios-artifacts/Payload
           cp -r build/ios/iphonesimulator/Runner.app ios-artifacts/Payload/
           cd ios-artifacts
-          zip -r Biothrix.ipa Payload
+          zip -r Wellnest.ipa Payload
           zip -r Runner.app.zip Payload/Runner.app
           rm -rf Payload
 
@@ -141,17 +141,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.versioning.outputs.tag }}
-          name: Biothrix Release ${{ steps.versioning.outputs.tag }}
+          name: Wellnest Release ${{ steps.versioning.outputs.tag }}
           make_latest: true
           prerelease: false
           fail_on_unmatched_files: false
           body: |
-            ## Biothrix Wellness — Release ${{ steps.versioning.outputs.tag }}
+            ## Wellnest Wellness — Release ${{ steps.versioning.outputs.tag }}
 
             ### Included Release Packages:
-            - **Android APK** (`Biothrix-release.apk`): Direct install on any Android phone.
-            - **Android App Bundle** (`Biothrix-release.aab`): For Google Play Store submission.
-            - **iOS Package** (`Biothrix.ipa`): For iOS sideloading (AltStore, Sideloadly, TrollStore) or re-signing (when built).
+            - **Android APK** (`Wellnest-release.apk`): Direct install on any Android phone.
+            - **Android App Bundle** (`Wellnest-release.aab`): For Google Play Store submission.
+            - **iOS Package** (`Wellnest.ipa`): For iOS sideloading (AltStore, Sideloadly, TrollStore) or re-signing (when built).
             - **iOS Runner Bundle** (`Runner.app.zip`): Xcode simulator / archive (when built).
 
             ### Highlights:

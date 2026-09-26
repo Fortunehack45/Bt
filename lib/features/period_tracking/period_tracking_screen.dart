@@ -169,7 +169,7 @@ class PeriodTrackingScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Biothrix is designed for wellness journaling and trend tracking. It is not a diagnostic device and should not be used as contraception or medical guidance.',
+                            'Wellnest is designed for wellness journaling and trend tracking. It is not a diagnostic device and should not be used as contraception or medical guidance.',
                             style: AppTypography.caption(isDark).copyWith(fontSize: 10.5, fontStyle: FontStyle.italic),
                           ),
                         ],

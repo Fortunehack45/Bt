@@ -425,7 +425,7 @@ class ExportReportSheet extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text(
-                                    'BIOTHRIX CLINICAL DOSSIER',
+                                    'WELLNEST CLINICAL DOSSIER',
                                     style: TextStyle(
                                       fontFamily: AppTypography.fontFamily,
                                       fontSize: 15,
@@ -533,7 +533,7 @@ class ExportReportSheet extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'BIOTHRIX AI CLINICAL OBSERVATION',
+                                'WELLNEST AI CLINICAL OBSERVATION',
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary),
                               ),
                               const SizedBox(height: 6),
@@ -589,7 +589,7 @@ class ExportReportSheet extends StatelessWidget {
                         label: const Text('Share Dossier'),
                         onPressed: () {
                           HapticService.selection();
-                          Clipboard.setData(ClipboardData(text: 'Biothrix Clinical Dossier for ${provider.userName}: BMI ${provider.bmi}, Steps ${provider.steps}, Sleep ${provider.sleepHours}h.'));
+                          Clipboard.setData(ClipboardData(text: 'Wellnest Clinical Dossier for ${provider.userName}: BMI ${provider.bmi}, Steps ${provider.steps}, Sleep ${provider.sleepHours}h.'));
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Clinical summary copied for sharing!')),
                           );
@@ -736,7 +736,7 @@ class ExportReportSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Formatted in Biothrix dark slate styling with lime accents. Contains patient biometrics, BMI classification, daily scores, 7-day adherence table, and AI clinical summaries.',
+                  'Formatted in Wellnest dark slate styling with lime accents. Contains patient biometrics, BMI classification, daily scores, 7-day adherence table, and AI clinical summaries.',
                   style: AppTypography.caption(isDark).copyWith(height: 1.4),
                 ),
                 const SizedBox(height: 14),

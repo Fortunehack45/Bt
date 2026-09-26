@@ -76,7 +76,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
     final p = widget.provider;
     final hasTelemetry = p.steps > 0 || p.waterGlasses > 0 || p.calories > 0;
 
-    final greeting = StringBuffer('Hello ${p.userName}! I\'m your Biothrix AI Health Companion, synced to your live biometric sensors.\n\n');
+    final greeting = StringBuffer('Hello ${p.userName}! I\'m your Wellnest AI Health Companion, synced to your live biometric sensors.\n\n');
 
     if (hasTelemetry) {
       greeting.writeln('📈 **Today\'s Snapshot:**');
@@ -219,7 +219,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
     }
 
     // Default intelligent clinical response
-    return '🧠 **Biothrix Clinical Insight:**\n\n'
+    return '🧠 **Wellnest Clinical Insight:**\n\n'
         'Under your primary focus of **"${p.primaryGoal}"**, every biometric datapoint works in harmony. Your body adapts best to consistent small habits rather than radical shifts.\n\n'
         'Would you like me to formulate a specific routine for your activity, hydration pacing, or nutritional timing?';
   }
@@ -259,7 +259,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
                       Row(
                         children: [
                           Text(
-                            'Biothrix AI Companion',
+                            'Wellnest AI Companion',
                             style: AppTypography.h3(isDark).copyWith(fontSize: 16),
                           ),
                           const SizedBox(width: 6),
@@ -390,7 +390,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
                       color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Ask Biothrix AI anything...',
+                      hintText: 'Ask Wellnest AI anything...',
                       hintStyle: TextStyle(
                         fontFamily: AppTypography.fontFamily,
                         fontSize: 13,
@@ -487,7 +487,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
                 const Icon(Icons.auto_awesome_rounded, size: 14, color: AppColors.primaryDark),
                 const SizedBox(width: 6),
                 Text(
-                  'Biothrix Intelligence',
+                  'Wellnest Intelligence',
                   style: TextStyle(
                     fontFamily: AppTypography.fontFamily,
                     fontSize: 11,
@@ -530,7 +530,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
             const Icon(Icons.auto_awesome_rounded, size: 14, color: AppColors.primaryDark),
             const SizedBox(width: 8),
             Text(
-              'Biothrix AI analyzing telemetry...',
+              'Wellnest AI analyzing telemetry...',
               style: TextStyle(
                 fontFamily: AppTypography.fontFamily,
                 fontSize: 12,

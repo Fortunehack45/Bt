@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:biothrix/core/utils/wellness_report_exporter.dart';
-import 'package:biothrix/core/widgets/concentric_activity_rings.dart';
-import 'package:biothrix/domain/state/wellness_provider.dart';
+import 'package:wellnest/core/utils/wellness_report_exporter.dart';
+import 'package:wellnest/core/widgets/concentric_activity_rings.dart';
+import 'package:wellnest/domain/state/wellness_provider.dart';
 
 void main() {
   group('Biothrix WellnessProvider Fresh User Tests', () {
@@ -249,7 +249,7 @@ void main() {
       expect(pdfBytes.isNotEmpty, true);
       final pdfString = utf8.decode(pdfBytes, allowMalformed: true);
       expect(pdfString.startsWith('%PDF-1.4'), true);
-      expect(pdfString.contains('BIOTHRIX WELLNESS CLINICAL DOSSIER'), true);
+      expect(pdfString.contains('WELLNEST WELLNESS CLINICAL DOSSIER'), true);
       expect(pdfString.contains('%%EOF'), true);
     });
 

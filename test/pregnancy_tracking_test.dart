@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:biothrix/domain/models/reproductive_health_models.dart';
-import 'package:biothrix/domain/state/wellness_provider.dart';
+import 'package:wellnest/domain/models/reproductive_health_models.dart';
+import 'package:wellnest/domain/state/wellness_provider.dart';
 
 void main() {
   group('Pregnancy Tracking & Gestational Wellness Tests', () {

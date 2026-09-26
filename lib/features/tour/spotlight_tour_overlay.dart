@@ -73,7 +73,7 @@ class _SpotlightTourOverlayState extends State<SpotlightTourOverlay> {
       category: 'GESTURE COMMAND',
       icon: Icons.swipe_vertical_rounded,
       description:
-          'Swipe UP or DOWN on this circular button to fluidly switch between 1-Tap Quick Action Logging (+) and your Biothrix AI Intelligence Core.',
+          'Swipe UP or DOWN on this circular button to fluidly switch between 1-Tap Quick Action Logging (+) and your Wellnest AI Intelligence Core.',
       targetKey: TourTargetKeys.fabKey,
       isCircle: true,
     ),

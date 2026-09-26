@@ -195,7 +195,7 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
                 const Icon(Icons.event_rounded, size: 14, color: Color(0xFFA855F7)),
                 const SizedBox(width: 6),
                 Text(
-                  '$daysUntilDue days until estimated due date (${_months[due.month - 1]} ${due.day})',
+                  '$daysUntilDue ${daysUntilDue == 1 ? 'day' : 'days'} until estimated due date (${_months[due.month - 1]} ${due.day})',
                   style: TextStyle(
                     fontFamily: AppTypography.fontFamily,
                     fontSize: 12,

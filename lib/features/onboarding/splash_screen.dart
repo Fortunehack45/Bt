@@ -88,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Biothrix',
+                  'Wellnest',
                   style: AppTypography.displayMedium(isDark).copyWith(
                     letterSpacing: -0.5,
                     fontWeight: FontWeight.w800,

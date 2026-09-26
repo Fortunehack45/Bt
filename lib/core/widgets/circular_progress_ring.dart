@@ -13,6 +13,8 @@ class CircularProgressRing extends StatelessWidget {
   final Color trackColor;
   final String? centerPrimaryText;
   final String? centerSecondaryText;
+  final Color? primaryTextColor;
+  final Color? secondaryTextColor;
   final Widget? center;
 
   const CircularProgressRing({
@@ -25,6 +27,8 @@ class CircularProgressRing extends StatelessWidget {
     Color? backgroundColor,
     this.centerPrimaryText,
     this.centerSecondaryText,
+    this.primaryTextColor,
+    this.secondaryTextColor,
     this.center,
   }) : trackColor = backgroundColor ?? trackColor ?? const Color(0xFFE2F7B0);
 
@@ -67,19 +71,19 @@ class CircularProgressRing extends StatelessWidget {
                     fontSize: size * 0.22,
                     fontWeight: FontWeight.w800,
                     height: 1.0,
-                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                    color: primaryTextColor ?? (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
                   ),
                 ),
                 if (centerSecondaryText != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     centerSecondaryText!,
                     style: TextStyle(
                       fontFamily: AppTypography.fontFamily,
-                      fontSize: size * 0.12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: size * 0.125,
+                      fontWeight: FontWeight.w700,
                       height: 1.0,
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      color: secondaryTextColor ?? (isDark ? AppColors.textSecondaryDark : const Color(0xFF263326)),
                     ),
                   ),
                 ],

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:biothrix/domain/models/reproductive_health_models.dart';
-import 'package:biothrix/domain/state/wellness_provider.dart';
-import 'package:biothrix/features/home/home_screen.dart';
-import 'package:biothrix/features/home/widgets/period_cycle_hero_card.dart';
-import 'package:biothrix/features/home/widgets/pregnancy_journey_hero_card.dart';
+import 'package:wellnest/domain/models/reproductive_health_models.dart';
+import 'package:wellnest/domain/state/wellness_provider.dart';
+import 'package:wellnest/features/home/home_screen.dart';
+import 'package:wellnest/features/home/widgets/period_cycle_hero_card.dart';
+import 'package:wellnest/features/home/widgets/pregnancy_journey_hero_card.dart';
 
 void main() {
   group('Reproductive Health Onboarding & Home Screen Integration Tests', () {

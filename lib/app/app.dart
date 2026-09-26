@@ -6,15 +6,17 @@ import '../features/onboarding/onboarding_screen.dart';
 import '../features/onboarding/splash_screen.dart';
 import 'app_shell.dart';
 
-/// The root Biothrix application widget.
-class BiothrixApp extends StatefulWidget {
-  const BiothrixApp({super.key});
+/// The root Wellnest application widget.
+class WellnestApp extends StatefulWidget {
+  const WellnestApp({super.key});
 
   @override
-  State<BiothrixApp> createState() => _BiothrixAppState();
+  State<WellnestApp> createState() => _WellnestAppState();
 }
 
-class _BiothrixAppState extends State<BiothrixApp> {
+typedef BiothrixApp = WellnestApp;
+
+class _WellnestAppState extends State<WellnestApp> {
   final WellnessProvider _wellnessProvider = WellnessProvider();
   bool _showSplash = true;
   bool _showOnboarding = true;
@@ -45,7 +47,7 @@ class _BiothrixAppState extends State<BiothrixApp> {
           return AnnotatedRegion<SystemUiOverlayStyle>(
             value: overlayStyle,
             child: MaterialApp(
-              title: 'Biothrix Wellness',
+              title: 'Wellnest Wellness',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.light(),
               darkTheme: AppTheme.dark(),
