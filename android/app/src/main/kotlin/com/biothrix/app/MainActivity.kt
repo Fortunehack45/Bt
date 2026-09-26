@@ -34,6 +34,7 @@ class MainActivity: FlutterActivity(), SensorEventListener {
     private var stepSensor: Sensor? = null
     private var accelerometerSensor: Sensor? = null
     private var isUsingStepDetector = false
+    private var lastStepCounterValue = -1.0f
     private var lastAccelMagnitude = 0.0f
     private var lastStepTimestamp = 0L
 
@@ -215,6 +216,7 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                     result.success(available)
                 }
                 "startStepTracking" -> {
+                    lastStepCounterValue = -1.0f
                     val sensorToListen = stepSensor ?: accelerometerSensor
                     if (sensorToListen != null && sensorManager != null) {
                         sensorManager?.registerListener(this, sensorToListen, SensorManager.SENSOR_DELAY_UI)
@@ -224,6 +226,7 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                     }
                 }
                 "stopStepTracking" -> {
+                    lastStepCounterValue = -1.0f
                     sensorManager?.unregisterListener(this)
                     result.success(true)
                 }
@@ -243,8 +246,19 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                 }
             }
             Sensor.TYPE_STEP_COUNTER -> {
-                // Returns step count since device reboot
-                pedometerChannel?.invokeMethod("onStepDetected", 1)
+                // Returns cumulative step count since device reboot; calculate real step delta
+                if (event.values.isNotEmpty()) {
+                    val currentTotal = event.values[0]
+                    if (lastStepCounterValue < 0.0f) {
+                        lastStepCounterValue = currentTotal
+                    } else {
+                        val delta = (currentTotal - lastStepCounterValue).toInt()
+                        if (delta > 0) {
+                            lastStepCounterValue = currentTotal
+                            pedometerChannel?.invokeMethod("onStepDetected", delta)
+                        }
+                    }
+                }
             }
             Sensor.TYPE_ACCELEROMETER -> {
                 // Fallback high-fidelity dynamic peak detector for phones lacking dedicated step coprocessors

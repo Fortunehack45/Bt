@@ -8,7 +8,7 @@ void main() {
 
   group('Smart Device & Vitals Telemetry Tests', () {
     test('SmartDevice model serialization and properties', () {
-      final device = SmartDevice(
+      const device = SmartDevice(
         id: 'test-ring',
         name: 'Oura Horizon',
         type: DeviceType.smartRing,
@@ -81,10 +81,10 @@ void main() {
       final provider = WellnessProvider();
       expect(provider.steps, 0);
 
-      PedometerService.instance.simulateBurstWalk(provider, 300);
+      PedometerService.instance.processHardwareStepEvent(provider, 300);
       expect(provider.steps, 300);
 
-      await PedometerService.instance.startTracking(provider, simulation: false);
+      await PedometerService.instance.startTracking(provider);
       expect(PedometerService.instance.isTracking, true);
       await PedometerService.instance.stopTracking(provider);
       expect(PedometerService.instance.isTracking, false);
@@ -115,7 +115,7 @@ void main() {
       expect(provider.hrvMs, 58);
 
       // Pair a new watch
-      final appleWatch = SmartDevice(
+      const appleWatch = SmartDevice(
         id: 'apple-watch-ultra',
         name: 'Apple Watch Ultra',
         type: DeviceType.smartWatch,

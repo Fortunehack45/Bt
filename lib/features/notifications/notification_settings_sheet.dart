@@ -219,8 +219,8 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                           );
                         },
                         borderRadius: BorderRadius.circular(16),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [

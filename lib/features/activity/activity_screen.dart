@@ -251,7 +251,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                   if (isPedometerActive) {
                                     await PedometerService.instance.stopTracking(provider);
                                   } else {
-                                    await PedometerService.instance.startTracking(provider, simulation: false);
+                                    await PedometerService.instance.startTracking(provider);
                                   }
                                   setState(() {});
                                 },
@@ -274,33 +274,24 @@ class _ActivityScreenState extends State<ActivityScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          // Simulation quick action
+                          const SizedBox(height: 8),
                           Row(
                             children: [
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  PedometerService.instance.simulateBurstWalk(provider, 250);
-                                  setState(() {});
-                                },
-                                icon: const Icon(Icons.bolt_rounded, size: 16),
-                                label: const Text('+250 Steps', style: TextStyle(fontSize: 11)),
-                                style: OutlinedButton.styleFrom(
-                                  visualDensity: VisualDensity.compact,
-                                  shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                                ),
+                              Icon(
+                                isPedometerActive ? Icons.sensors_rounded : Icons.sensors_off_rounded,
+                                size: 14,
+                                color: isPedometerActive ? const Color(0xFF10B981) : (isDark ? Colors.white38 : Colors.black38),
                               ),
-                              const SizedBox(width: 8),
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  PedometerService.instance.simulateBurstWalk(provider, 1000);
-                                  setState(() {});
-                                },
-                                icon: const Icon(Icons.directions_run_rounded, size: 16),
-                                label: const Text('+1,000 Steps', style: TextStyle(fontSize: 11)),
-                                style: OutlinedButton.styleFrom(
-                                  visualDensity: VisualDensity.compact,
-                                  shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  isPedometerActive
+                                      ? 'Onboard motion hardware actively tracking your physical steps'
+                                      : 'Tap Start Sensor to track walking steps using phone hardware',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? Colors.white54 : Colors.black54,
+                                  ),
                                 ),
                               ),
                             ],

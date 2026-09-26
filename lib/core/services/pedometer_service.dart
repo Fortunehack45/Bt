@@ -28,7 +28,7 @@ extension PedometerPaceCategoryExtension on PedometerPaceCategory {
 
 /// Central cross-platform pedometer and cadence tracking engine for Wellnest.
 /// Bridges physical phone hardware sensors (Android Sensor.TYPE_STEP_DETECTOR / Accelerometer, iOS CMPedometer / CMMotionManager)
-/// directly into the reactive wellness state.
+/// directly into the reactive wellness state without any simulations or mock data.
 class PedometerService {
   PedometerService._() {
     _initChannel();
@@ -40,13 +40,9 @@ class PedometerService {
   bool _isTracking = false;
   bool get isTracking => _isTracking;
 
-  bool _isSimulationMode = false;
-  bool get isSimulationMode => _isSimulationMode;
-
   bool _isHardwareSensorActive = false;
   bool get isHardwareSensorActive => _isHardwareSensorActive;
 
-  Timer? _simulationTimer;
   Timer? _cadenceResetTimer;
   int _currentCadenceSpm = 0;
   int get currentCadenceSpm => _currentCadenceSpm;
@@ -71,6 +67,13 @@ class PedometerService {
         _handleHardwareStepDetected(count);
       }
     });
+  }
+
+  /// Processes genuine physical steps from the platform hardware sensor.
+  void processHardwareStepEvent(WellnessProvider provider, int count) {
+    if (count <= 0) return;
+    _activeProvider = provider;
+    _handleHardwareStepDetected(count);
   }
 
   void _handleHardwareStepDetected(int count) {
@@ -119,16 +122,10 @@ class PedometerService {
     return (steps * 0.04).round();
   }
 
-  /// Starts live step tracking using physical phone hardware sensors (or simulation fallback).
-  Future<void> startTracking(WellnessProvider provider, {bool simulation = false}) async {
+  /// Starts live step tracking using physical phone hardware sensors.
+  Future<void> startTracking(WellnessProvider provider) async {
     _activeProvider = provider;
     _isTracking = true;
-    _isSimulationMode = simulation;
-
-    if (simulation) {
-      _startSimulation(provider);
-      return;
-    }
 
     try {
       final available = await _channel.invokeMethod<bool>('isStepCountingAvailable') ?? false;
@@ -141,21 +138,16 @@ class PedometerService {
           return;
         }
       }
-      // If hardware unavailable in environment (e.g. desktop simulator), fallback to simulation
-      _startSimulation(provider);
+      _isHardwareSensorActive = false;
     } catch (_) {
       _isHardwareSensorActive = false;
-      _startSimulation(provider);
     }
   }
 
   /// Stops live step tracking.
   Future<void> stopTracking(WellnessProvider provider) async {
     _isTracking = false;
-    _isSimulationMode = false;
     _isHardwareSensorActive = false;
-    _simulationTimer?.cancel();
-    _simulationTimer = null;
     _cadenceResetTimer?.cancel();
     _currentCadenceSpm = 0;
     _recentStepTimestamps.clear();
@@ -166,32 +158,7 @@ class PedometerService {
     } catch (_) {}
   }
 
-  void _startSimulation(WellnessProvider provider) {
-    _simulationTimer?.cancel();
-    _currentCadenceSpm = 112; // 112 steps per minute brisk walk
-    provider.updateCadence(_currentCadenceSpm);
-
-    // Increment step every ~535ms to match 112 SPM
-    _simulationTimer = Timer.periodic(const Duration(milliseconds: 535), (timer) {
-      if (!_isTracking) {
-        timer.cancel();
-        return;
-      }
-      provider.addSteps(1);
-      _stepStreamController.add(provider.steps);
-      HapticService.selection();
-    });
-  }
-
-  /// Simulates walking a specific count of steps instantly (e.g. 500 steps brisk walk).
-  void simulateBurstWalk(WellnessProvider provider, int stepsCount) {
-    provider.addSteps(stepsCount);
-    _stepStreamController.add(provider.steps);
-    HapticService.mediumImpact();
-  }
-
   void dispose() {
-    _simulationTimer?.cancel();
     _cadenceResetTimer?.cancel();
     _stepStreamController.close();
   }

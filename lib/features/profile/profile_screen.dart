@@ -11,6 +11,7 @@ import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
 import '../../core/widgets/wellness_bottom_sheet.dart';
 import '../../domain/state/wellness_provider.dart';
+import '../../domain/models/smart_device_models.dart';
 import '../widgets/widget_studio_screen.dart';
 import '../wearables/wearables_hub_screen.dart';
 import 'personal_profile_screen.dart';

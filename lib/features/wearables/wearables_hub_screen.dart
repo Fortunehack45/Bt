@@ -137,9 +137,9 @@ class _WearablesHubScreenState extends State<WearablesHubScreen>
                             color: const Color(0xFF10B981).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
+                            children: [
                               Icon(Icons.bolt_rounded, size: 12, color: Color(0xFF10B981)),
                               SizedBox(width: 4),
                               Text(
@@ -299,7 +299,7 @@ class _WearablesHubScreenState extends State<WearablesHubScreen>
                       style: AppTypography.h3(isDark).copyWith(fontSize: 16),
                     ),
                     const SizedBox(height: 2),
-                    Text(
+                    const Text(
                       'Connected • Live Synced',
                       style: TextStyle(
                         fontSize: 11,
@@ -753,10 +753,10 @@ class _WearablesHubScreenState extends State<WearablesHubScreen>
                   const Divider(height: 24, thickness: 0.6),
                   Expanded(
                     child: discovered.isEmpty
-                        ? Center(
+                        ? const Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
+                              children: [
                                 CircularProgressIndicator(color: brandEmerald),
                                 SizedBox(height: 16),
                                 Text('Scanning Bluetooth Low Energy peripherals...'),

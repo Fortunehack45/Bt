@@ -32,10 +32,10 @@ class CircularRevealClipper extends CustomClipper<Path> {
   }
 
   double _calcMaxRadius(Size size, Offset center) {
-    final d1 = math.hypot(center.dx, center.dy);
-    final d2 = math.hypot(size.width - center.dx, center.dy);
-    final d3 = math.hypot(center.dx, size.height - center.dy);
-    final d4 = math.hypot(size.width - center.dx, size.height - center.dy);
+    final d1 = math.sqrt(center.dx * center.dx + center.dy * center.dy);
+    final d2 = math.sqrt((size.width - center.dx) * (size.width - center.dx) + center.dy * center.dy);
+    final d3 = math.sqrt(center.dx * center.dx + (size.height - center.dy) * (size.height - center.dy));
+    final d4 = math.sqrt((size.width - center.dx) * (size.width - center.dx) + (size.height - center.dy) * (size.height - center.dy));
     return math.max(math.max(d1, d2), math.max(d3, d4));
   }
 
@@ -118,10 +118,13 @@ class ThemeRevealState extends State<ThemeReveal>
         return;
       }
 
-      final pixelRatio = MediaQuery.maybeOf(context)?.devicePixelRatio ?? 2.0;
-      final image = await boundary.toImage(pixelRatio: pixelRatio);
+      final media = MediaQuery.maybeOf(context);
+      final pixelRatio = media?.devicePixelRatio ?? 2.0;
+      final screenSize = media?.size ?? const Size(400, 800);
 
-      final screenSize = MediaQuery.of(context).size;
+      final image = await boundary.toImage(pixelRatio: pixelRatio);
+      if (!mounted) return;
+
       // Default to top-right corner as indicated in reference red mark
       _origin = origin ?? Offset(screenSize.width, 0);
 

@@ -421,7 +421,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  '${provider.bpm > 0 ? provider.bpm : (provider.isDemoMode ? 74 : 72)}',
+                  provider.bpm > 0 ? '${provider.bpm}' : '--',
                   style: TextStyle(
                     fontFamily: AppTypography.fontFamily,
                     fontWeight: FontWeight.w900,
@@ -451,10 +451,17 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(width: 5, height: 5, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: provider.bpm > 0 ? const Color(0xFF10B981) : Colors.grey,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                   const SizedBox(width: 5),
                   Text(
-                    'Optimal Resting • 56-118 BPM Range',
+                    provider.bpm > 0 ? 'Pulse Logged • Genuine Sensor' : 'No Vitals Logged',
                     style: TextStyle(
                       fontFamily: AppTypography.fontFamily,
                       fontSize: 10,
@@ -556,15 +563,23 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
         );
 
       case 2: // Calorie & Nutrition
+        final calorieRatio = provider.targetCalories > 0
+            ? (provider.calories / provider.targetCalories).clamp(0.0, 1.0)
+            : 0.0;
+        final calorieDiff = provider.targetCalories - provider.calories;
+        final statusText = calorieDiff >= 0
+            ? '$calorieDiff kcal remaining'
+            : '${-calorieDiff} kcal surplus';
+
         return Row(
           children: [
             CircularProgressRing(
-              progress: 0.88,
+              progress: calorieRatio,
               size: isCompact ? 54 : 64,
               strokeWidth: 6,
               progressColor: AppColors.primary,
               trackColor: subColor.withOpacity(0.2),
-              centerPrimaryText: '${provider.calories > 0 ? provider.calories : 1775}',
+              centerPrimaryText: '${provider.calories}',
               centerSecondaryText: 'kcal',
             ),
             const SizedBox(width: 14),
@@ -595,7 +610,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Deficit: -325 kcal (On Track)',
+                    statusText,
                     style: TextStyle(
                       fontFamily: AppTypography.fontFamily,
                       fontSize: 10,
@@ -646,9 +661,9 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                     color: const Color(0xFF818CF8).withOpacity(0.2),
                     borderRadius: AppRadii.roundedPill,
                   ),
-                  child: const Text(
-                    '92 SCORE',
-                    style: TextStyle(
+                  child: Text(
+                    '${provider.sleepScore > 0 ? provider.sleepScore : 0} SCORE',
+                    style: const TextStyle(
                       fontFamily: AppTypography.fontFamily,
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -659,7 +674,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
               ],
             ),
             Text(
-              '${provider.sleepHours > 0 ? provider.sleepHours.toStringAsFixed(1) : "7.8"} hrs',
+              '${provider.sleepHours.toStringAsFixed(1)} hrs',
               style: TextStyle(
                 fontFamily: AppTypography.fontFamily,
                 fontWeight: FontWeight.w900,
@@ -668,7 +683,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
               ),
             ),
             Text(
-              'Deep: 1h 45m • REM: 2h 10m • 94% Efficiency',
+              'Goal: ${provider.sleepGoalHours.toStringAsFixed(1)} hrs • ${provider.sleepHours >= provider.sleepGoalHours ? "Goal Met" : "${(provider.sleepGoalHours - provider.sleepHours).toStringAsFixed(1)}h to goal"}',
               style: TextStyle(
                 fontFamily: AppTypography.fontFamily,
                 fontSize: 10,
@@ -680,6 +695,10 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
         );
 
       case 4: // Habits
+        final completedCount = provider.habits.where((h) => h.isCompleted).length;
+        final totalCount = provider.habits.length;
+        final leadHabit = provider.habits.isNotEmpty ? provider.habits.first : null;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -711,9 +730,9 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
                     ),
                   ],
                 ),
-                const Text(
-                  '4 / 5 DONE',
-                  style: TextStyle(
+                Text(
+                  '$completedCount / $totalCount DONE',
+                  style: const TextStyle(
                     fontFamily: AppTypography.fontFamily,
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
@@ -726,19 +745,26 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
               children: [
                 const Icon(Icons.local_fire_department_rounded, color: Colors.orange, size: 18),
                 const SizedBox(width: 6),
-                Text(
-                  '14-Day Morning Sunlight Streak',
-                  style: TextStyle(
-                    fontFamily: AppTypography.fontFamily,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    color: textColor,
+                Expanded(
+                  child: Text(
+                    leadHabit != null
+                        ? '${leadHabit.streakDays}-Day ${leadHabit.title} Streak'
+                        : 'No Active Protocols',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: textColor,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
             Text(
-              'Next: Evening Wind-down protocol (Pending)',
+              totalCount > completedCount
+                  ? '${totalCount - completedCount} protocol(s) remaining today'
+                  : (totalCount > 0 ? 'All protocols completed today' : 'Tap to add your first protocol'),
               style: TextStyle(
                 fontFamily: AppTypography.fontFamily,
                 fontSize: 10,
@@ -792,7 +818,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
               ],
             ),
             Text(
-              '${provider.steps > 0 ? provider.steps : 8420}',
+              '${provider.steps}',
               style: TextStyle(
                 fontFamily: AppTypography.fontFamily,
                 fontWeight: FontWeight.w900,
@@ -802,7 +828,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
               ),
             ),
             Text(
-              '6.4 km • 420 active kcal • 42 active mins',
+              '${PedometerService.calculateDistanceKm(provider.steps)} km • ${PedometerService.calculateActiveCalories(provider.steps)} active kcal • ${(provider.steps / 100).round()} active mins',
               style: TextStyle(
                 fontFamily: AppTypography.fontFamily,
                 fontSize: 10,
@@ -858,10 +884,10 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
             ),
             Row(
               children: [
-                Expanded(child: _buildMiniVital('PULSE', '${provider.bpm > 0 ? provider.bpm : 74}', 'BPM', AppColors.heartRed, textColor)),
+                Expanded(child: _buildMiniVital('PULSE', provider.bpm > 0 ? '${provider.bpm}' : '--', 'BPM', AppColors.heartRed, textColor)),
                 Expanded(child: _buildMiniVital('WATER', '${provider.waterGlasses}', 'GLS', AppColors.waterBlue, textColor)),
-                Expanded(child: _buildMiniVital('STEPS', '${provider.steps > 0 ? (provider.steps / 1000).toStringAsFixed(1) : "8.4"}k', 'STP', AppColors.stepsOrange, textColor)),
-                Expanded(child: _buildMiniVital('SLEEP', provider.sleepHours > 0 ? provider.sleepHours.toStringAsFixed(1) : '7.8', 'HRS', const Color(0xFF818CF8), textColor)),
+                Expanded(child: _buildMiniVital('STEPS', '${(provider.steps / 1000).toStringAsFixed(1)}k', 'STP', AppColors.stepsOrange, textColor)),
+                Expanded(child: _buildMiniVital('SLEEP', provider.sleepHours.toStringAsFixed(1), 'HRS', const Color(0xFF818CF8), textColor)),
               ],
             ),
           ],
