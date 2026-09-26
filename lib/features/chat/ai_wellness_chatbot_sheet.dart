@@ -99,22 +99,34 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
     final greeting = StringBuffer('Hello ${p.userName}! I\'m your Wellnest AI Health Companion, synced to your profile and live biometric telemetry.\n\n');
 
     if (p.isPeriodTrackingEnabled) {
+      final pred = p.periodPrediction;
+      final cycleLen = p.averageCycleLength.round();
+      final currentDay = p.currentCycleDay.clamp(1, cycleLen);
+      final phaseName = pred.currentPhase.displayName;
+      final fertility = p.isFertileWindowDay(DateTime.now())
+          ? 'High (Fertile Window)'
+          : (pred.currentPhase == PeriodPhase.ovulation ? 'Peak Fertility' : 'Low Fertility');
+      final daysUntilNext = pred.estimatedNextPeriodDate != null
+          ? pred.estimatedNextPeriodDate!.difference(DateTime.now()).inDays.clamp(0, 45)
+          : (cycleLen - currentDay).clamp(0, 45);
+
       greeting.writeln('🌸 **Reproductive Cycle Status:**');
-      greeting.writeln('• Cycle Day: Day ${p.currentCycleDay} of ${p.cycleLength} (${p.currentCyclePhase.displayName})');
-      greeting.writeln('• Fertility Window: ${p.fertilityStatus}');
-      greeting.writeln('• Next Period Expected: In ${p.daysUntilNextPeriod} days\n');
-    } else if (p.isPregnancyTrackingEnabled) {
-      final fetalData = GestationalDatabase.getDataForWeek(p.currentGestationWeek);
+      greeting.writeln('• Cycle Day: Day $currentDay of $cycleLen ($phaseName)');
+      greeting.writeln('• Fertility Window: $fertility');
+      greeting.writeln('• Next Period Expected: In $daysUntilNext days\n');
+    } else if (p.isPregnancyTrackingEnabled && p.pregnancyData != null) {
+      final preg = p.pregnancyData!;
+      final fetalData = GestationalDatabase.getWeekInfo(preg.currentWeek);
       greeting.writeln('🤰 **Gestational Status:**');
-      greeting.writeln('• Progress: Week ${p.currentGestationWeek} • Trimester ${p.currentTrimester}');
-      greeting.writeln('• Baby Size: ${fetalData.fruitComparison} (~${fetalData.lengthCm} cm, ${fetalData.weightGrams} g)');
-      greeting.writeln('• Due Date: In ${p.daysUntilDueDate} days\n');
+      greeting.writeln('• Progress: Week ${preg.currentWeek} • ${preg.trimesterLabel}');
+      greeting.writeln('• Baby Size: ${fetalData.babySizeFruit} (~${fetalData.estimatedLengthCm} cm, ${fetalData.estimatedWeightGrams.toInt()} g)');
+      greeting.writeln('• Due Date: In ${preg.daysUntilDueDate} days\n');
     }
 
     greeting.writeln('📈 **Biometrics & Clinical Baselines:**');
     greeting.writeln('• Steps: ${p.steps} / ${p.stepGoal} (${((p.steps / (p.stepGoal > 0 ? p.stepGoal : 1)) * 100).toInt()}% completed)');
     greeting.writeln('• Hydration: ${p.waterGlasses} / ${p.recommendedHydrationGlasses} glasses (${(p.waterGlasses * 0.25).toStringAsFixed(1)}L logged)');
-    greeting.writeln('• Basal Metabolic Rate (BMR): ${p.bmr} kcal/day');
+    greeting.writeln('• Basal Metabolic Rate (BMR): ${p.bmr.toStringAsFixed(0)} kcal/day');
     greeting.writeln('• Target Daily Calories: ${p.recommendedDailyCalories} kcal/day (${p.calories} kcal logged)');
     if (p.bpm > 0) greeting.writeln('• Resting Heart Rate: ${p.bpm} BPM');
     if (p.sleepHours > 0) greeting.writeln('• Last Sleep: ${p.sleepHours} hrs (${p.sleepScore}% quality score)');
@@ -193,7 +205,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
     // Period / Menstrual Cycle Questions
     if (query.contains('cramp') || query.contains('symptom') || query.contains('period pain')) {
       return '🩸 **Clinical Protocol for Menstrual Cramp Relief:**\n\n'
-          'Menstrual cramps (dysmenorrhea) are caused by uterine contractions triggered by prostaglandins ($PGF_{2\alpha}$). Here are evidence-based relief strategies:\n\n'
+          'Menstrual cramps (dysmenorrhea) are caused by uterine contractions triggered by prostaglandins (PGF2α). Here are evidence-based relief strategies:\n\n'
           '1. **Localized Heat Therapy:** Apply a heating pad or warm compress (approx. 40°C / 104°F) across the lower abdomen for 20 minutes to relax myometrial tension.\n'
           '2. **Magnesium & Anti-Inflammatory Nutrients:** Magnesium glycinate (200–300 mg) helps relax smooth muscle tissue. Hydrate with warm herbal chamomile or peppermint tea.\n'
           '3. **Gentle Pelvic Mobility:** Child\'s Pose, Cat-Cow, and light walking improve pelvic vascular flow and stimulate endogenous endorphin release.\n'
@@ -208,12 +220,23 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
         return '🌸 **Menstrual Tracking:**\n\nPeriod tracking is currently inactive. If eligible, you can enable Period Tracking in Settings to receive cycle phase forecasts, ovulation windows, and symptom logging.';
       }
 
+      final pred = p.periodPrediction;
+      final cycleLen = p.averageCycleLength.round();
+      final currentDay = p.currentCycleDay.clamp(1, cycleLen);
+      final phaseName = pred.currentPhase.displayName;
+      final fertility = p.isFertileWindowDay(DateTime.now())
+          ? 'High (Fertile Window)'
+          : (pred.currentPhase == PeriodPhase.ovulation ? 'Peak Fertility' : 'Low Fertility');
+      final daysUntilNext = pred.estimatedNextPeriodDate != null
+          ? pred.estimatedNextPeriodDate!.difference(DateTime.now()).inDays.clamp(0, 45)
+          : (cycleLen - currentDay).clamp(0, 45);
+
       return '🌸 **Menstrual Cycle Telemetry:**\n\n'
-          '• **Current Day:** Day **${p.currentCycleDay}** of ${p.cycleLength}\n'
-          '• **Cycle Phase:** **${p.currentCyclePhase.displayName}**\n'
-          '• **Fertile Window:** **${p.fertilityStatus}**\n'
-          '• **Next Period:** Expected in **${p.daysUntilNextPeriod} days**\n\n'
-          '💡 *Phase Guidance:* During the ${p.currentCyclePhase.displayName.toLowerCase()}, your body experiences distinct hormonal shifts. In the follicular phase, rising estrogen supports higher strength training intensity and cognitive sharpness; in the luteal phase, rising progesterone elevates your resting body temperature and metabolic rate, making magnesium and steady hydration essential.';
+          '• **Current Day:** Day **$currentDay** of $cycleLen\n'
+          '• **Cycle Phase:** **$phaseName**\n'
+          '• **Fertile Window:** **$fertility**\n'
+          '• **Next Period:** Expected in **$daysUntilNext days**\n\n'
+          '💡 *Phase Guidance:* During the ${phaseName.toLowerCase()}, your body experiences distinct hormonal shifts. In the follicular phase, rising estrogen supports higher strength training intensity and cognitive sharpness; in the luteal phase, rising progesterone elevates your resting body temperature and metabolic rate, making magnesium and steady hydration essential.';
     }
 
     // Pregnancy Questions
@@ -222,15 +245,19 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
         return '🤰 **Pregnancy Tracking:**\n\nPregnancy tracking is currently disabled. You can activate it in Settings to access weekly gestational milestones, baby size fruit comparisons, and trimester-specific guidance.';
       }
 
-      final fetalData = GestationalDatabase.getDataForWeek(p.currentGestationWeek);
-      return '🤰 **Gestational Milestone (Week ${p.currentGestationWeek}):**\n\n'
-          '• **Trimester:** Trimester ${p.currentTrimester}\n'
-          '• **Baby Size:** Size of a **${fetalData.fruitComparison}**\n'
-          '• **Approx. Length:** ~${fetalData.lengthCm} cm (crown to heel)\n'
-          '• **Approx. Weight:** ~${fetalData.weightGrams} g\n'
-          '• **Due Date Countdown:** **${p.daysUntilDueDate} days remaining**\n\n'
-          '🔬 **Development Highlights:**\n${fetalData.milestoneSummary}\n\n'
-          '👩‍⚕️ **Clinical Focus:**\n${fetalData.medicalGuidance}';
+      final preg = p.pregnancyData;
+      final currentWeek = preg?.currentWeek ?? 1;
+      final fetalData = GestationalDatabase.getWeekInfo(currentWeek);
+      final daysLeft = preg?.daysUntilDueDate ?? 280;
+
+      return '🤰 **Gestational Milestone (Week $currentWeek):**\n\n'
+          '• **Trimester:** ${fetalData.trimesterLabel}\n'
+          '• **Baby Size:** Size of a **${fetalData.babySizeFruit}**\n'
+          '• **Approx. Length:** ~${fetalData.estimatedLengthCm} cm (crown to heel)\n'
+          '• **Approx. Weight:** ~${fetalData.estimatedWeightGrams.toInt()} g\n'
+          '• **Due Date Countdown:** **$daysLeft days remaining**\n\n'
+          '🔬 **Development Highlights:**\n${fetalData.fetalMilestone}\n\n'
+          '👩‍⚕️ **Clinical Focus:**\n${fetalData.clinicalTip}';
     }
 
     if (query.contains('progress') || query.contains('analyze') || query.contains('summary')) {
@@ -239,7 +266,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
       return '📊 **Biometric Analysis for ${p.userName}:**\n\n'
           '• **Movement:** $stepPct% of your daily step goal achieved (${p.steps} / ${p.stepGoal} steps).\n'
           '• **Hydration:** $waterPct% of personalized clinical goal (${p.waterGlasses} / ${p.recommendedHydrationGlasses} glasses).\n'
-          '• **Metabolism:** ${p.calories} kcal logged vs ${p.recommendedDailyCalories} kcal clinical target (BMR: ${p.bmr} kcal).\n'
+          '• **Metabolism:** ${p.calories} kcal logged vs ${p.recommendedDailyCalories} kcal clinical target (BMR: ${p.bmr.toStringAsFixed(0)} kcal).\n'
           '• **Cardiovascular:** ${p.bpm > 0 ? 'Resting heart rate at ${p.bpm} BPM.' : 'No recent BPM spike detected.'}\n\n'
           '💡 *Recommendation:* You have strong consistency today! A light 15-minute evening stroll will easily push your step count toward your goal.';
     }
@@ -250,7 +277,7 @@ class _AiWellnessChatbotSheetState extends State<AiWellnessChatbotSheet> {
       if (remaining == 0) {
         return '💧 **Hydration Status: Fully Optimized!**\n\nYou have completed your clinically calculated hydration target of $goal glasses (${(goal * 0.25).toStringAsFixed(1)}L), perfectly matching your body mass of ${p.weightKg.toStringAsFixed(1)} kg. Cellular hydration and kidney filtration are optimal. Continue sipping as thirst indicates.';
       }
-      return '💧 **Personalized Hydration Pacing:**\n\nBased on your body weight of ${p.weightKg.toStringAsFixed(1)} kg ($35\\text{ml}/\\text{kg}$ guideline), your clinical goal is **$goal glasses** (${(goal * 0.25).toStringAsFixed(1)}L).\n\n'
+      return '💧 **Personalized Hydration Pacing:**\n\nBased on your body weight of ${p.weightKg.toStringAsFixed(1)} kg (35ml/kg clinical guideline), your clinical goal is **$goal glasses** (${(goal * 0.25).toStringAsFixed(1)}L).\n\n'
           '• **Logged:** ${p.waterGlasses} glasses\n'
           '• **Remaining:** $remaining glasses (${(remaining * 0.25).toStringAsFixed(1)}L)\n\n'
           '💡 *Tip:* Drink one 250ml glass within the next 45 minutes to maintain steady blood volume and cognitive alertness.';

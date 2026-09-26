@@ -165,7 +165,7 @@ class _LogPeriodSheetState extends State<LogPeriodSheet> {
         left: AppSpacing.pageMargin,
         right: AppSpacing.pageMargin,
         top: 12.0,
-        bottom: MediaQuery.of(context).padding.bottom + 20,
+        bottom: MediaQuery.of(context).padding.bottom + 20 + bottomInset,
       ),
       child: SingleChildScrollView(
         child: Column(

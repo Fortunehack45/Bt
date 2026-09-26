@@ -666,7 +666,7 @@ class _GestationalDialPainter extends CustomPainter {
       final effectiveSweep = sweepAngle - gapAngle;
       if (effectiveSweep <= 0.005) return;
 
-      final capRadius = (strokeWidth / 2) + 2.5;
+      const capRadius = (strokeWidth / 2) + 2.5;
 
       // Start cap coordinates
       final startCapX = center.dx + radius * math.cos(effectiveStart);
@@ -708,7 +708,7 @@ class _GestationalDialPainter extends CustomPainter {
     // Trimester 2 (Weeks 13 to 27)
     if (currentWeek > 12) {
       final t2Weeks = (currentWeek - 12).clamp(0, 15);
-      final t2StartAngle = -math.pi / 2 + (12 / 40.0) * 2 * math.pi;
+      const t2StartAngle = -math.pi / 2 + (12 / 40.0) * 2 * math.pi;
       final t2Sweep = (t2Weeks / 40.0) * 2 * math.pi;
       drawTrimesterArc(
         startAngle: t2StartAngle,
@@ -720,7 +720,7 @@ class _GestationalDialPainter extends CustomPainter {
     // Trimester 3 (Weeks 28 to 40)
     if (currentWeek > 27) {
       final t3Weeks = (currentWeek - 27).clamp(0, 13);
-      final t3StartAngle = -math.pi / 2 + (27 / 40.0) * 2 * math.pi;
+      const t3StartAngle = -math.pi / 2 + (27 / 40.0) * 2 * math.pi;
       final t3Sweep = (t3Weeks / 40.0) * 2 * math.pi;
       drawTrimesterArc(
         startAngle: t3StartAngle,

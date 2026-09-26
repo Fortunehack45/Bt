@@ -224,7 +224,7 @@ class _AddPrenatalCheckupSheetState extends State<AddPrenatalCheckupSheet> {
                       color: accent.withOpacity(0.18),
                       borderRadius: AppRadii.roundedSm,
                     ),
-                    child: Icon(Icons.event_note_rounded, color: accent, size: 22),
+                    child: const Icon(Icons.event_note_rounded, color: accent, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Column(
@@ -310,7 +310,7 @@ class _AddPrenatalCheckupSheetState extends State<AddPrenatalCheckupSheet> {
               fontFamily: AppTypography.fontFamily,
               color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
             ),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: 'e.g. 20-Week Anatomy Ultrasound',
               prefixIcon: Icon(Icons.edit_note_rounded, color: accent, size: 20),
             ),
@@ -361,7 +361,7 @@ class _AddPrenatalCheckupSheetState extends State<AddPrenatalCheckupSheet> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.calendar_today_rounded, size: 16, color: accent),
+                                const Icon(Icons.calendar_today_rounded, size: 16, color: accent),
                                 const SizedBox(width: 8),
                                 Text(
                                   '${_months[_selectedDate.month - 1]} ${_selectedDate.day}',
@@ -377,7 +377,7 @@ class _AddPrenatalCheckupSheetState extends State<AddPrenatalCheckupSheet> {
                               ),
                               child: Text(
                                 daysUntil >= 0 ? 'in ${daysUntil}d' : '${daysUntil.abs()}d ago',
-                                style: TextStyle(color: accent, fontSize: 10.5, fontWeight: FontWeight.w800),
+                                style: const TextStyle(color: accent, fontSize: 10.5, fontWeight: FontWeight.w800),
                               ),
                             ),
                           ],
@@ -417,7 +417,7 @@ class _AddPrenatalCheckupSheetState extends State<AddPrenatalCheckupSheet> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.access_time_rounded, size: 16, color: accent),
+                                const Icon(Icons.access_time_rounded, size: 16, color: accent),
                                 const SizedBox(width: 8),
                                 Text(_selectedTime, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                               ],

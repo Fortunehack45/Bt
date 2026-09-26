@@ -5,7 +5,6 @@ import '../../../core/theme/app_radii.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../core/widgets/solid_wellness_card.dart';
-import '../../../domain/models/reproductive_health_models.dart';
 import '../../../domain/state/wellness_provider.dart';
 import 'log_period_sheet.dart';
 
@@ -30,36 +29,12 @@ class InteractiveCycleWheelHero extends StatefulWidget {
   State<InteractiveCycleWheelHero> createState() => _InteractiveCycleWheelHeroState();
 }
 
-class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animController;
-  late Animation<double> _progressAnim;
-
+class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
   // Selected date being inspected
   DateTime _viewDate = DateTime.now();
 
   // Inspected cycle day (1 to cycleLength). If null, defaults to today's cycle day.
   int? _inspectedCycleDay;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _progressAnim = CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOutCubic,
-    );
-    _animController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
 
   static const List<String> _weekDayNames = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
@@ -92,8 +67,6 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = WellnessStateScope.of(context);
-    final prediction = provider.periodPrediction;
-    final activePeriod = provider.activePeriod;
 
     final cycleLen = provider.averageCycleLength.round().clamp(21, 45);
     final periodDur = provider.averagePeriodDuration.round().clamp(3, 10);
@@ -630,7 +603,7 @@ class _TrulyInteractiveCyclePainter extends CustomPainter {
       final effectiveSweep = sweepAngle - gapAngle;
       if (effectiveSweep <= 0.005) return;
 
-      final capRadius = (strokeWidth / 2) + 2.5;
+      const capRadius = (strokeWidth / 2) + 2.5;
 
       // Start cap coordinates
       final startCapX = center.dx + radius * math.cos(effectiveStart);

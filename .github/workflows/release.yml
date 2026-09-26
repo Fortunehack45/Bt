@@ -76,7 +76,7 @@ jobs:
         run: flutter pub get
 
       - name: Build iOS Application (Simulator / Unsigned)
-        run: flutter build ios --simulator
+        run: flutter build ios --simulator --no-codesign
 
       - name: Package iOS IPA (Payload Archive)
         run: |
