@@ -151,11 +151,11 @@ class _LogWeightFormState extends State<_LogWeightForm> {
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: AppTypography.fontFamily,
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFFF59E0B),
+            color: Color(0xFFF59E0B),
           ),
         ),
       ),

@@ -68,7 +68,7 @@ class _LogSleepFormState extends State<_LogSleepForm> {
             children: [
               Text(
                 '${_hours.toStringAsFixed(1)} hrs',
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: AppTypography.fontFamily,
                   fontSize: 40,
                   fontWeight: FontWeight.w800,

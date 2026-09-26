@@ -10,12 +10,13 @@ Future<T?> showPlatformGlassBottomSheet<T>({
   required WidgetBuilder builder,
   bool isDismissible = true,
   bool enableDrag = true,
+  bool isScrollControlled = true,
 }) {
   return showModalBottomSheet<T>(
     context: context,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withOpacity(0.35),
-    isScrollControlled: true,
+    isScrollControlled: isScrollControlled,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     builder: (context) {

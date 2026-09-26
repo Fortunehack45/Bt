@@ -82,8 +82,6 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
     final daysInMonth = DateUtils.getDaysInMonth(_viewMonth.year, _viewMonth.month);
     final firstDayWeekday = DateTime(_viewMonth.year, _viewMonth.month, 1).weekday % 7; // Sunday = 0
 
-    final telemetry = widget.provider.getDayTelemetry(_selected);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -115,7 +113,7 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
                       color: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
                       borderRadius: AppRadii.roundedPill,
                     ),
-                    child: Text(
+                    child: const Text(
                       'Today',
                       style: TextStyle(
                         fontFamily: AppTypography.fontFamily,

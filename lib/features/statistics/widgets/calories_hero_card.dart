@@ -49,7 +49,7 @@ class CaloriesHeroCard extends StatelessWidget {
               if (onTap != null)
                 GestureDetector(
                   onTap: onTap,
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
@@ -61,8 +61,8 @@ class CaloriesHeroCard extends StatelessWidget {
                           color: AppColors.primaryDark,
                         ),
                       ),
-                      const SizedBox(width: 2),
-                      const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.primaryDark),
+                      SizedBox(width: 2),
+                      Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.primaryDark),
                     ],
                   ),
                 ),

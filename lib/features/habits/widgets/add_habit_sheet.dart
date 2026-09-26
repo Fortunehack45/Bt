@@ -132,13 +132,13 @@ class _AddHabitFormState extends State<_AddHabitForm> {
             filled: true,
             fillColor: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(
+            border: const OutlineInputBorder(
               borderRadius: AppRadii.roundedMd,
               borderSide: BorderSide.none,
             ),
-            focusedBorder: OutlineInputBorder(
+            focusedBorder: const OutlineInputBorder(
               borderRadius: AppRadii.roundedMd,
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
             ),
           ),
         ),

@@ -6,7 +6,6 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../core/widgets/circular_progress_ring.dart';
 import '../../../core/widgets/solid_wellness_card.dart';
-import '../../../core/widgets/wellness_bottom_sheet.dart';
 import '../../../domain/state/wellness_provider.dart';
 
 void showAiWellnessInsightsSheet(BuildContext context, WellnessProvider provider) {
@@ -24,10 +23,9 @@ void showAiWellnessInsightsSheet(BuildContext context, WellnessProvider provider
     backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
     shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedSheet),
     builder: (sheetContext) {
+      bool isSyncing = false;
       return StatefulBuilder(
         builder: (ctx, setState) {
-          bool isSyncing = false;
-
           return Padding(
             padding: EdgeInsets.only(
               left: AppSpacing.pageMargin,

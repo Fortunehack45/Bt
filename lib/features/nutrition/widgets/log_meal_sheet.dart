@@ -31,7 +31,7 @@ class _LogMealFormState extends State<_LogMealForm> {
   late String _mealType;
   final _nameController = TextEditingController();
   final _calorieController = TextEditingController(text: '350');
-  String _notes = '';
+  final String _notes = '';
 
   final List<Map<String, dynamic>> _types = const [
     {'name': 'Breakfast', 'icon': Icons.wb_twilight_rounded, 'color': Color(0xFFF59E0B)},
@@ -170,13 +170,13 @@ class _LogMealFormState extends State<_LogMealForm> {
             filled: true,
             fillColor: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(
+            border: const OutlineInputBorder(
               borderRadius: AppRadii.roundedMd,
               borderSide: BorderSide.none,
             ),
-            focusedBorder: OutlineInputBorder(
+            focusedBorder: const OutlineInputBorder(
               borderRadius: AppRadii.roundedMd,
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
             ),
           ),
         ),
@@ -200,7 +200,7 @@ class _LogMealFormState extends State<_LogMealForm> {
               child: TextField(
                 controller: _calorieController,
                 keyboardType: TextInputType.number,
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: AppTypography.fontFamily,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -216,7 +216,7 @@ class _LogMealFormState extends State<_LogMealForm> {
                   filled: true,
                   fillColor: isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  border: OutlineInputBorder(
+                  border: const OutlineInputBorder(
                     borderRadius: AppRadii.roundedMd,
                     borderSide: BorderSide.none,
                   ),
@@ -243,7 +243,7 @@ class _LogMealFormState extends State<_LogMealForm> {
                   child: Center(
                     child: Text(
                       '+$c',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: AppTypography.fontFamily,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,

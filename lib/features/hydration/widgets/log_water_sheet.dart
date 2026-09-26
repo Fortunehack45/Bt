@@ -76,7 +76,7 @@ class _LogWaterFormState extends State<_LogWaterForm> {
             children: [
               Text(
                 '$_ml ml',
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: AppTypography.fontFamily,
                   fontSize: 42,
                   fontWeight: FontWeight.w800,

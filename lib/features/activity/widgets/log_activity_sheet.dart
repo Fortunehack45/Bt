@@ -149,7 +149,7 @@ class _LogActivityFormState extends State<_LogActivityForm> {
               fontWeight: FontWeight.w700,
               color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
             )),
-            Text('${_durationMinutes.toInt()} minutes', style: TextStyle(
+            Text('${_durationMinutes.toInt()} minutes', style: const TextStyle(
               fontFamily: AppTypography.fontFamily,
               fontSize: 16,
               fontWeight: FontWeight.w800,

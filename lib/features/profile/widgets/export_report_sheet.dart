@@ -508,7 +508,7 @@ class ExportReportSheet extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+              shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
             ),
             icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.black, size: 20),
             label: const Text(
@@ -528,7 +528,7 @@ class ExportReportSheet extends StatelessWidget {
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+              shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
               side: BorderSide(
                 color: isDark ? const Color(0xFF33423A) : const Color(0xFFC0CEC4),
               ),
