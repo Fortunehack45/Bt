@@ -4,6 +4,8 @@ import 'package:wellnest/domain/models/smart_device_models.dart';
 import 'package:wellnest/domain/state/wellness_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Smart Device & Vitals Telemetry Tests', () {
     test('SmartDevice model serialization and properties', () {
       final device = SmartDevice(

@@ -4,7 +4,7 @@ import '../../core/theme/app_colors.dart';
 /// Categories of health and wellness notifications supported by Wellnest.
 enum NotificationCategory {
   all(displayName: 'All', label: 'All'),
-  reminders(displayName: 'Reminders', label: 'Reminder'),
+  reminders(displayName: 'Reminders', label: 'Reminders'),
   insights(displayName: 'Insights', label: 'Insight'),
   reproductive(displayName: 'Reproductive', label: 'Cycle & Baby'),
   system(displayName: 'System', label: 'System');

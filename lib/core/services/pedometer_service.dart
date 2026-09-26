@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/services.dart';
+import '../utils/haptic_service.dart';
 import '../../domain/state/wellness_provider.dart';
 
 /// Walking state category based on cadence.
@@ -102,7 +102,7 @@ class PedometerService {
       }
       provider.addSteps(1);
       _stepStreamController.add(provider.steps);
-      HapticFeedback.selectionClick();
+      HapticService.selection();
     });
   }
 
@@ -110,7 +110,7 @@ class PedometerService {
   void simulateBurstWalk(WellnessProvider provider, int stepsCount) {
     provider.addSteps(stepsCount);
     _stepStreamController.add(provider.steps);
-    HapticFeedback.mediumImpact();
+    HapticService.mediumImpact();
   }
 
   void dispose() {
