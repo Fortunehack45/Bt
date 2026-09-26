@@ -5,13 +5,13 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';
-import '../../core/widgets/circular_progress_ring.dart';
 import '../../core/widgets/empty_state_view.dart';
 import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
 import '../../domain/state/wellness_provider.dart';
 import '../pregnancy_tracking/pregnancy_tracking_screen.dart';
 import 'widgets/cycle_calendar_view.dart';
+import 'widgets/interactive_cycle_wheel_hero.dart';
 import 'widgets/log_period_sheet.dart';
 
 /// Full-featured Period Tracking & Menstrual Vitality Hub.
@@ -29,14 +29,10 @@ class PeriodTrackingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = WellnessStateScope.of(context);
-    final prediction = provider.periodPrediction;
-    final activePeriod = provider.activePeriod;
     final lastPeriod = provider.lastRecordedPeriod;
 
     final cycleLen = provider.averageCycleLength.round();
     final periodDur = provider.averagePeriodDuration.round();
-    final currentDay = provider.currentCycleDay;
-    final progress = (currentDay / cycleLen).clamp(0.0, 1.0);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
@@ -45,167 +41,35 @@ class PeriodTrackingScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         topSafeArea: true,
         bottomSafeArea: true,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.only(
-            left: AppSpacing.pageMargin,
-            right: AppSpacing.pageMargin,
-            top: 10.0,
-            bottom: AppSpacing.contentBottomPadding(context),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Screen Header
-              ScreenHeader(
-                title: 'Menstrual Vitality',
-                onBack: onBack,
-                action: IconButton(
-                  icon: const Icon(Icons.add_rounded),
-                  tooltip: 'Log Flow or Symptoms',
-                  onPressed: () => showLogPeriodSheet(context, provider),
-                ),
+        child: Column(
+          children: [
+            // Standardized Screen Header matching exact 16px page margin of the app
+            ScreenHeader(
+              title: 'Menstrual Vitality',
+              onBack: onBack,
+              action: IconButton(
+                icon: const Icon(Icons.add_rounded),
+                tooltip: 'Log Flow or Symptoms',
+                onPressed: () => showLogPeriodSheet(context, provider),
               ),
-              const SizedBox(height: AppSpacing.md),
+            ),
 
-              // Hero Cycle Status Card
-              SolidWellnessCard(
-                padding: const EdgeInsets.all(18),
+            // Scrollable Dashboard Content with aligned 16px horizontal margin
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: AppSpacing.pageMargin,
+                  right: AppSpacing.pageMargin,
+                  top: 4.0,
+                  bottom: AppSpacing.contentBottomPadding(context),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Cycle Status',
-                          style: TextStyle(
-                            fontFamily: AppTypography.fontFamily,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: prediction.currentPhase.color.withOpacity(0.18),
-                            borderRadius: AppRadii.roundedPill,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: prediction.currentPhase.color,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                prediction.currentPhase.displayName,
-                                style: TextStyle(
-                                  fontFamily: AppTypography.fontFamily,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: prediction.currentPhase.color,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Ring & Day Readout
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 86,
-                          height: 86,
-                          child: CircularProgressRing(
-                            progress: progress,
-                            strokeWidth: 8.0,
-                            progressColor: prediction.currentPhase.color,
-                            backgroundColor: isDark ? const Color(0xFF26332C) : const Color(0xFFE2EBE5),
-                            center: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Day',
-                                  style: TextStyle(
-                                    fontFamily: AppTypography.fontFamily,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
-                                  ),
-                                ),
-                                Text(
-                                  '$currentDay',
-                                  style: TextStyle(
-                                    fontFamily: AppTypography.fontFamily,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900,
-                                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 18),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                activePeriod != null
-                                    ? 'Period Active (${activePeriod.flow.displayName} Flow)'
-                                    : (prediction.estimatedNextPeriodDate != null
-                                        ? 'Next period in ~${prediction.estimatedNextPeriodDate!.difference(DateTime.now()).inDays.abs()} days'
-                                        : 'Cycle in progress'),
-                                style: TextStyle(
-                                  fontFamily: AppTypography.fontFamily,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                prediction.currentPhase.description,
-                                style: AppTypography.caption(isDark).copyWith(fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Quick Log Action Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: ElevatedButton.icon(
-                        onPressed: () => showLogPeriodSheet(context, provider),
-                        icon: const Icon(Icons.water_drop_rounded, size: 16),
-                        label: const Text('Log Today\'s Flow & Symptoms'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF43F5E),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
+                    // Hero Interactive Cycle Wheel (Reference Image 1)
+                    const InteractiveCycleWheelHero(),
+                    const SizedBox(height: AppSpacing.md),
 
               // 2x2 Telemetry Cards
               Row(
@@ -491,7 +355,10 @@ class PeriodTrackingScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ],
+  ),
+),
+);
   }
 
   Widget _buildMetricTile({

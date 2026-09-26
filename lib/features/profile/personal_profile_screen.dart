@@ -153,7 +153,10 @@ class PersonalProfileScreen extends StatelessWidget {
                             selectedColor: const Color(0xFFF43F5E).withOpacity(0.2),
                             checkmarkColor: const Color(0xFFF43F5E),
                             onSelected: (val) {
-                              setState(() => selectedTrackPeriod = val);
+                              setState(() {
+                                selectedTrackPeriod = val;
+                                if (val) selectedTrackPregnancy = false;
+                              });
                             },
                           ),
                           const SizedBox(width: 8),
@@ -163,7 +166,10 @@ class PersonalProfileScreen extends StatelessWidget {
                             selectedColor: const Color(0xFFA855F7).withOpacity(0.2),
                             checkmarkColor: const Color(0xFFA855F7),
                             onSelected: (val) {
-                              setState(() => selectedTrackPregnancy = val);
+                              setState(() {
+                                selectedTrackPregnancy = val;
+                                if (val) selectedTrackPeriod = false;
+                              });
                             },
                           ),
                         ],

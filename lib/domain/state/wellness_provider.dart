@@ -125,8 +125,16 @@ class WellnessProvider extends ChangeNotifier {
     if (targetWeightKg != null) _targetWeightKg = targetWeightKg;
     if (primaryGoal != null) _primaryGoal = primaryGoal;
     if (activityLevel != null) _activityLevel = activityLevel;
-    if (isPeriodTrackingEnabled != null) _isPeriodTrackingEnabled = isPeriodTrackingEnabled;
-    if (isPregnancyTrackingEnabled != null) _isPregnancyTrackingEnabled = isPregnancyTrackingEnabled;
+    if (isPregnancyTrackingEnabled == true) {
+      _isPregnancyTrackingEnabled = true;
+      _isPeriodTrackingEnabled = false;
+    } else if (isPeriodTrackingEnabled == true) {
+      _isPeriodTrackingEnabled = true;
+      _isPregnancyTrackingEnabled = false;
+    } else {
+      if (isPeriodTrackingEnabled != null) _isPeriodTrackingEnabled = isPeriodTrackingEnabled;
+      if (isPregnancyTrackingEnabled != null) _isPregnancyTrackingEnabled = isPregnancyTrackingEnabled;
+    }
     notifyListeners();
   }
 
@@ -678,11 +686,17 @@ class WellnessProvider extends ChangeNotifier {
 
   void setPeriodTrackingEnabled(bool enabled) {
     _isPeriodTrackingEnabled = enabled;
+    if (enabled) {
+      _isPregnancyTrackingEnabled = false;
+    }
     notifyListeners();
   }
 
   void setPregnancyTrackingEnabled(bool enabled) {
     _isPregnancyTrackingEnabled = enabled;
+    if (enabled) {
+      _isPeriodTrackingEnabled = false;
+    }
     notifyListeners();
   }
 
@@ -970,19 +984,32 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addPregnancyAppointment(String title, DateTime date, {
+  void addPregnancyAppointment(
+    String title,
+    DateTime date, {
+    String timeString = '09:30 AM',
+    PrenatalAppointmentType type = PrenatalAppointmentType.routineCheckup,
     String providerOrLocation = '',
     String notes = '',
+    String preparation = '',
   }) {
     final appt = PregnancyAppointment(
       id: 'appt_${DateTime.now().millisecondsSinceEpoch}',
       title: title,
       date: date,
+      timeString: timeString,
+      type: type,
       providerOrLocation: providerOrLocation,
       notes: notes,
+      preparation: preparation,
       isCompleted: false,
     );
     _pregnancyAppointments.add(appt);
+    notifyListeners();
+  }
+
+  void deletePregnancyAppointment(String id) {
+    _pregnancyAppointments.removeWhere((a) => a.id == id);
     notifyListeners();
   }
 

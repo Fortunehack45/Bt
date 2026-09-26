@@ -776,7 +776,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               isSelected: _trackPeriod,
               onTap: () {
                 HapticService.selection();
-                setState(() => _trackPeriod = !_trackPeriod);
+                setState(() {
+                  _trackPeriod = !_trackPeriod;
+                  if (_trackPeriod) _trackPregnancy = false;
+                });
               },
               isDark: isDark,
             ),
@@ -791,9 +794,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               isSelected: _trackPregnancy,
               onTap: () {
                 HapticService.selection();
-                setState(() => _trackPregnancy = !_trackPregnancy);
+                setState(() {
+                  _trackPregnancy = !_trackPregnancy;
+                  if (_trackPregnancy) _trackPeriod = false;
+                });
               },
               isDark: isDark,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Note: Menstrual cycles naturally pause during pregnancy. You can switch between modes at any time in Settings.',
+              style: AppTypography.caption(isDark).copyWith(fontSize: 11, fontStyle: FontStyle.italic),
             ),
           ],
         ],

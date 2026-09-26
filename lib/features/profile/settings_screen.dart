@@ -526,6 +526,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
+                      child: Text(
+                        'Note: Menstrual cycles naturally cease during pregnancy. Activating one mode automatically pauses the live status of the other while 100% of your historical records remain safely preserved.',
+                        style: AppTypography.caption(isDark).copyWith(fontSize: 11.5, fontStyle: FontStyle.italic),
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.lg),
 
                     // Section 5: Units & Data Management

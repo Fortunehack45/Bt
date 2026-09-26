@@ -16,12 +16,21 @@ void showLogPregnancyWellnessSheet(BuildContext context, WellnessProvider provid
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withOpacity(0.55),
     builder: (sheetContext) {
+      final topPadding = MediaQuery.of(sheetContext).padding.top;
       return Container(
+        margin: EdgeInsets.only(top: topPadding + 20),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(sheetContext).size.height - (topPadding + 20),
+        ),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF141C17) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        child: LogPregnancyWellnessSheet(provider: provider),
+        child: SafeArea(
+          top: false,
+          bottom: true,
+          child: LogPregnancyWellnessSheet(provider: provider),
+        ),
       );
     },
   );

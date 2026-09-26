@@ -315,21 +315,46 @@ class PregnancyLogEntry {
   });
 }
 
-/// Prenatal appointment or reminder item.
+/// Clinical category for prenatal appointments.
+enum PrenatalAppointmentType {
+  routineCheckup(displayName: 'Routine OB/GYN Visit', icon: Icons.medical_services_rounded, color: Color(0xFF10B981)),
+  ultrasoundScan(displayName: 'Ultrasound / Anatomy Scan', icon: Icons.biotech_rounded, color: Color(0xFFA855F7)),
+  labBloodwork(displayName: 'Bloodwork & Lab Panel', icon: Icons.opacity_rounded, color: Color(0xFFF43F5E)),
+  glucoseTest(displayName: 'Glucose Screening Test', icon: Icons.analytics_rounded, color: Color(0xFFF59E0B)),
+  fetalMonitoring(displayName: 'Fetal Heartbeat / NST', icon: Icons.favorite_rounded, color: Color(0xFFEC4899)),
+  consultation(displayName: 'Midwife / Specialist Consult', icon: Icons.forum_rounded, color: Color(0xFF2EB5FA));
+
+  final String displayName;
+  final IconData icon;
+  final Color color;
+  const PrenatalAppointmentType({
+    required this.displayName,
+    required this.icon,
+    required this.color,
+  });
+}
+
+/// Prenatal appointment or reminder item with clinical details.
 class PregnancyAppointment {
   final String id;
   final String title;
   final DateTime date;
+  final String timeString;
+  final PrenatalAppointmentType type;
   final String providerOrLocation;
   final String notes;
+  final String preparation;
   final bool isCompleted;
 
   const PregnancyAppointment({
     required this.id,
     required this.title,
     required this.date,
+    this.timeString = '09:30 AM',
+    this.type = PrenatalAppointmentType.routineCheckup,
     this.providerOrLocation = '',
     this.notes = '',
+    this.preparation = '',
     this.isCompleted = false,
   });
 
@@ -337,16 +362,22 @@ class PregnancyAppointment {
     String? id,
     String? title,
     DateTime? date,
+    String? timeString,
+    PrenatalAppointmentType? type,
     String? providerOrLocation,
     String? notes,
+    String? preparation,
     bool? isCompleted,
   }) {
     return PregnancyAppointment(
       id: id ?? this.id,
       title: title ?? this.title,
       date: date ?? this.date,
+      timeString: timeString ?? this.timeString,
+      type: type ?? this.type,
       providerOrLocation: providerOrLocation ?? this.providerOrLocation,
       notes: notes ?? this.notes,
+      preparation: preparation ?? this.preparation,
       isCompleted: isCompleted ?? this.isCompleted,
     );
   }
