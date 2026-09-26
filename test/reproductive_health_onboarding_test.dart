@@ -18,7 +18,7 @@ void main() {
         age: 28,
         heightCm: 165.0,
         weightKg: 60.0,
-        goal: 'Vitality & Daily Energy',
+        primaryGoal: 'Vitality & Daily Energy',
         isPeriodTrackingEnabled: true,
         isPregnancyTrackingEnabled: false,
       );
@@ -36,7 +36,7 @@ void main() {
         age: 26,
         heightCm: 168.0,
         weightKg: 58.0,
-        goal: 'Vitality & Daily Energy',
+        primaryGoal: 'Vitality & Daily Energy',
         isPeriodTrackingEnabled: true,
       );
 
@@ -73,7 +73,7 @@ void main() {
         age: 29,
         heightCm: 165.0,
         weightKg: 62.0,
-        goal: 'Healthy Weight Management',
+        primaryGoal: 'Healthy Weight Management',
         isPregnancyTrackingEnabled: true,
       );
 
@@ -112,7 +112,7 @@ void main() {
         age: 32,
         heightCm: 180.0,
         weightKg: 75.0,
-        goal: 'Cardiovascular Fitness',
+        primaryGoal: 'Cardiovascular Fitness',
         isPeriodTrackingEnabled: false,
         isPregnancyTrackingEnabled: false,
       );

@@ -9,7 +9,6 @@ import '../../core/widgets/circular_progress_ring.dart';
 import '../../core/widgets/empty_state_view.dart';
 import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
-import '../../domain/models/reproductive_health_models.dart';
 import '../../domain/state/wellness_provider.dart';
 import 'widgets/log_pregnancy_wellness_sheet.dart';
 import 'widgets/pregnancy_setup_sheet.dart';
@@ -39,7 +38,7 @@ class PregnancyTrackingScreen extends StatelessWidget {
           builder: (dialogCtx, setDialogState) {
             return AlertDialog(
               backgroundColor: isDark ? const Color(0xFF141C17) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: AppRadii.roundedMd),
+              shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedMd),
               title: Text(
                 'Add Prenatal Checkup',
                 style: AppTypography.h3(isDark),

@@ -771,7 +771,7 @@ class WellnessProvider extends ChangeNotifier {
     final isLearning = _periodCycles.length < 2;
     final message = isLearning
         ? "We're still learning your cycle. Log a few more cycles to improve your estimates."
-        : "Estimate based on your previous ${cycleLen}-day cycle patterns. Individual cycles vary naturally.";
+        : "Estimate based on your previous $cycleLen-day cycle patterns. Individual cycles vary naturally.";
 
     return PeriodPrediction(
       estimatedNextPeriodDate: nextPeriod,

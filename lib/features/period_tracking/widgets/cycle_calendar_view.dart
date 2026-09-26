@@ -4,7 +4,6 @@ import '../../../core/theme/app_radii.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../core/widgets/solid_wellness_card.dart';
-import '../../../domain/models/reproductive_health_models.dart';
 import '../../../domain/state/wellness_provider.dart';
 import 'log_period_sheet.dart';
 

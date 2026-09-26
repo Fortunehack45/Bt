@@ -21,7 +21,8 @@ class ScreenHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.leading,
-    this.trailing,
+    Widget? trailing,
+    Widget? action,
     this.onBack,
     this.onLeadingTap,
     this.height = 56.0,
@@ -31,7 +32,7 @@ class ScreenHeader extends StatelessWidget {
       top: 10.0,
       bottom: 8.0,
     ),
-  });
+  }) : trailing = trailing ?? action;
 
   @override
   Widget build(BuildContext context) {

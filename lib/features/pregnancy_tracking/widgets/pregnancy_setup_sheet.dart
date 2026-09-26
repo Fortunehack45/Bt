@@ -236,11 +236,11 @@ class _PregnancySetupSheetState extends State<PregnancySetupSheet> {
                     children: [
                       Text(
                         '${_months[_selectedDate.month - 1]} ${_selectedDate.day}, ${_selectedDate.year}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: AppTypography.fontFamily,
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFFA855F7),
+                          color: Color(0xFFA855F7),
                         ),
                       ),
                       Container(
