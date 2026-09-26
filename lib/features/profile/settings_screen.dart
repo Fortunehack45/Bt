@@ -356,6 +356,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     SolidWellnessCard(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
