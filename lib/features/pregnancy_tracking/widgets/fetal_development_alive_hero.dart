@@ -5,12 +5,18 @@ import '../../../core/theme/app_radii.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../core/widgets/solid_wellness_card.dart';
+import '../../../domain/models/gestational_database.dart';
 import '../../../domain/state/wellness_provider.dart';
 import 'log_pregnancy_wellness_sheet.dart';
 
-/// Luxury Gestational Progress Hero Portal for Pregnancy Tracking.
-/// Features a wide, solid multi-trimester circular dial, active week floating badge,
-/// maternal heartbeat glow, live gestational age readout, and developmental baby size card.
+/// Truly Interactive, Biologically Accurate 40-Week Gestational Progress Hero Portal.
+///
+/// Features:
+/// - Tactile circular dial scrubbing across all 40 weeks of human pregnancy
+/// - Real-time medical data lookup from [GestationalDatabase] (fetal dimensions, milestones, maternal guidance)
+/// - Trimester segmented color arcs (T1 Rose, T2 Purple, T3 Amber) with boundary dividers
+/// - Guaranteed overflow-proof cards and metrics displays
+/// - Quick trimester jumping and 1-tap "Jump to Current Week" return action
 class FetalDevelopmentAliveHero extends StatefulWidget {
   final VoidCallback? onTrimesterDetailsTap;
 
@@ -25,26 +31,28 @@ class FetalDevelopmentAliveHero extends StatefulWidget {
 
 class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
     with SingleTickerProviderStateMixin {
-  late AnimationController _sweepController;
-  late Animation<double> _sweepAnimation;
+  late AnimationController _animController;
+  late Animation<double> _pulseAnimation;
+
+  // Selected week being actively inspected on the dial (1 to 40)
+  int? _inspectedWeek;
 
   @override
   void initState() {
     super.initState();
-    _sweepController = AnimationController(
+    _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.96, end: 1.04).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOutSine),
     );
-    _sweepAnimation = CurvedAnimation(
-      parent: _sweepController,
-      curve: Curves.easeOutCubic,
-    );
-    _sweepController.forward();
   }
 
   @override
   void dispose() {
-    _sweepController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
@@ -53,154 +61,307 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ];
 
+  void _onDialTouch(Offset localPos, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final dx = localPos.dx - center.dx;
+    final dy = localPos.dy - center.dy;
+
+    // Angle starting from top (-pi/2) going clockwise [0, 2*pi]
+    double angle = math.atan2(dy, dx) + (math.pi / 2);
+    if (angle < 0) angle += 2 * math.pi;
+
+    final weekFrac = angle / (2 * math.pi);
+    final newWeek = (weekFrac * 40).round().clamp(1, 40);
+
+    if (newWeek != _inspectedWeek) {
+      HapticService.tick();
+      setState(() => _inspectedWeek = newWeek);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = WellnessStateScope.of(context);
     final preg = provider.pregnancyData;
 
-    final week = preg?.currentWeek ?? 22;
-    final day = preg?.currentDayOfCurrentWeek ?? 2;
-    final due = preg?.dueDate ?? DateTime.now().add(const Duration(days: 131));
-    final daysUntilDue = preg?.daysUntilDueDate ?? 131;
-    final fruit = preg?.babySizeFruit ?? 'Papaya';
-    final lengthCm = preg?.estimatedLengthCm ?? 27.8;
-    final weightG = preg?.estimatedWeightGrams ?? 430.0;
-    final comparison = preg?.babySizeComparison ?? 'Size of a golden papaya (~27.8cm)';
+    final actualWeek = preg?.currentWeek ?? 12;
+    final currentDay = preg?.currentDayOfCurrentWeek ?? 0;
+    final due = preg?.dueDate ?? DateTime.now().add(const Duration(days: 196));
+    final daysUntilDue = preg?.daysUntilDueDate ?? 196;
 
-    final progressRatio = (week / 40.0).clamp(0.0, 1.0);
+    final activeWeek = (_inspectedWeek ?? actualWeek).clamp(1, 40);
+    final isViewingDifferentWeek = activeWeek != actualWeek;
+
+    final weekInfo = GestationalDatabase.getWeekInfo(activeWeek);
+    final progressRatio = (activeWeek / 40.0).clamp(0.0, 1.0);
+
+    // Dynamic accent color based on the active week's trimester
+    final Color trimesterColor;
+    if (weekInfo.trimester == 1) {
+      trimesterColor = const Color(0xFFF43F5E); // First Trimester Rose
+    } else if (weekInfo.trimester == 2) {
+      trimesterColor = const Color(0xFFA855F7); // Second Trimester Orchid
+    } else {
+      trimesterColor = const Color(0xFFF59E0B); // Third Trimester Amber
+    }
 
     return SolidWellnessCard(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Trimester Phase Legend
+          // 1. Trimester Phase Legend & Interactive Jump Tabs
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildLegendItem('Trimester 1', const Color(0xFFF43F5E)),
-              const SizedBox(width: 16),
-              _buildLegendItem('Trimester 2', const Color(0xFFA855F7)),
-              const SizedBox(width: 16),
-              _buildLegendItem('Trimester 3', const Color(0xFFF59E0B)),
+              _buildTrimesterTab(
+                label: 'T1: W1–12',
+                trimesterNum: 1,
+                color: const Color(0xFFF43F5E),
+                isSelected: weekInfo.trimester == 1,
+                isDark: isDark,
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _inspectedWeek = 6);
+                },
+              ),
+              _buildTrimesterTab(
+                label: 'T2: W13–27',
+                trimesterNum: 2,
+                color: const Color(0xFFA855F7),
+                isSelected: weekInfo.trimester == 2,
+                isDark: isDark,
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _inspectedWeek = 20);
+                },
+              ),
+              _buildTrimesterTab(
+                label: 'T3: W28–40',
+                trimesterNum: 3,
+                color: const Color(0xFFF59E0B),
+                isSelected: weekInfo.trimester == 3,
+                isDark: isDark,
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _inspectedWeek = 34);
+                },
+              ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
 
-          // 2. Wide Luxury Gestational Dial with Center Sanctuary
-          AnimatedBuilder(
-            animation: _sweepAnimation,
-            builder: (context, child) {
-              return SizedBox(
-                width: 250,
-                height: 250,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CustomPaint(
-                      size: const Size(250, 250),
-                      painter: _GestationalDialPainter(
-                        currentWeek: week,
-                        sweepProgress: _sweepAnimation.value,
-                        isDark: isDark,
-                      ),
-                    ),
+          // 2. Interactive Gestational Dial with Week Scrubbing
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final dialSize = math.min(constraints.maxWidth, 260.0);
 
-                    // Center Informational Sanctuary
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+              return Center(
+                child: SizedBox(
+                  width: dialSize,
+                  height: dialSize,
+                  child: GestureDetector(
+                    onPanStart: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize)),
+                    onPanUpdate: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize)),
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        // Soft maternal icon
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFA855F7).withOpacity(0.14),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.favorite_rounded,
-                            size: 22,
-                            color: Color(0xFFA855F7),
+                        // Circular Custom Painter
+                        CustomPaint(
+                          size: Size(dialSize, dialSize),
+                          painter: _GestationalDialPainter(
+                            currentWeek: activeWeek,
+                            actualWeek: actualWeek,
+                            isDark: isDark,
+                            accentColor: trimesterColor,
                           ),
                         ),
-                        const SizedBox(height: 8),
 
-                        // Week Readout
-                        Text(
-                          'Week $week',
-                          style: TextStyle(
-                            fontFamily: AppTypography.fontFamily,
-                            fontSize: 30,
-                            fontWeight: FontWeight.w900,
-                            height: 1.1,
-                            letterSpacing: -0.6,
-                            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-
-                        // Day & Trimester
-                        Text(
-                          'Day $day • ${preg?.trimesterLabel ?? 'Second Trimester'}',
-                          style: const TextStyle(
-                            fontFamily: AppTypography.fontFamily,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFFA855F7),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Percentage & Total Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
-                            borderRadius: AppRadii.roundedPill,
-                            border: Border.all(
-                              color: isDark ? const Color(0xFF2C3931) : const Color(0xFFDEE7E1),
-                              width: 0.8,
+                        // Center Informational Hub
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Heart icon with subtle pulse
+                            ScaleTransition(
+                              scale: _pulseAnimation,
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: trimesterColor.withOpacity(0.14),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.favorite_rounded,
+                                  size: 20,
+                                  color: trimesterColor,
+                                ),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            '${(progressRatio * 100).toInt()}% • 40 Weeks Total',
-                            style: TextStyle(
-                              fontFamily: AppTypography.fontFamily,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? AppColors.textSecondaryDark : AppColors.textPrimaryLight,
+                            const SizedBox(height: 6),
+
+                            // Week Readout
+                            Text(
+                              'Week $activeWeek',
+                              style: TextStyle(
+                                fontFamily: AppTypography.fontFamily,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1,
+                                letterSpacing: -0.6,
+                                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 2),
+
+                            // Trimester & Day Description
+                            Text(
+                              isViewingDifferentWeek
+                                  ? weekInfo.trimesterLabel
+                                  : 'Day $currentDay • ${weekInfo.trimesterLabel}',
+                              style: TextStyle(
+                                fontFamily: AppTypography.fontFamily,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: trimesterColor,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+
+                            // Percentage & Total Progress Pill
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
+                                borderRadius: AppRadii.roundedPill,
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF2C3931) : const Color(0xFFDEE7E1),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text(
+                                '${(progressRatio * 100).toInt()}% • 40 Weeks Total',
+                                style: TextStyle(
+                                  fontFamily: AppTypography.fontFamily,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? AppColors.textSecondaryDark : AppColors.textPrimaryLight,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               );
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // 3. Due Date Countdown Banner
+          // 3. Quick Stepper & Return Navigation Controls
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_left_rounded, size: 28),
+                tooltip: 'Previous Week',
+                onPressed: activeWeek > 1
+                    ? () {
+                        HapticService.tick();
+                        setState(() => _inspectedWeek = activeWeek - 1);
+                      }
+                    : null,
+              ),
+              const SizedBox(width: 4),
+
+              if (isViewingDifferentWeek)
+                TextButton.icon(
+                  onPressed: () {
+                    HapticService.selection();
+                    setState(() => _inspectedWeek = actualWeek);
+                  },
+                  icon: const Icon(Icons.my_location_rounded, size: 14),
+                  label: Text(
+                    'Return to Current Week ($actualWeek)',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: trimesterColor,
+                    backgroundColor: trimesterColor.withOpacity(0.12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
+                    borderRadius: AppRadii.roundedPill,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.touch_app_rounded, size: 14, color: trimesterColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Touch or drag dial to explore weeks',
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.arrow_right_rounded, size: 28),
+                tooltip: 'Next Week',
+                onPressed: activeWeek < 40
+                    ? () {
+                        HapticService.tick();
+                        setState(() => _inspectedWeek = activeWeek + 1);
+                      }
+                    : null,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // 4. Due Date Countdown Banner (Flexible with no overflow)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
+              color: isDark ? const Color(0xFF1A241E) : const Color(0xFFF3F7F4),
               borderRadius: AppRadii.roundedPill,
+              border: Border.all(
+                color: isDark ? const Color(0xFF26362C) : const Color(0xFFE2EBE5),
+                width: 0.8,
+              ),
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.event_rounded, size: 14, color: Color(0xFFA855F7)),
-                const SizedBox(width: 6),
-                Text(
-                  '$daysUntilDue ${daysUntilDue == 1 ? 'day' : 'days'} until estimated due date (${_months[due.month - 1]} ${due.day})',
-                  style: TextStyle(
-                    fontFamily: AppTypography.fontFamily,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                Icon(Icons.event_available_rounded, size: 15, color: trimesterColor),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '$daysUntilDue ${daysUntilDue == 1 ? 'day' : 'days'} until estimated due date (${_months[due.month - 1]} ${due.day})',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                    ),
                   ),
                 ),
               ],
@@ -208,11 +369,11 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
           ),
           const SizedBox(height: 14),
 
-          // 4. Baby Developmental Metrics Readout
+          // 5. Baby Developmental Size Card (Completely Overflow-Proof)
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF141C17) : const Color(0xFFF4F8F5),
+              color: isDark ? const Color(0xFF141C17) : const Color(0xFFF8FAF9),
               borderRadius: AppRadii.roundedMd,
               border: Border.all(
                 color: isDark ? const Color(0xFF243329) : const Color(0xFFE2EBE5),
@@ -222,59 +383,107 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Top Row: Title + Progress Badge (Fixed overflow with Expanded)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Baby is the Size of a $fruit',
-                      style: TextStyle(
-                        fontFamily: AppTypography.fontFamily,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                    Expanded(
+                      child: Text(
+                        'Baby is the Size of a ${weekInfo.babySizeFruit}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFA855F7).withOpacity(0.14),
+                        color: trimesterColor.withOpacity(0.14),
                         borderRadius: AppRadii.roundedPill,
                       ),
                       child: Text(
                         '${(progressRatio * 100).toInt()}% • 40 Wks',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: AppTypography.fontFamily,
-                          fontSize: 11.5,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFFA855F7),
+                          color: trimesterColor,
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
+
                 Text(
-                  comparison,
+                  weekInfo.babySizeComparison,
                   style: AppTypography.caption(isDark).copyWith(fontSize: 12),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
+
+                // Metrics Chips: Length & Weight
                 Row(
                   children: [
-                    Text(
-                      'Length: ~${lengthCm.toStringAsFixed(1)} cm',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFA855F7),
+                    _buildMetricChip(
+                      icon: Icons.straighten_rounded,
+                      label: '~${weekInfo.estimatedLengthCm} cm (${weekInfo.estimatedLengthInches} in)',
+                      color: trimesterColor,
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildMetricChip(
+                      icon: Icons.scale_rounded,
+                      label: '~${weekInfo.estimatedWeightGrams.toInt()} g (${weekInfo.formattedWeightImperial})',
+                      color: trimesterColor,
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Fetal Milestone Readout
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.child_care_rounded, size: 16, color: trimesterColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        weekInfo.fetalMilestone,
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          height: 1.35,
+                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        ),
                       ),
                     ),
-                    const Text(' • '),
-                    Text(
-                      'Weight: ~${weightG >= 1000 ? (weightG / 1000).toStringAsFixed(1) : weightG.toInt()} ${weightG >= 1000 ? 'kg' : 'g'}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFA855F7),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Maternal Change Insight
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.spa_rounded, size: 16, color: isDark ? AppColors.primary : AppColors.primaryDark),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        weekInfo.maternalChanges,
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          height: 1.35,
+                          color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                        ),
                       ),
                     ),
                   ],
@@ -284,7 +493,7 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
           ),
           const SizedBox(height: 14),
 
-          // 5. Primary Action: Log Today's Maternal Wellbeing
+          // 6. Action Button: Log Today's Maternal Wellbeing
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -315,190 +524,248 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
     );
   }
 
-  Widget _buildLegendItem(String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+  Widget _buildTrimesterTab({
+    required String label,
+    required int trimesterNum,
+    required Color color,
+    required bool isSelected,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? color.withOpacity(0.16)
+              : (isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2)),
+          borderRadius: AppRadii.roundedPill,
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 1.0,
           ),
         ),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected
+                    ? color
+                    : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildMetricChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1D2621) : const Color(0xFFEFF4F1),
+          borderRadius: AppRadii.roundedPill,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: AppTypography.fontFamily,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-/// Custom painter for the wide luxury Gestational Dial.
-/// Features a 22px solid background channel with embedded interval markers,
-/// segmented trimester progress arcs, and an elevated floating active-week thumb.
+/// Custom painter for the 40-week Gestational Dial.
+/// Accurately renders 3 continuous trimester segments with divider ticks,
+/// 40 micro-graduation dots, and a responsive active-week thumb badge.
 class _GestationalDialPainter extends CustomPainter {
   final int currentWeek;
-  final double sweepProgress;
+  final int actualWeek;
   final bool isDark;
+  final Color accentColor;
 
   _GestationalDialPainter({
     required this.currentWeek,
-    required this.sweepProgress,
+    required this.actualWeek,
     required this.isDark,
+    required this.accentColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    const strokeWidth = 22.0;
-    final radius = (size.width - strokeWidth - 8) / 2;
+    const strokeWidth = 20.0;
+    final radius = (size.width - strokeWidth - 10) / 2;
 
-    // 1. Broad solid background track channel
-    final trackPaint = Paint()
+    // 1. Base Track Channel
+    final baseTrackPaint = Paint()
       ..color = isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
-    canvas.drawCircle(center, radius, trackPaint);
+    canvas.drawCircle(center, radius, baseTrackPaint);
 
-    // Subtle 40-week division tick dots embedded in the track
+    // 2. Micro dots for each of the 40 weeks
     final dotPaint = Paint()
       ..color = isDark ? const Color(0xFF2C3931) : const Color(0xFFDEE7E1)
       ..style = PaintingStyle.fill;
 
-    for (int i = 0; i < 40; i++) {
-      final angle = -math.pi / 2 + (i / 40.0) * 2 * math.pi;
+    for (int w = 1; w <= 40; w++) {
+      final angle = -math.pi / 2 + (w / 40.0) * 2 * math.pi;
       final dx = center.dx + radius * math.cos(angle);
       final dy = center.dy + radius * math.sin(angle);
-      canvas.drawCircle(Offset(dx, dy), 1.8, dotPaint);
+      canvas.drawCircle(Offset(dx, dy), 1.4, dotPaint);
     }
 
-    // 2. Segment 1: Trimester 1 (Weeks 1–12) — Rose arc
-    const t1Sweep = (12.0 / 40.0) * 2 * math.pi;
-    final t1Progress = currentWeek >= 12 ? 1.0 : (currentWeek / 12.0);
-    final t1Paint = Paint()
-      ..color = const Color(0xFFF43F5E)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
+    // 3. Segmented Trimester Arcs up to currentWeek
+    final rect = Rect.fromCircle(center: center, radius: radius);
 
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      t1Sweep * t1Progress * sweepProgress,
-      false,
-      t1Paint,
-    );
-
-    // 3. Segment 2: Trimester 2 (Weeks 13–27) — Royal Violet arc
-    const t2Start = -math.pi / 2 + t1Sweep;
-    const t2Sweep = (15.0 / 40.0) * 2 * math.pi;
-    final t2Progress = currentWeek <= 12
-        ? 0.0
-        : (currentWeek >= 27 ? 1.0 : (currentWeek - 12) / 15.0);
-
-    final t2Paint = Paint()
-      ..color = const Color(0xFFA855F7)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    if (t2Progress > 0) {
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        t2Start,
-        t2Sweep * t2Progress * sweepProgress,
-        false,
-        t2Paint,
-      );
+    // Trimester 1 (Weeks 1 to 12)
+    final t1Weeks = currentWeek.clamp(0, 12);
+    if (t1Weeks > 0) {
+      final t1Sweep = (t1Weeks / 40.0) * 2 * math.pi;
+      final t1Paint = Paint()
+        ..color = const Color(0xFFF43F5E)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = currentWeek <= 12 ? StrokeCap.round : StrokeCap.butt;
+      canvas.drawArc(rect, -math.pi / 2, t1Sweep, false, t1Paint);
     }
 
-    // 4. Segment 3: Trimester 3 (Weeks 28–40) — Golden Amber arc
-    const t3Start = t2Start + t2Sweep;
-    const t3Sweep = (13.0 / 40.0) * 2 * math.pi;
-    final t3Progress = currentWeek <= 27
-        ? 0.0
-        : ((currentWeek - 27) / 13.0).clamp(0.0, 1.0);
-
-    final t3Paint = Paint()
-      ..color = const Color(0xFFF59E0B)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    if (t3Progress > 0) {
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        t3Start,
-        t3Sweep * t3Progress * sweepProgress,
-        false,
-        t3Paint,
-      );
+    // Trimester 2 (Weeks 13 to 27)
+    if (currentWeek > 12) {
+      final t2Weeks = (currentWeek - 12).clamp(0, 15);
+      final t2StartAngle = -math.pi / 2 + (12 / 40.0) * 2 * math.pi;
+      final t2Sweep = (t2Weeks / 40.0) * 2 * math.pi;
+      final t2Paint = Paint()
+        ..color = const Color(0xFFA855F7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = currentWeek <= 27 ? StrokeCap.round : StrokeCap.butt;
+      canvas.drawArc(rect, t2StartAngle, t2Sweep, false, t2Paint);
     }
 
-    // 5. Active Current Week Elevated Floating Thumb
-    final weekFraction = (currentWeek / 40.0).clamp(0.0, 1.0);
-    final thumbAngle = -math.pi / 2 + weekFraction * 2 * math.pi;
+    // Trimester 3 (Weeks 28 to 40)
+    if (currentWeek > 27) {
+      final t3Weeks = (currentWeek - 27).clamp(0, 13);
+      final t3StartAngle = -math.pi / 2 + (27 / 40.0) * 2 * math.pi;
+      final t3Sweep = (t3Weeks / 40.0) * 2 * math.pi;
+      final t3Paint = Paint()
+        ..color = const Color(0xFFF59E0B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(rect, t3StartAngle, t3Sweep, false, t3Paint);
+    }
+
+    // 4. Trimester dividing notches at Week 12 and Week 27
+    _drawTrimesterDivider(canvas, center, radius, strokeWidth, 12);
+    _drawTrimesterDivider(canvas, center, radius, strokeWidth, 27);
+
+    // 5. Active Floating Week Thumb Badge
+    final thumbAngle = -math.pi / 2 + (currentWeek / 40.0) * 2 * math.pi;
     final thumbX = center.dx + radius * math.cos(thumbAngle);
     final thumbY = center.dy + radius * math.sin(thumbAngle);
 
-    // Floating drop shadow under thumb
-    final thumbShadow = Paint()
-      ..color = Colors.black.withOpacity(0.2)
+    // Outer glow aura
+    final glowPaint = Paint()
+      ..color = accentColor.withOpacity(0.35)
+      ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawCircle(Offset(thumbX, thumbY + 1.5), 15.0, thumbShadow);
+    canvas.drawCircle(Offset(thumbX, thumbY), 16.0, glowPaint);
 
-    // Solid circular disc
-    final thumbFill = Paint()
-      ..color = isDark ? const Color(0xFF231B30) : Colors.white
+    // White core thumb
+    final thumbPaint = Paint()
+      ..color = Colors.white
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(thumbX, thumbY), 15.0, thumbFill);
+    canvas.drawCircle(Offset(thumbX, thumbY), 13.0, thumbPaint);
 
-    // Violet ring border
-    final thumbBorder = Paint()
-      ..color = const Color(0xFFA855F7)
+    // Border ring
+    final borderPaint = Paint()
+      ..color = accentColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-    canvas.drawCircle(Offset(thumbX, thumbY), 15.0, thumbBorder);
+      ..strokeWidth = 2.5;
+    canvas.drawCircle(Offset(thumbX, thumbY), 13.0, borderPaint);
 
-    // Two-line clean label: 'Wk' on top, '$currentWeek' below
-    final labelTop = TextPainter(
-      text: const TextSpan(
-        text: 'Wk',
-        style: TextStyle(
-          fontSize: 7.5,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFFA855F7),
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    labelTop.paint(canvas, Offset(thumbX - labelTop.width / 2, thumbY - 10));
-
-    final labelBottom = TextPainter(
+    // Week text inside thumb
+    final textPainter = TextPainter(
       text: TextSpan(
         text: '$currentWeek',
         style: TextStyle(
-          fontSize: 11,
+          fontSize: currentWeek >= 10 ? 9.5 : 11,
           fontWeight: FontWeight.w900,
-          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+          color: const Color(0xFF1E293B),
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    labelBottom.paint(canvas, Offset(thumbX - labelBottom.width / 2, thumbY - 1));
+
+    textPainter.paint(
+      canvas,
+      Offset(thumbX - textPainter.width / 2, thumbY - textPainter.height / 2),
+    );
+  }
+
+  void _drawTrimesterDivider(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    double strokeWidth,
+    int week,
+  ) {
+    final angle = -math.pi / 2 + (week / 40.0) * 2 * math.pi;
+    final rInner = radius - (strokeWidth / 2) - 2;
+    final rOuter = radius + (strokeWidth / 2) + 2;
+
+    final p1 = Offset(center.dx + rInner * math.cos(angle), center.dy + rInner * math.sin(angle));
+    final p2 = Offset(center.dx + rOuter * math.cos(angle), center.dy + rOuter * math.sin(angle));
+
+    final dividerPaint = Paint()
+      ..color = isDark ? Colors.white54 : Colors.black45
+      ..strokeWidth = 1.5;
+    canvas.drawLine(p1, p2, dividerPaint);
   }
 
   @override
-  bool shouldRepaint(_GestationalDialPainter oldDelegate) {
+  bool shouldRepaint(covariant _GestationalDialPainter oldDelegate) {
     return oldDelegate.currentWeek != currentWeek ||
-        oldDelegate.sweepProgress != sweepProgress ||
-        oldDelegate.isDark != isDark;
+        oldDelegate.actualWeek != actualWeek ||
+        oldDelegate.isDark != isDark ||
+        oldDelegate.accentColor != accentColor;
   }
 }

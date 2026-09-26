@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radii.dart';
@@ -19,20 +20,29 @@ Future<T?> showPlatformGlassBottomSheet<T>({
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withOpacity(0.35),
     isScrollControlled: isScrollControlled,
+    useSafeArea: true,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
-    builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-      final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    builder: (modalContext) {
+      final isDark = Theme.of(modalContext).brightness == Brightness.dark;
+      final mq = MediaQuery.of(modalContext);
+      final rawTop = math.max(mq.padding.top, mq.viewPadding.top);
+      final topMargin = math.max(rawTop, 48.0) + 16.0;
+      final bottomInset = mq.viewInsets.bottom;
 
-      return Padding(
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: PlatformGlassSurface(
-          borderRadius: AppRadii.roundedSheet,
-          padding: EdgeInsets.zero,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+      return Container(
+        margin: EdgeInsets.only(top: topMargin),
+        constraints: BoxConstraints(
+          maxHeight: mq.size.height - topMargin,
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: PlatformGlassSurface(
+            borderRadius: AppRadii.roundedSheet,
+            padding: EdgeInsets.zero,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               if (showDragHandle) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Center(
@@ -55,7 +65,8 @@ Future<T?> showPlatformGlassBottomSheet<T>({
             ],
           ),
         ),
-      );
-    },
+      ),
+    );
+  },
   );
 }

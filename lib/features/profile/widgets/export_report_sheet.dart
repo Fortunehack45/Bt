@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
@@ -15,15 +16,27 @@ void showExportReportSheet(BuildContext context, WellnessProvider provider) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withOpacity(0.55),
     builder: (sheetContext) {
+      final mq = MediaQuery.of(sheetContext);
+      final rawTop = math.max(mq.padding.top, mq.viewPadding.top);
+      final topMargin = math.max(rawTop, 48.0) + 16.0;
+
       return Container(
+        margin: EdgeInsets.only(top: topMargin),
+        constraints: BoxConstraints(
+          maxHeight: mq.size.height - topMargin,
+        ),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF141C17) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        child: ExportReportSheet(provider: provider),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: ExportReportSheet(provider: provider),
+        ),
       );
     },
   );
@@ -341,10 +354,18 @@ class ExportReportSheet extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
+        final mq = MediaQuery.of(ctx);
+        final rawTop = math.max(mq.padding.top, mq.viewPadding.top);
+        final topMargin = math.max(rawTop, 48.0) + 16.0;
+
         return Container(
-          height: MediaQuery.of(ctx).size.height * 0.90,
+          margin: EdgeInsets.only(top: topMargin),
+          constraints: BoxConstraints(
+            maxHeight: mq.size.height - topMargin,
+          ),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF0F1512) : const Color(0xFFF8FAF9),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),

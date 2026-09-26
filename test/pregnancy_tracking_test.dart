@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wellnest/domain/models/gestational_database.dart';
 import 'package:wellnest/domain/models/reproductive_health_models.dart';
 import 'package:wellnest/domain/state/wellness_provider.dart';
 
@@ -162,6 +163,20 @@ void main() {
       expect(provider.pregnancyLogs.length, 1);
       expect(provider.pregnancyAppointments.length, 1);
       expect(provider.pregnancyData, isNotNull);
+    });
+
+    test('GestationalDatabase provides accurate clinical info for all 40 weeks', () {
+      for (int w = 1; w <= 40; w++) {
+        final info = GestationalDatabase.getWeekInfo(w);
+        expect(info.week, w);
+        expect(info.babySizeFruit, isNotEmpty);
+        expect(info.babySizeComparison, isNotEmpty);
+        expect(info.fetalMilestone, isNotEmpty);
+        expect(info.maternalChanges, isNotEmpty);
+        expect(info.estimatedLengthCm, greaterThan(0));
+        expect(info.estimatedWeightGrams, greaterThan(0));
+        expect(info.trimester, inInclusiveRange(1, 3));
+      }
     });
   });
 }

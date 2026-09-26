@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radii.dart';
@@ -23,17 +24,21 @@ Future<T?> showWellnessBottomSheet<T>({
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withOpacity(0.55),
     builder: (modalContext) {
-      final bottomInset = MediaQuery.of(modalContext).viewInsets.bottom;
-      final safeBottom = MediaQuery.of(modalContext).padding.bottom;
+      final mq = MediaQuery.of(modalContext);
+      final rawTop = math.max(mq.padding.top, mq.viewPadding.top);
+      final topMargin = math.max(rawTop, 48.0) + 16.0;
+      final bottomInset = mq.viewInsets.bottom;
+      final safeBottom = mq.padding.bottom;
 
       return Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(modalContext).size.height * 0.88,
+          maxHeight: mq.size.height - topMargin,
         ),
-        margin: EdgeInsets.only(bottom: bottomInset),
+        margin: EdgeInsets.only(top: topMargin, bottom: bottomInset),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
           borderRadius: AppRadii.roundedSheet,

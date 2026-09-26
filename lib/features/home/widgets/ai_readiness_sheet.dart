@@ -20,6 +20,7 @@ void showAiWellnessInsightsSheet(BuildContext context, WellnessProvider provider
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
     shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedSheet),
     builder: (sheetContext) {

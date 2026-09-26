@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radii.dart';
@@ -17,16 +18,18 @@ void showAddPrenatalCheckupSheet(
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withOpacity(0.65),
     builder: (sheetContext) {
-      final topPadding = MediaQuery.of(sheetContext).padding.top;
-      final bottomInset = MediaQuery.of(sheetContext).viewInsets.bottom;
+      final mq = MediaQuery.of(sheetContext);
+      final rawTop = math.max(mq.padding.top, mq.viewPadding.top);
+      final topMargin = math.max(rawTop, 48.0) + 16.0;
 
       return Container(
-        margin: EdgeInsets.only(top: topPadding + 20),
+        margin: EdgeInsets.only(top: topMargin),
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(sheetContext).size.height - (topPadding + 20),
+          maxHeight: mq.size.height - topMargin,
         ),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF141C17) : Colors.white,
@@ -43,12 +46,15 @@ void showAddPrenatalCheckupSheet(
             ),
           ],
         ),
-        child: SafeArea(
-          top: false,
-          bottom: true,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: bottomInset),
-            child: AddPrenatalCheckupSheet(provider: provider),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: SafeArea(
+            top: false,
+            bottom: true,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+              child: AddPrenatalCheckupSheet(provider: provider),
+            ),
           ),
         ),
       );

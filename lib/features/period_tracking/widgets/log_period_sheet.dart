@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radii.dart';
@@ -18,25 +19,42 @@ void showLogPeriodSheet(
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withOpacity(0.55),
     builder: (sheetContext) {
-      final topPadding = MediaQuery.of(sheetContext).padding.top;
+      final mq = MediaQuery.of(sheetContext);
+      final rawTop = math.max(mq.padding.top, mq.viewPadding.top);
+      final topMargin = math.max(rawTop, 44.0) + 16.0;
+
       return Container(
-        margin: EdgeInsets.only(top: topPadding + 20),
+        margin: EdgeInsets.only(top: topMargin),
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(sheetContext).size.height - (topPadding + 20),
+          maxHeight: mq.size.height - topMargin,
         ),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF141C17) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.35),
+              blurRadius: 32,
+              offset: const Offset(0, -6),
+            ),
+          ],
         ),
-        child: SafeArea(
-          top: false,
-          bottom: true,
-          child: LogPeriodSheet(
-            provider: provider,
-            initialDate: initialDate ?? provider.selectedDate,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: SafeArea(
+            top: false,
+            bottom: true,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+              child: LogPeriodSheet(
+                provider: provider,
+                initialDate: initialDate ?? provider.selectedDate,
+              ),
+            ),
           ),
         ),
       );
@@ -147,7 +165,7 @@ class _LogPeriodSheetState extends State<LogPeriodSheet> {
         left: AppSpacing.pageMargin,
         right: AppSpacing.pageMargin,
         top: 12.0,
-        bottom: bottomInset > 0 ? bottomInset + 16 : MediaQuery.of(context).padding.bottom + 20,
+        bottom: MediaQuery.of(context).padding.bottom + 20,
       ),
       child: SingleChildScrollView(
         child: Column(

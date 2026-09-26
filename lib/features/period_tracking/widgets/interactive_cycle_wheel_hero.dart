@@ -9,10 +9,15 @@ import '../../../domain/models/reproductive_health_models.dart';
 import '../../../domain/state/wellness_provider.dart';
 import 'log_period_sheet.dart';
 
-/// Interactive Menstrual Cycle Wheel Hero matching the design in Reference Image 1.
-/// Features a top week day strip with organic pointer, a wide 22px solid cycle track,
-/// segmented phase arcs (Rose flow arc, Cyan fertile window), elevated floating Day thumb,
-/// dashed Ovulation peak indicator, and medical-grade center typography.
+/// Truly Interactive, Biologically Accurate Menstrual Cycle Wheel Hero.
+///
+/// Features:
+/// - 360-degree interactive finger-scrubbing across all days of the menstrual cycle
+/// - Bi-directional synchronization between the circular dial and the 7-day calendar strip
+/// - Real-time biological phase computation (Menstrual, Follicular, Fertile/Ovulation, Luteal)
+/// - Real-time conception probability and physiological hormone guidance
+/// - 1-tap "Return to Today" action
+/// - Tactile haptic detents on every cycle day boundary
 class InteractiveCycleWheelHero extends StatefulWidget {
   final VoidCallback? onCycleDetailsTap;
 
@@ -29,14 +34,19 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _progressAnim;
+
+  // Selected date being inspected
   DateTime _viewDate = DateTime.now();
+
+  // Inspected cycle day (1 to cycleLength). If null, defaults to today's cycle day.
+  int? _inspectedCycleDay;
 
   @override
   void initState() {
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     );
     _progressAnim = CurvedAnimation(
       parent: _animController,
@@ -53,6 +63,31 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
 
   static const List<String> _weekDayNames = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
+  void _onDialTouch(Offset localPos, Size size, int cycleLength, int todayCycleDay) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final dx = localPos.dx - center.dx;
+    final dy = localPos.dy - center.dy;
+
+    // Angle starting from top (-pi/2) going clockwise [0, 2*pi]
+    double angle = math.atan2(dy, dx) + (math.pi / 2);
+    if (angle < 0) angle += 2 * math.pi;
+
+    final frac = angle / (2 * math.pi);
+    final newDay = (frac * cycleLength).round().clamp(1, cycleLength);
+
+    if (newDay != _inspectedCycleDay) {
+      HapticService.tick();
+      setState(() {
+        _inspectedCycleDay = newDay;
+        // Sync _viewDate relative to today's cycle day
+        final dayDiff = newDay - todayCycleDay;
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        _viewDate = today.add(Duration(days: dayDiff));
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -60,55 +95,73 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
     final prediction = provider.periodPrediction;
     final activePeriod = provider.activePeriod;
 
-    final cycleLen = provider.averageCycleLength.round();
-    final periodDur = provider.averagePeriodDuration.round();
-    final currentDay = provider.currentCycleDay;
+    final cycleLen = provider.averageCycleLength.round().clamp(21, 45);
+    final periodDur = provider.averagePeriodDuration.round().clamp(3, 10);
+    final todayCycleDay = provider.currentCycleDay.clamp(1, cycleLen);
 
-    // Days calculation for status headline
-    String statusHeadline;
-    String statusSubtitle;
-    if (activePeriod != null) {
-      statusHeadline = 'Period: Day $currentDay';
+    final activeCycleDay = (_inspectedCycleDay ?? todayCycleDay).clamp(1, cycleLen);
+    final isInspectingDifferentDay = activeCycleDay != todayCycleDay;
+
+    final ovulationDay = cycleLen - 14;
+    final fertileStart = (ovulationDay - 4).clamp(1, cycleLen);
+    final fertileEnd = (ovulationDay + 1).clamp(1, cycleLen);
+
+    // Biological Phase Determination for the actively inspected cycle day
+    final String phaseName;
+    final Color phaseColor;
+    final String statusHeadline;
+    final String statusSubtitle;
+    final String fertilityLabel;
+    final String biologicalGuidance;
+    final IconData phaseIcon;
+
+    if (activeCycleDay <= periodDur) {
+      // 1. Menstrual Phase (Days 1 to periodDur)
+      phaseName = 'Menstrual Phase';
+      phaseColor = const Color(0xFFF43F5E); // Rose
+      phaseIcon = Icons.water_drop_rounded;
+      statusHeadline = 'Period: Day $activeCycleDay';
       statusSubtitle = 'Active Menstruation Flow';
-    } else if (prediction.estimatedNextPeriodDate != null) {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final next = DateTime(
-        prediction.estimatedNextPeriodDate!.year,
-        prediction.estimatedNextPeriodDate!.month,
-        prediction.estimatedNextPeriodDate!.day,
-      );
-      final diff = next.difference(today).inDays;
-      if (diff > 0) {
-        statusHeadline = 'Period in $diff ${diff == 1 ? 'day' : 'days'}';
-        statusSubtitle = prediction.currentPhase.displayName;
-      } else if (diff == 0) {
-        statusHeadline = 'Period Expected Today';
-        statusSubtitle = 'Menstrual phase transition';
+      fertilityLabel = 'Menstrual Flow • Low Fertility';
+      biologicalGuidance = 'Uterine lining shedding. Estrogen and progesterone at baseline. Rest and gentle hydration prioritized.';
+    } else if (activeCycleDay < fertileStart) {
+      // 2. Follicular Phase (periodDur+1 to fertileStart-1)
+      phaseName = 'Follicular Phase';
+      phaseColor = const Color(0xFF10B981); // Emerald / Sage
+      phaseIcon = Icons.spa_rounded;
+      statusHeadline = 'Cycle Day $activeCycleDay of $cycleLen';
+      statusSubtitle = 'Estrogen Rising & Renewal';
+      fertilityLabel = 'Low Conception Likelihood';
+      biologicalGuidance = 'Follicles maturing in ovaries. Rising estrogen boosts physical stamina, cognitive sharpness, and mood.';
+    } else if (activeCycleDay >= fertileStart && activeCycleDay <= fertileEnd) {
+      // 3. Fertile Window & Ovulation (fertileStart to fertileEnd)
+      if (activeCycleDay == ovulationDay) {
+        phaseName = 'Ovulation Peak';
+        phaseColor = const Color(0xFFA855F7); // Purple / Violet
+        phaseIcon = Icons.wb_sunny_rounded;
+        statusHeadline = 'Ovulation Day $activeCycleDay';
+        statusSubtitle = 'LH Surge & Egg Release';
+        fertilityLabel = 'Peak Fertility Window';
+        biologicalGuidance = 'Luteinizing Hormone peak triggers ovum release. Maximum probability of conception in this 24h window.';
       } else {
-        statusHeadline = 'Period: ${diff.abs()} ${diff.abs() == 1 ? 'day' : 'days'} late';
-        statusSubtitle = 'Natural cycle variability';
+        phaseName = 'Fertile Window';
+        phaseColor = const Color(0xFF06B6D4); // Cyan
+        phaseIcon = Icons.flare_rounded;
+        statusHeadline = 'Cycle Day $activeCycleDay of $cycleLen';
+        statusSubtitle = 'High Fertility Window';
+        fertilityLabel = 'High Conception Chance';
+        biologicalGuidance = 'Sperm can survive up to 5 days in fertile cervical fluid. High conception window leading to ovulation.';
       }
     } else {
-      statusHeadline = 'Cycle Day $currentDay';
-      statusSubtitle = 'Regular follicular phase';
-    }
-
-    // Fertility badge label and colors
-    String fertilityLabel;
-    Color fertilityColor;
-    if (prediction.currentPhase == PeriodPhase.ovulation) {
-      fertilityLabel = 'Peak Fertility Window';
-      fertilityColor = const Color(0xFFA855F7);
-    } else if (currentDay >= (cycleLen - 19) && currentDay <= (cycleLen - 11)) {
-      fertilityLabel = 'High Fertility';
-      fertilityColor = const Color(0xFF06B6D4);
-    } else if (activePeriod != null) {
-      fertilityLabel = 'Menstrual Flow Active';
-      fertilityColor = const Color(0xFFF43F5E);
-    } else {
-      fertilityLabel = 'Low Fertility';
-      fertilityColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+      // 4. Luteal Phase (fertileEnd+1 to cycleLen)
+      phaseName = 'Luteal Phase';
+      phaseColor = const Color(0xFFF59E0B); // Amber / Gold
+      phaseIcon = Icons.bedtime_rounded;
+      final daysUntilNext = cycleLen - activeCycleDay + 1;
+      statusHeadline = 'Period in $daysUntilNext ${daysUntilNext == 1 ? 'day' : 'days'}';
+      statusSubtitle = 'Progesterone Dominant';
+      fertilityLabel = 'Low Fertility • Restorative';
+      biologicalGuidance = 'Corpus luteum secretes progesterone. Basal body temperature elevates. Nourish body with magnesium and sleep.';
     }
 
     // Generate 7-day strip centered on today
@@ -118,10 +171,11 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
     final weekDays = List.generate(7, (i) => weekStart.add(Duration(days: i)));
 
     return SolidWellnessCard(
-      padding: const EdgeInsets.only(top: 14, bottom: 18, left: 16, right: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Horizontal Week Day Strip with Indicators
+          // 1. Horizontal 7-Day Strip with Interactive Day Tap
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: weekDays.map((d) {
@@ -133,7 +187,14 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
               return GestureDetector(
                 onTap: () {
                   HapticService.selection();
-                  setState(() => _viewDate = d);
+                  final dayDiff = d.difference(today).inDays;
+                  int computedCycleDay = (todayCycleDay + dayDiff) % cycleLen;
+                  if (computedCycleDay <= 0) computedCycleDay += cycleLen;
+
+                  setState(() {
+                    _viewDate = d;
+                    _inspectedCycleDay = computedCycleDay;
+                  });
                 },
                 child: Column(
                   children: [
@@ -173,7 +234,6 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
                       ),
                     ),
                     const SizedBox(height: 3),
-                    // Indicators under day (pink for period, cyan for fertile)
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -204,125 +264,269 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
               );
             }).toList(),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 12),
 
-          // 2. Main Circular Cycle Wheel with Multi-Segment Phase Arcs
-          AnimatedBuilder(
-            animation: _progressAnim,
-            builder: (context, child) {
-              return SizedBox(
-                width: 250,
-                height: 250,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CustomPaint(
-                      size: const Size(250, 250),
-                      painter: _CycleWheelPainter(
-                        cycleLength: cycleLen,
-                        periodDuration: periodDur,
-                        currentDay: currentDay,
-                        animValue: _progressAnim.value,
-                        isDark: isDark,
-                      ),
-                    ),
+          // 2. Interactive Biological Cycle Wheel (Touch & Scrub Capable)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final dialSize = math.min(constraints.maxWidth, 260.0);
 
-                    // Center Content
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+              return Center(
+                child: SizedBox(
+                  width: dialSize,
+                  height: dialSize,
+                  child: GestureDetector(
+                    onPanStart: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize), cycleLen, todayCycleDay),
+                    onPanUpdate: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize), cycleLen, todayCycleDay),
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        GestureDetector(
-                          onTap: () {
-                            HapticService.selection();
-                            if (widget.onCycleDetailsTap != null) {
-                              widget.onCycleDetailsTap!();
-                            }
-                          },
-                          child: const Row(
+                        CustomPaint(
+                          size: Size(dialSize, dialSize),
+                          painter: _TrulyInteractiveCyclePainter(
+                            cycleLength: cycleLen,
+                            periodDuration: periodDur,
+                            activeCycleDay: activeCycleDay,
+                            todayCycleDay: todayCycleDay,
+                            ovulationDay: ovulationDay,
+                            fertileStart: fertileStart,
+                            fertileEnd: fertileEnd,
+                            isDark: isDark,
+                            phaseColor: phaseColor,
+                          ),
+                        ),
+
+                        // Center Informational Core
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                'Current cycle',
-                                style: TextStyle(
-                                  fontFamily: AppTypography.fontFamily,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFFF43F5E),
+                              // Phase Pill & Link
+                              GestureDetector(
+                                onTap: () {
+                                  HapticService.selection();
+                                  if (widget.onCycleDetailsTap != null) {
+                                    widget.onCycleDetailsTap!();
+                                  }
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(phaseIcon, size: 14, color: phaseColor),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      phaseName,
+                                      style: TextStyle(
+                                        fontFamily: AppTypography.fontFamily,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        color: phaseColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Icon(Icons.chevron_right_rounded, size: 15, color: phaseColor),
+                                  ],
                                 ),
                               ),
-                              SizedBox(width: 3),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                size: 16,
-                                color: Color(0xFFF43F5E),
+                              const SizedBox(height: 4),
+
+                              // Large Headline
+                              Text(
+                                statusHeadline,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: AppTypography.fontFamily,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.15,
+                                  letterSpacing: -0.5,
+                                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+
+                              // Subtitle
+                              Text(
+                                statusSubtitle,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: AppTypography.fontFamily,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+
+                              // Fertility Pill
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                                decoration: BoxDecoration(
+                                  color: phaseColor.withOpacity(0.14),
+                                  borderRadius: AppRadii.roundedPill,
+                                  border: Border.all(
+                                    color: phaseColor.withOpacity(0.32),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Text(
+                                  fertilityLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: AppTypography.fontFamily,
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: phaseColor,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 5),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 22),
-                          child: Text(
-                            statusHeadline,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: AppTypography.fontFamily,
-                              fontSize: 23,
-                              fontWeight: FontWeight.w900,
-                              height: 1.12,
-                              letterSpacing: -0.6,
-                              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          statusSubtitle,
-                          style: TextStyle(
-                            fontFamily: AppTypography.fontFamily,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: fertilityColor.withOpacity(0.16),
-                            borderRadius: AppRadii.roundedPill,
-                            border: Border.all(
-                              color: fertilityColor.withOpacity(0.3),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Text(
-                            fertilityLabel,
-                            style: TextStyle(
-                              fontFamily: AppTypography.fontFamily,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: fertilityColor,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               );
             },
           ),
+          const SizedBox(height: 12),
+
+          // 3. Quick Stepper & Return Navigation Controls
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_left_rounded, size: 28),
+                tooltip: 'Previous Day',
+                onPressed: activeCycleDay > 1
+                    ? () {
+                        HapticService.tick();
+                        final newDay = activeCycleDay - 1;
+                        setState(() {
+                          _inspectedCycleDay = newDay;
+                          final diff = newDay - todayCycleDay;
+                          _viewDate = today.add(Duration(days: diff));
+                        });
+                      }
+                    : null,
+              ),
+              const SizedBox(width: 4),
+
+              if (isInspectingDifferentDay)
+                TextButton.icon(
+                  onPressed: () {
+                    HapticService.selection();
+                    setState(() {
+                      _inspectedCycleDay = todayCycleDay;
+                      _viewDate = today;
+                    });
+                  },
+                  icon: const Icon(Icons.my_location_rounded, size: 14),
+                  label: Text(
+                    'Return to Today (Day $todayCycleDay)',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: phaseColor,
+                    backgroundColor: phaseColor.withOpacity(0.12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
+                    borderRadius: AppRadii.roundedPill,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.touch_app_rounded, size: 14, color: phaseColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Touch or drag wheel to explore cycle days',
+                        style: TextStyle(
+                          fontFamily: AppTypography.fontFamily,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.arrow_right_rounded, size: 28),
+                tooltip: 'Next Day',
+                onPressed: activeCycleDay < cycleLen
+                    ? () {
+                        HapticService.tick();
+                        final newDay = activeCycleDay + 1;
+                        setState(() {
+                          _inspectedCycleDay = newDay;
+                          final diff = newDay - todayCycleDay;
+                          _viewDate = today.add(Duration(days: diff));
+                        });
+                      }
+                    : null,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // 4. Biological Hormone & Symptom Guidance Card
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF141C17) : const Color(0xFFF8FAF9),
+              borderRadius: AppRadii.roundedMd,
+              border: Border.all(
+                color: isDark ? const Color(0xFF243329) : const Color(0xFFE2EBE5),
+                width: 0.8,
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.insights_rounded, size: 16, color: phaseColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    biologicalGuidance,
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      height: 1.35,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 14),
 
-          // 3. Bottom Action Bar: "Today" Jump Pill & "Log Flow / Symptoms" CTA
+          // 5. Bottom Action: "Today" Jump Pill & "Log Flow / Symptoms" CTA
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               TextButton.icon(
                 onPressed: () {
                   HapticService.selection();
-                  setState(() => _viewDate = DateTime.now());
+                  setState(() {
+                    _viewDate = DateTime.now();
+                    _inspectedCycleDay = todayCycleDay;
+                  });
                 },
                 icon: const Icon(Icons.calendar_today_rounded, size: 13),
                 label: const Text('Today', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
@@ -356,39 +560,47 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
   }
 }
 
-/// Custom painter rendering the wide luxury Menstrual Cycle Wheel.
-/// Features a broad 22px solid background channel with embedded interval markers,
-/// segmented phase arcs (Menstrual Rose arc, Fertile Cyan arc), clean Dashed Ovulation indicator,
-/// and an elevated floating active-day thumb badge.
-class _CycleWheelPainter extends CustomPainter {
+/// Custom painter for the wide luxury Menstrual Cycle Wheel.
+/// Renders 4 biological phase arcs with precision graduation dots,
+/// ovulation peak beacon, and a glowing draggable active-day thumb badge.
+class _TrulyInteractiveCyclePainter extends CustomPainter {
   final int cycleLength;
   final int periodDuration;
-  final int currentDay;
-  final double animValue;
+  final int activeCycleDay;
+  final int todayCycleDay;
+  final int ovulationDay;
+  final int fertileStart;
+  final int fertileEnd;
   final bool isDark;
+  final Color phaseColor;
 
-  _CycleWheelPainter({
+  _TrulyInteractiveCyclePainter({
     required this.cycleLength,
     required this.periodDuration,
-    required this.currentDay,
-    required this.animValue,
+    required this.activeCycleDay,
+    required this.todayCycleDay,
+    required this.ovulationDay,
+    required this.fertileStart,
+    required this.fertileEnd,
     required this.isDark,
+    required this.phaseColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    const strokeWidth = 22.0;
-    final radius = (size.width - strokeWidth - 8) / 2;
+    const strokeWidth = 20.0;
+    final radius = (size.width - strokeWidth - 10) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
 
-    // 1. Broad solid background track channel
+    // 1. Base Channel Track
     final trackPaint = Paint()
       ..color = isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
     canvas.drawCircle(center, radius, trackPaint);
 
-    // Subtle interval tick dots embedded inside the track channel
+    // 2. Micro dots for each cycle day
     final dotPaint = Paint()
       ..color = isDark ? const Color(0xFF2C3931) : const Color(0xFFDEE7E1)
       ..style = PaintingStyle.fill;
@@ -397,149 +609,119 @@ class _CycleWheelPainter extends CustomPainter {
       final angle = -math.pi / 2 + (i / cycleLength) * 2 * math.pi;
       final dx = center.dx + radius * math.cos(angle);
       final dy = center.dy + radius * math.sin(angle);
-      canvas.drawCircle(Offset(dx, dy), 1.6, dotPaint);
+      canvas.drawCircle(Offset(dx, dy), 1.5, dotPaint);
     }
 
-    // 2. Period Menstrual Phase Arc (Rose / Pink from Day 1 to periodDuration)
-    final periodArcSweep = (periodDuration / cycleLength) * 2 * math.pi * animValue;
+    // 3. Menstrual Phase Arc (Days 1 to periodDuration, Rose #F43F5E)
+    final periodSweep = (periodDuration / cycleLength) * 2 * math.pi;
     final periodPaint = Paint()
       ..color = const Color(0xFFF43F5E)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect, -math.pi / 2, periodSweep, false, periodPaint);
 
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      periodArcSweep,
-      false,
-      periodPaint,
-    );
+    // 4. Follicular Phase Arc (Muted Mint/Emerald #10B981)
+    final follicularStartAngle = -math.pi / 2 + (periodDuration / cycleLength) * 2 * math.pi;
+    final follicularSweep = ((fertileStart - periodDuration - 1) / cycleLength) * 2 * math.pi;
+    if (follicularSweep > 0) {
+      final follicularPaint = Paint()
+        ..color = const Color(0xFF10B981).withOpacity(0.35)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.butt;
+      canvas.drawArc(rect, follicularStartAngle, follicularSweep, false, follicularPaint);
+    }
 
-    // 3. Fertile Window Arc (Vivid Cyan / Turquoise)
-    final ovulationDay = cycleLength - 14;
-    final fertileStartDay = ovulationDay - 4;
-    final fertileEndDay = ovulationDay + 1;
-    final fertileDuration = fertileEndDay - fertileStartDay;
-
-    final fertileStartAngle = -math.pi / 2 + (fertileStartDay / cycleLength) * 2 * math.pi;
-    final fertileSweepAngle = (fertileDuration / cycleLength) * 2 * math.pi * animValue;
-
+    // 5. Fertile Window Arc (Cyan #06B6D4)
+    final fertileStartAngle = -math.pi / 2 + ((fertileStart - 1) / cycleLength) * 2 * math.pi;
+    final fertileSweep = ((fertileEnd - fertileStart + 1) / cycleLength) * 2 * math.pi;
     final fertilePaint = Paint()
       ..color = const Color(0xFF06B6D4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect, fertileStartAngle, fertileSweep, false, fertilePaint);
 
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      fertileStartAngle,
-      fertileSweepAngle,
-      false,
-      fertilePaint,
-    );
-
-    // 4. Ovulation Peak Indicator (Dashed circular badge on the fertile arc)
-    final ovAngle = -math.pi / 2 + (ovulationDay / cycleLength) * 2 * math.pi;
+    // 6. Ovulation Peak Indicator (Day 14 Starburst / Circle)
+    final ovAngle = -math.pi / 2 + ((ovulationDay - 1) / cycleLength) * 2 * math.pi;
     final ovX = center.dx + radius * math.cos(ovAngle);
     final ovY = center.dy + radius * math.sin(ovAngle);
 
-    final ovFillPaint = Paint()
-      ..color = Colors.black.withOpacity(0.18)
+    final ovBeaconPaint = Paint()
+      ..color = const Color(0xFFA855F7)
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(ovX, ovY), 13.0, ovFillPaint);
+    canvas.drawCircle(Offset(ovX, ovY), 5.5, ovBeaconPaint);
 
-    final ovBadgePaint = Paint()
-      ..color = Colors.white.withOpacity(0.9)
+    final ovBeaconBorder = Paint()
+      ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6;
-    canvas.drawCircle(Offset(ovX, ovY), 13.0, ovBadgePaint);
+      ..strokeWidth = 2.0;
+    canvas.drawCircle(Offset(ovX, ovY), 5.5, ovBeaconBorder);
 
-    final ovTop = TextPainter(
-      text: const TextSpan(
-        text: 'Day',
-        style: TextStyle(
-          fontSize: 7.5,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    ovTop.paint(canvas, Offset(ovX - ovTop.width / 2, ovY - 9));
+    // 7. Luteal Phase Arc (Warm Amber #F59E0B)
+    final lutealStartAngle = -math.pi / 2 + (fertileEnd / cycleLength) * 2 * math.pi;
+    final lutealSweep = ((cycleLength - fertileEnd) / cycleLength) * 2 * math.pi;
+    if (lutealSweep > 0) {
+      final lutealPaint = Paint()
+        ..color = const Color(0xFFF59E0B).withOpacity(0.35)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.butt;
+      canvas.drawArc(rect, lutealStartAngle, lutealSweep, false, lutealPaint);
+    }
 
-    final ovBottom = TextPainter(
-      text: const TextSpan(
-        text: '14',
-        style: TextStyle(
-          fontSize: 10.5,
-          fontWeight: FontWeight.w900,
-          color: Colors.white,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    ovBottom.paint(canvas, Offset(ovX - ovBottom.width / 2, ovY));
-
-    // 5. Active Current Day Elevated Floating Thumb Badge
-    final currentDayFraction = (currentDay / cycleLength).clamp(0.0, 1.0);
-    final thumbAngle = -math.pi / 2 + currentDayFraction * 2 * math.pi;
+    // 8. Active Floating Thumb Badge
+    final thumbAngle = -math.pi / 2 + ((activeCycleDay - 0.5) / cycleLength) * 2 * math.pi;
     final thumbX = center.dx + radius * math.cos(thumbAngle);
     final thumbY = center.dy + radius * math.sin(thumbAngle);
 
-    // Soft drop shadow under thumb
-    final thumbShadow = Paint()
-      ..color = Colors.black.withOpacity(0.20)
+    // Outer glow aura
+    final glowPaint = Paint()
+      ..color = phaseColor.withOpacity(0.40)
+      ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawCircle(Offset(thumbX, thumbY + 1.5), 15.0, thumbShadow);
+    canvas.drawCircle(Offset(thumbX, thumbY), 16.0, glowPaint);
 
-    // Elevated white circular disc
-    final thumbFill = Paint()
-      ..color = isDark ? const Color(0xFF233129) : Colors.white
+    // White core thumb
+    final thumbCorePaint = Paint()
+      ..color = Colors.white
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(thumbX, thumbY), 15.0, thumbFill);
+    canvas.drawCircle(Offset(thumbX, thumbY), 13.0, thumbCorePaint);
 
-    // Crisp border matching theme
-    final thumbBorder = Paint()
-      ..color = isDark ? const Color(0xFF3B4E42) : const Color(0xFFDEE7E1)
+    // Ring border
+    final thumbBorderPaint = Paint()
+      ..color = phaseColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6;
-    canvas.drawCircle(Offset(thumbX, thumbY), 15.0, thumbBorder);
+      ..strokeWidth = 2.5;
+    canvas.drawCircle(Offset(thumbX, thumbY), 13.0, thumbBorderPaint);
 
-    // Clean two-line label: 'Day' on top, '$currentDay' below
-    final dayTop = TextPainter(
+    // Day number inside thumb
+    final textPainter = TextPainter(
       text: TextSpan(
-        text: 'Day',
+        text: '$activeCycleDay',
         style: TextStyle(
-          fontSize: 7.5,
-          fontWeight: FontWeight.w700,
-          color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    dayTop.paint(canvas, Offset(thumbX - dayTop.width / 2, thumbY - 10));
-
-    final dayBottom = TextPainter(
-      text: TextSpan(
-        text: '$currentDay',
-        style: TextStyle(
-          fontSize: 12,
+          fontSize: activeCycleDay >= 10 ? 9.5 : 11,
           fontWeight: FontWeight.w900,
-          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+          color: const Color(0xFF1E293B),
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    dayBottom.paint(canvas, Offset(thumbX - dayBottom.width / 2, thumbY - 1));
+
+    textPainter.paint(
+      canvas,
+      Offset(thumbX - textPainter.width / 2, thumbY - textPainter.height / 2),
+    );
   }
 
   @override
-  bool shouldRepaint(_CycleWheelPainter oldDelegate) {
-    return oldDelegate.cycleLength != cycleLength ||
+  bool shouldRepaint(covariant _TrulyInteractiveCyclePainter oldDelegate) {
+    return oldDelegate.activeCycleDay != activeCycleDay ||
+        oldDelegate.todayCycleDay != todayCycleDay ||
+        oldDelegate.cycleLength != cycleLength ||
         oldDelegate.periodDuration != periodDuration ||
-        oldDelegate.currentDay != currentDay ||
-        oldDelegate.animValue != animValue ||
-        oldDelegate.isDark != isDark;
+        oldDelegate.isDark != isDark ||
+        oldDelegate.phaseColor != phaseColor;
   }
 }

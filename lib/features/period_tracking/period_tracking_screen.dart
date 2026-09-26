@@ -62,7 +62,7 @@ class PeriodTrackingScreen extends StatelessWidget {
                 padding: EdgeInsets.only(
                   left: AppSpacing.pageMargin,
                   right: AppSpacing.pageMargin,
-                  top: 4.0,
+                  top: 14.0,
                   bottom: AppSpacing.contentBottomPadding(context),
                 ),
                 child: Column(

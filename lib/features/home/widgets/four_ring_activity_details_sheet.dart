@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -11,6 +12,7 @@ void showFourRingActivityDetailsSheet(BuildContext context, WellnessProvider pro
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withOpacity(0.55),
     builder: (sheetContext) {
@@ -147,10 +149,15 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
     final waterAvg = (waterList.reduce((a, b) => a + b) / 7);
     final sleepAvg = (sleepList.reduce((a, b) => a + b) / 7);
 
-    final selectedDayIndex = _selectedDate.difference(_weekStart).inDays.clamp(0, 6);
+    final mq = MediaQuery.of(context);
+    final rawTop = math.max(mq.padding.top, mq.viewPadding.top);
+    final topMargin = math.max(rawTop, 48.0) + 16.0;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.90,
+      constraints: BoxConstraints(
+        maxHeight: mq.size.height - topMargin,
+      ),
+      margin: EdgeInsets.only(top: topMargin),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF141C17) : const Color(0xFFF7FBF8),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),

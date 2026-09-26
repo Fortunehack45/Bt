@@ -121,9 +121,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _nextPage(WellnessProvider provider) {
     HapticService.mediumImpact();
     if (_currentPage < _totalPages - 1) {
+      if (_currentPage == _totalPages - 2) {
+        HapticService.celebrate();
+      }
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
       );
     } else {
       _finish(provider);
