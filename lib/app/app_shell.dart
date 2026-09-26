@@ -16,6 +16,8 @@ import '../features/hydration/hydration_screen.dart';
 import '../features/hydration/widgets/log_water_sheet.dart';
 import '../features/nutrition/nutrition_screen.dart';
 import '../features/nutrition/widgets/log_meal_sheet.dart';
+import '../features/period_tracking/widgets/log_period_sheet.dart';
+import '../features/pregnancy_tracking/widgets/log_pregnancy_wellness_sheet.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/profile/settings_screen.dart';
 import '../features/sleep/sleep_screen.dart';
@@ -91,6 +93,8 @@ class _AppShellState extends State<AppShell> {
           onAddHabit: () {
             showAddHabitSheet(context, provider);
           },
+          onLogPeriod: provider.isPeriodTrackingEnabled ? () => showLogPeriodSheet(context, provider) : null,
+          onLogPregnancy: provider.isPregnancyTrackingEnabled ? () => showLogPregnancyWellnessSheet(context, provider) : null,
         );
       },
     );

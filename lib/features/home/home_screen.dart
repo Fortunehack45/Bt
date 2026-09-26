@@ -10,6 +10,8 @@ import 'widgets/four_ring_hero_card.dart';
 import 'widgets/home_header.dart';
 import 'widgets/meal_tracker_section.dart';
 import 'widgets/metric_summary_grid.dart';
+import 'widgets/period_cycle_hero_card.dart';
+import 'widgets/pregnancy_journey_hero_card.dart';
 import 'widgets/recommendations_carousel.dart';
 import 'widgets/weekly_progress_hero_card.dart';
 
@@ -91,6 +93,16 @@ class HomeScreen extends StatelessWidget {
                 key: TourTargetKeys.ringsHeroKey,
               ),
               const SizedBox(height: AppSpacing.md),
+
+              // Specialized Reproductive Health Hero Cards (Rendered conditionally when enabled)
+              if (provider.isPeriodTrackingEnabled) ...[
+                const PeriodCycleHeroCard(),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              if (provider.isPregnancyTrackingEnabled) ...[
+                const PregnancyJourneyHeroCard(),
+                const SizedBox(height: AppSpacing.md),
+              ],
 
               // 3. Weekly Progress Hero Card (Lime gradient, "Daily intake", ring - Second Feature)
               WeeklyProgressHeroCard(

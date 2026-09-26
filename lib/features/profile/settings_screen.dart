@@ -28,6 +28,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _sleepReminders = true;
   bool _activityReminders = true;
   bool _mealReminders = true;
+  bool _periodReminders = true;
+  bool _pregnancyReminders = true;
   bool _isMetric = true;
 
   void _showSetGoalSheet(BuildContext context, String title, int currentVal, String unit, Function(int) onSave) {
@@ -436,6 +438,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             value: _mealReminders,
                             onChanged: (val) => setState(() => _mealReminders = val),
                           ),
+                          if (provider.isPeriodTrackingEnabled) ...[
+                            const Divider(height: 1),
+                            _buildSwitchRow(
+                              title: 'Cycle & Period Alerts',
+                              subtitle: 'Phase transitions & symptom logging prompts',
+                              value: _periodReminders,
+                              onChanged: (val) => setState(() => _periodReminders = val),
+                            ),
+                          ],
+                          if (provider.isPregnancyTrackingEnabled) ...[
+                            const Divider(height: 1),
+                            _buildSwitchRow(
+                              title: 'Prenatal & Wellbeing Reminders',
+                              subtitle: 'Upcoming checkups & hydration reminders',
+                              value: _pregnancyReminders,
+                              onChanged: (val) => setState(() => _pregnancyReminders = val),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -467,6 +487,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             title: 'Daily Calorie Target',
                             value: '${provider.targetCalories} kcal',
                             onTap: () => _showSetGoalSheet(context, 'Calorie Target', provider.targetCalories, 'kcal', (v) => provider.setTargetCalories(v)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+
+                    // Section: Reproductive Health Focus
+                    Text('Reproductive Health Focus', style: AppTypography.h3(isDark)),
+                    const SizedBox(height: AppSpacing.sm),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: Column(
+                        children: [
+                          _buildSwitchRow(
+                            title: 'Period Tracking',
+                            subtitle: provider.isPeriodTrackingEnabled
+                                ? 'Active • Flow, symptoms & cycle calendar (data preserved)'
+                                : 'Disabled • Historical cycle logs remain safely stored',
+                            value: provider.isPeriodTrackingEnabled,
+                            onChanged: (val) {
+                              HapticService.selection();
+                              provider.setPeriodTrackingEnabled(val);
+                            },
+                          ),
+                          const Divider(height: 1),
+                          _buildSwitchRow(
+                            title: 'Pregnancy Tracking',
+                            subtitle: provider.isPregnancyTrackingEnabled
+                                ? 'Active • Trimester milestones & maternal wellbeing'
+                                : 'Disabled • Historical pregnancy records remain safely stored',
+                            value: provider.isPregnancyTrackingEnabled,
+                            onChanged: (val) {
+                              HapticService.selection();
+                              provider.setPregnancyTrackingEnabled(val);
+                            },
                           ),
                         ],
                       ),

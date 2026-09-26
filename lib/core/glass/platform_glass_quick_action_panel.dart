@@ -13,6 +13,8 @@ class PlatformGlassQuickActionPanel extends StatelessWidget {
   final VoidCallback onAddMeal;
   final VoidCallback onLogSleep;
   final VoidCallback onAddHabit;
+  final VoidCallback? onLogPeriod;
+  final VoidCallback? onLogPregnancy;
 
   const PlatformGlassQuickActionPanel({
     super.key,
@@ -21,6 +23,8 @@ class PlatformGlassQuickActionPanel extends StatelessWidget {
     required this.onAddMeal,
     required this.onLogSleep,
     required this.onAddHabit,
+    this.onLogPeriod,
+    this.onLogPregnancy,
   });
 
   @override
@@ -125,6 +129,45 @@ class PlatformGlassQuickActionPanel extends StatelessWidget {
               ),
             ],
           ),
+          if (onLogPeriod != null || onLogPregnancy != null) ...[
+            const SizedBox(height: AppSpacing.gutter),
+            Row(
+              children: [
+                if (onLogPeriod != null)
+                  Expanded(
+                    child: _buildActionTile(
+                      context: context,
+                      icon: Icons.water_drop_rounded,
+                      color: const Color(0xFFF43F5E),
+                      bgColor: const Color(0xFFF43F5E).withOpacity(0.14),
+                      title: 'Log Period',
+                      subtitle: 'Flow & symptoms',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        onLogPeriod!();
+                      },
+                    ),
+                  ),
+                if (onLogPeriod != null && onLogPregnancy != null)
+                  const SizedBox(width: AppSpacing.gutter),
+                if (onLogPregnancy != null)
+                  Expanded(
+                    child: _buildActionTile(
+                      context: context,
+                      icon: Icons.favorite_rounded,
+                      color: const Color(0xFFA855F7),
+                      bgColor: const Color(0xFFA855F7).withOpacity(0.14),
+                      title: 'Pregnancy Log',
+                      subtitle: 'Maternal wellbeing',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        onLogPregnancy!();
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: AppSpacing.gutter),
 
           // Habit Builder Tile

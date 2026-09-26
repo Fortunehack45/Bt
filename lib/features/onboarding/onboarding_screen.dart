@@ -32,7 +32,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   double _selectedHeightCm = 178.0;
   double _selectedWeightKg = 70.0;
   String _selectedGoal = 'Vitality & Daily Energy';
-
+  bool _trackPeriod = false;
+  bool _trackPregnancy = false;
 
   static const List<String> _fullMonthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -73,6 +74,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       weightKg: _selectedWeightKg,
       targetWeightKg: (_selectedWeightKg * 0.96),
       primaryGoal: _selectedGoal,
+      isPeriodTrackingEnabled: _selectedGender == 'Female' && _trackPeriod,
+      isPregnancyTrackingEnabled: _selectedGender == 'Female' && _trackPregnancy,
     );
     widget.onGetStarted();
   }
@@ -741,7 +744,135 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             );
           }),
+
+          // Specialized Health Focus for Female users
+          if (_selectedGender == 'Female') ...[
+            const SizedBox(height: 20),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Specialized Health Focus (Optional)',
+                    style: AppTypography.h3(isDark).copyWith(fontSize: 15),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Add specialized cycle or maternal health tracking to your dashboard',
+                    style: AppTypography.caption(isDark).copyWith(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Option 1: Track my period
+            _buildSpecializedGoalCard(
+              title: 'Track my period',
+              desc: 'Predict upcoming cycle phases, fertile window & log symptoms',
+              icon: Icons.water_drop_outlined,
+              accentColor: const Color(0xFFF43F5E),
+              isSelected: _trackPeriod,
+              onTap: () {
+                HapticService.selection();
+                setState(() => _trackPeriod = !_trackPeriod);
+              },
+              isDark: isDark,
+            ),
+            const SizedBox(height: 10),
+
+            // Option 2: Track my pregnancy
+            _buildSpecializedGoalCard(
+              title: 'Track my pregnancy',
+              desc: 'Week-by-week milestones, estimated due date & maternal wellness',
+              icon: Icons.child_care_rounded,
+              accentColor: const Color(0xFFA855F7),
+              isSelected: _trackPregnancy,
+              onTap: () {
+                HapticService.selection();
+                setState(() => _trackPregnancy = !_trackPregnancy);
+              },
+              isDark: isDark,
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildSpecializedGoalCard({
+    required String title,
+    required String desc,
+    required IconData icon,
+    required Color accentColor,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? accentColor.withOpacity(0.18) : accentColor.withOpacity(0.08))
+              : (isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceElevated),
+          borderRadius: AppRadii.roundedMd,
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            width: isSelected ? 1.8 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.15),
+                borderRadius: AppRadii.roundedSm,
+              ),
+              child: Icon(icon, color: accentColor, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(desc, style: AppTypography.caption(isDark).copyWith(fontSize: 12)),
+                ],
+              ),
+            ),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? accentColor : Colors.transparent,
+                border: Border.all(
+                  color: isSelected ? accentColor : (isDark ? Colors.white38 : Colors.black26),
+                  width: 1.5,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 15)
+                  : null,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -784,6 +915,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 _buildTargetSummaryTile('Active Movement', '10,000 steps (~7.5 km)', Icons.directions_walk_rounded, AppColors.stepsOrange, isDark),
                 const Divider(height: 20),
                 _buildTargetSummaryTile('Nutrition Intake', '2,000 kcal daily balance', Icons.local_fire_department_rounded, AppColors.nutritionGold, isDark),
+                if (_selectedGender == 'Female' && _trackPeriod) ...[
+                  const Divider(height: 20),
+                  _buildTargetSummaryTile('Cycle Tracking', 'Period & symptoms enabled', Icons.water_drop_outlined, const Color(0xFFF43F5E), isDark),
+                ],
+                if (_selectedGender == 'Female' && _trackPregnancy) ...[
+                  const Divider(height: 20),
+                  _buildTargetSummaryTile('Pregnancy Journey', 'Milestones & maternal wellness', Icons.child_care_rounded, const Color(0xFFA855F7), isDark),
+                ],
               ],
             ),
           ),

@@ -27,6 +27,8 @@ class PersonalProfileScreen extends StatelessWidget {
     final targetWeightController = TextEditingController(text: provider.targetWeightKg.toStringAsFixed(1));
     String selectedGender = provider.gender;
     String selectedGoal = provider.primaryGoal;
+    bool selectedTrackPeriod = provider.isPeriodTrackingEnabled;
+    bool selectedTrackPregnancy = provider.isPregnancyTrackingEnabled;
 
     showModalBottomSheet<void>(
       context: context,
@@ -139,6 +141,34 @@ class PersonalProfileScreen extends StatelessWidget {
                         );
                       }).toList(),
                     ),
+                    if (selectedGender == 'Female') ...[
+                      const SizedBox(height: 14),
+                      Text('Reproductive Health Focus', style: AppTypography.caption(isDark)),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          FilterChip(
+                            label: const Text('Period Tracking'),
+                            selected: selectedTrackPeriod,
+                            selectedColor: const Color(0xFFF43F5E).withOpacity(0.2),
+                            checkmarkColor: const Color(0xFFF43F5E),
+                            onSelected: (val) {
+                              setState(() => selectedTrackPeriod = val);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          FilterChip(
+                            label: const Text('Pregnancy Tracking'),
+                            selected: selectedTrackPregnancy,
+                            selectedColor: const Color(0xFFA855F7).withOpacity(0.2),
+                            checkmarkColor: const Color(0xFFA855F7),
+                            onSelected: (val) {
+                              setState(() => selectedTrackPregnancy = val);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 24),
 
                     // Save Button
@@ -163,6 +193,8 @@ class PersonalProfileScreen extends StatelessWidget {
                             weightKg: parsedWeight,
                             targetWeightKg: parsedTarget,
                             primaryGoal: selectedGoal,
+                            isPeriodTrackingEnabled: selectedGender == 'Female' ? selectedTrackPeriod : false,
+                            isPregnancyTrackingEnabled: selectedGender == 'Female' ? selectedTrackPregnancy : false,
                           );
 
                           Navigator.of(sheetContext).pop();
