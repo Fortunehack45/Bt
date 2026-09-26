@@ -27,9 +27,11 @@ class AppColors {
 
   static const Color sleepPurple = Color(0xFF818CF8);
   static const Color sleepPurpleTint = Color(0xFFEEF0FE);
+  static const Color sleepIndigo = Color(0xFF6366F1);
 
   static const Color nutritionGold = Color(0xFFF59E0B);
   static const Color nutritionGoldTint = Color(0xFFFEF7EA);
+  static const Color nutritionGreen = Color(0xFF10B981);
 
   // Light Mode Surfaces & Neutrals
   static const Color lightBackground = Color(0xFFF7F9F8);

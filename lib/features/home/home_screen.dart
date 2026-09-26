@@ -49,6 +49,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = WellnessStateScope.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Calculate real composite progress from current goals
     final calorieRatio = provider.targetCalories > 0

@@ -3,13 +3,15 @@ import '../../core/theme/app_colors.dart';
 
 /// Categories of health and wellness notifications supported by Wellnest.
 enum NotificationCategory {
-  all(displayName: 'All'),
-  reminders(displayName: 'Reminders'),
-  insights(displayName: 'Insights'),
-  reproductive(displayName: 'Reproductive');
+  all(displayName: 'All', label: 'All'),
+  reminders(displayName: 'Reminders', label: 'Reminder'),
+  insights(displayName: 'Insights', label: 'Insight'),
+  reproductive(displayName: 'Reproductive', label: 'Cycle & Baby'),
+  system(displayName: 'System', label: 'System');
 
   final String displayName;
-  const NotificationCategory({required this.displayName});
+  final String label;
+  const NotificationCategory({required this.displayName, required this.label});
 }
 
 /// Specific type of telemetry alert or milestone.
@@ -44,11 +46,23 @@ enum NotificationType {
     icon: Icons.spa_rounded,
     accentColor: Color(0xFFF43F5E), // Rose
   ),
+  period(
+    displayName: 'Cycle Forecast',
+    category: NotificationCategory.reproductive,
+    icon: Icons.spa_rounded,
+    accentColor: Color(0xFFF43F5E), // Rose
+  ),
   pregnancy(
     displayName: 'Fetal Milestone',
     category: NotificationCategory.reproductive,
     icon: Icons.child_care_rounded,
     accentColor: Color(0xFFA855F7), // Purple
+  ),
+  milestone(
+    displayName: 'Milestone & Achievement',
+    category: NotificationCategory.insights,
+    icon: Icons.emoji_events_rounded,
+    accentColor: Color(0xFF92DF2B), // Lime
   ),
   system(
     displayName: 'Vitality Insight',
@@ -80,24 +94,35 @@ class WellnestNotification {
   final bool isRead;
   final String? actionRoute; // e.g. 'log_water', 'open_cycle', 'open_pregnancy', 'log_meal'
   final String? actionLabel; // e.g. '+1 Glass', 'View Cycle', 'Inspect Baby'
+  final NotificationCategory? explicitCategory;
 
   const WellnestNotification({
     required this.id,
     required this.title,
-    required this.body,
+    String? body,
+    String? message,
     required this.timestamp,
     required this.type,
+    NotificationCategory? category,
     this.isRead = false,
     this.actionRoute,
     this.actionLabel,
-  });
+  })  : body = body ?? message ?? '',
+        explicitCategory = category;
+
+  String get message => body;
+  NotificationCategory get category => explicitCategory ?? type.category;
+  IconData get icon => type.icon;
+  Color get accentColor => type.accentColor;
 
   WellnestNotification copyWith({
     String? id,
     String? title,
     String? body,
+    String? message,
     DateTime? timestamp,
     NotificationType? type,
+    NotificationCategory? category,
     bool? isRead,
     String? actionRoute,
     String? actionLabel,
@@ -105,9 +130,10 @@ class WellnestNotification {
     return WellnestNotification(
       id: id ?? this.id,
       title: title ?? this.title,
-      body: body ?? this.body,
+      body: body ?? message ?? this.body,
       timestamp: timestamp ?? this.timestamp,
       type: type ?? this.type,
+      category: category ?? explicitCategory,
       isRead: isRead ?? this.isRead,
       actionRoute: actionRoute ?? this.actionRoute,
       actionLabel: actionLabel ?? this.actionLabel,

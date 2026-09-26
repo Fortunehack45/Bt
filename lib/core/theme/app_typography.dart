@@ -92,6 +92,15 @@ class AppTypography {
         color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
       );
 
+  static TextStyle bodySmall(bool isDark) => TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.1,
+        height: 1.35,
+        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+      );
+
   // Captions, Labels & Badges
   static TextStyle label(bool isDark) => TextStyle(
         fontFamily: fontFamily,
