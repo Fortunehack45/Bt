@@ -3,15 +3,19 @@
     android:height="48dp"
     android:viewportWidth="48"
     android:viewportHeight="48">
-    <!-- Circular Background Pill -->
+    <!-- Circular Background Pill Centered at (24, 24) -->
     <path
         android:fillColor="#10B981"
         android:pathData="M24,4 C35.046,4 44,12.954 44,24 C44,35.046 35.046,44 24,44 C12.954,44 4,35.046 4,24 C4,12.954 12.954,4 24,4 Z" />
-    <!-- Fork & Knife Dining Icon -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M19,13 C18.4,13 18,13.4 18,14 L18,19 C18,20.7 19.3,22 21,22 L21,34 C21,34.6 21.4,35 22,35 C22.6,35 23,34.6 23,34 L23,22 C24.7,22 26,20.7 26,19 L26,14 C26,13.4 25.6,13 25,13 C24.4,13 24,13.4 24,14 L24,18 L23,18 L23,14 C23,13.4 22.6,13 22,13 C21.4,13 21,13.4 21,14 L21,18 L20,18 L20,14 C20,13.4 19.6,13 19,13 Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M29,13 C27.9,13 27,13.9 27,15 L27,24 C27,24.6 27.4,25 28,25 L29,25 L29,34 C29,34.6 29.4,35 30,35 C30.6,35 31,34.6 31,34 L31,14 C31,13.4 30.1,13 29,13 Z" />
+
+    <!-- Dining Fork and Knife Icon Mathematically & Optically Centered at (24, 24) -->
+    <group
+        android:scaleX="1.1"
+        android:scaleY="1.1"
+        android:translateX="10.8"
+        android:translateY="10.8">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M11,9 H9 V2 H7 v7 H5 V2 H3 v7 c0,2.12 1.66,3.84 3.75,3.97 V22 h2.5 v-9.03 C11.34,12.84 13,11.12 13,9 V2 h-2 v7 z M16,6 v8 h2.5 v8 H21 V2 c-2.76,0 -5,2.24 -5,4 z" />
+    </group>
 </vector>

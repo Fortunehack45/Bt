@@ -36,5 +36,40 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.biothrix.app.ACTION_LOG_WATER</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Log Water</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeAdd</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.biothrix.app.ACTION_RECORD_BPM</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Heart Rate</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeLove</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.biothrix.app.ACTION_ADD_MEAL</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Add Meal</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeCompose</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.biothrix.app.ACTION_TRACK_ACTIVITY</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Log Workout</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypePlay</string>
+		</dict>
+	</array>
 </dict>
 </plist>

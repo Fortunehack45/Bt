@@ -122,7 +122,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
       phaseIcon = Icons.water_drop_rounded;
       statusHeadline = 'Period: Day $activeCycleDay';
       statusSubtitle = 'Active Menstruation Flow';
-      fertilityLabel = 'Menstrual Flow • Low Fertility';
+      fertilityLabel = 'Active Flow';
       biologicalGuidance = 'Uterine lining shedding. Estrogen and progesterone at baseline. Rest and gentle hydration prioritized.';
     } else if (activeCycleDay < fertileStart) {
       // 2. Follicular Phase (periodDur+1 to fertileStart-1)
@@ -131,7 +131,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
       phaseIcon = Icons.spa_rounded;
       statusHeadline = 'Cycle Day $activeCycleDay of $cycleLen';
       statusSubtitle = 'Estrogen Rising & Renewal';
-      fertilityLabel = 'Low Conception Likelihood';
+      fertilityLabel = 'Low Conception';
       biologicalGuidance = 'Follicles maturing in ovaries. Rising estrogen boosts physical stamina, cognitive sharpness, and mood.';
     } else if (activeCycleDay >= fertileStart && activeCycleDay <= fertileEnd) {
       // 3. Fertile Window & Ovulation (fertileStart to fertileEnd)
@@ -141,7 +141,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
         phaseIcon = Icons.wb_sunny_rounded;
         statusHeadline = 'Ovulation Day $activeCycleDay';
         statusSubtitle = 'LH Surge & Egg Release';
-        fertilityLabel = 'Peak Fertility Window';
+        fertilityLabel = 'Peak Fertility';
         biologicalGuidance = 'Luteinizing Hormone peak triggers ovum release. Maximum probability of conception in this 24h window.';
       } else {
         phaseName = 'Fertile Window';
@@ -149,7 +149,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
         phaseIcon = Icons.flare_rounded;
         statusHeadline = 'Cycle Day $activeCycleDay of $cycleLen';
         statusSubtitle = 'High Fertility Window';
-        fertilityLabel = 'High Conception Chance';
+        fertilityLabel = 'High Fertility';
         biologicalGuidance = 'Sperm can survive up to 5 days in fertile cervical fluid. High conception window leading to ovulation.';
       }
     } else {
@@ -160,7 +160,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
       final daysUntilNext = cycleLen - activeCycleDay + 1;
       statusHeadline = 'Period in $daysUntilNext ${daysUntilNext == 1 ? 'day' : 'days'}';
       statusSubtitle = 'Progesterone Dominant';
-      fertilityLabel = 'Low Fertility • Restorative';
+      fertilityLabel = 'Low Fertility';
       biologicalGuidance = 'Corpus luteum secretes progesterone. Basal body temperature elevates. Nourish body with magnesium and sleep.';
     }
 
@@ -269,7 +269,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
           // 2. Interactive Biological Cycle Wheel (Touch & Scrub Capable)
           LayoutBuilder(
             builder: (context, constraints) {
-              final dialSize = math.min(constraints.maxWidth, 260.0);
+              final dialSize = math.min(constraints.maxWidth, 272.0);
 
               return Center(
                 child: SizedBox(
@@ -296,9 +296,9 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
                           ),
                         ),
 
-                        // Center Informational Core
+                        // Center Informational Core — Guaranteed generous breathing room
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 6),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -313,36 +313,36 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(phaseIcon, size: 14, color: phaseColor),
+                                    Icon(phaseIcon, size: 13, color: phaseColor),
                                     const SizedBox(width: 4),
                                     Text(
                                       phaseName,
                                       style: TextStyle(
                                         fontFamily: AppTypography.fontFamily,
-                                        fontSize: 12,
+                                        fontSize: 11.5,
                                         fontWeight: FontWeight.w800,
                                         color: phaseColor,
                                       ),
                                     ),
                                     const SizedBox(width: 2),
-                                    Icon(Icons.chevron_right_rounded, size: 15, color: phaseColor),
+                                    Icon(Icons.chevron_right_rounded, size: 14, color: phaseColor),
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 3),
 
                               // Large Headline
                               Text(
                                 statusHeadline,
                                 textAlign: TextAlign.center,
-                                maxLines: 2,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: AppTypography.fontFamily,
-                                  fontSize: 22,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w900,
                                   height: 1.15,
-                                  letterSpacing: -0.5,
+                                  letterSpacing: -0.4,
                                   color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                                 ),
                               ),
@@ -352,18 +352,20 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
                               Text(
                                 statusSubtitle,
                                 textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: AppTypography.fontFamily,
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
                                   color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 5),
 
-                              // Fertility Pill
+                              // Compact Fertility Badge (Short, crisp, never touching rim)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2.5),
                                 decoration: BoxDecoration(
                                   color: phaseColor.withOpacity(0.14),
                                   borderRadius: AppRadii.roundedPill,
@@ -378,7 +380,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: AppTypography.fontFamily,
-                                    fontSize: 10.5,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w800,
                                     color: phaseColor,
                                   ),
@@ -562,7 +564,8 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero>
 
 /// Custom painter for the wide luxury Menstrual Cycle Wheel.
 /// Renders 4 biological phase arcs with precision graduation dots,
-/// ovulation peak beacon, and a glowing draggable active-day thumb badge.
+/// ovulation peak beacon, curved background borders hugging rounded caps,
+/// and a glowing draggable active-day thumb badge.
 class _TrulyInteractiveCyclePainter extends CustomPainter {
   final int cycleLength;
   final int periodDuration;
@@ -589,9 +592,10 @@ class _TrulyInteractiveCyclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    const strokeWidth = 20.0;
-    final radius = (size.width - strokeWidth - 10) / 2;
+    const strokeWidth = 17.5;
+    final radius = (size.width - strokeWidth - 12) / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
+    final cardBg = isDark ? const Color(0xFF141C17) : Colors.white;
 
     // 1. Base Channel Track
     final trackPaint = Paint()
@@ -609,41 +613,80 @@ class _TrulyInteractiveCyclePainter extends CustomPainter {
       final angle = -math.pi / 2 + (i / cycleLength) * 2 * math.pi;
       final dx = center.dx + radius * math.cos(angle);
       final dy = center.dy + radius * math.sin(angle);
-      canvas.drawCircle(Offset(dx, dy), 1.5, dotPaint);
+      canvas.drawCircle(Offset(dx, dy), 1.4, dotPaint);
     }
 
-    // 3. Menstrual Phase Arc (Days 1 to periodDuration, Rose #F43F5E)
-    final periodSweep = (periodDuration / cycleLength) * 2 * math.pi;
-    final periodPaint = Paint()
-      ..color = const Color(0xFFF43F5E)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(rect, -math.pi / 2, periodSweep, false, periodPaint);
+    // Helper: Draw arc segment with round caps and protective curved border mask
+    // to strictly prevent adjacent arc bleed and render an elegant curved boundary contour
+    void drawSegmentWithCurvedBorder({
+      required double startAngle,
+      required double sweepAngle,
+      required Color color,
+      double opacity = 1.0,
+    }) {
+      if (sweepAngle <= 0.001) return;
+      const double gapAngle = 0.052; // ~3.0 degrees of clean separation
+      final effectiveStart = startAngle + (gapAngle / 2);
+      final effectiveSweep = sweepAngle - gapAngle;
+      if (effectiveSweep <= 0.005) return;
 
-    // 4. Follicular Phase Arc (Muted Mint/Emerald #10B981)
-    final follicularStartAngle = -math.pi / 2 + (periodDuration / cycleLength) * 2 * math.pi;
-    final follicularSweep = ((fertileStart - periodDuration - 1) / cycleLength) * 2 * math.pi;
-    if (follicularSweep > 0) {
-      final follicularPaint = Paint()
-        ..color = const Color(0xFF10B981).withOpacity(0.35)
+      final capRadius = (strokeWidth / 2) + 2.5;
+
+      // Start cap coordinates
+      final startCapX = center.dx + radius * math.cos(effectiveStart);
+      final startCapY = center.dy + radius * math.sin(effectiveStart);
+
+      // End cap coordinates
+      final endAngle = effectiveStart + effectiveSweep;
+      final endCapX = center.dx + radius * math.cos(endAngle);
+      final endCapY = center.dy + radius * math.sin(endAngle);
+
+      // 1. Background Mask Circles at caps — creates the curved border hugging the end of the arc
+      final maskPaint = Paint()
+        ..color = cardBg
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(startCapX, startCapY), capRadius, maskPaint);
+      canvas.drawCircle(Offset(endCapX, endCapY), capRadius, maskPaint);
+
+      // 2. Draw the rounded phase arc
+      final arcPaint = Paint()
+        ..color = color.withOpacity(opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.butt;
-      canvas.drawArc(rect, follicularStartAngle, follicularSweep, false, follicularPaint);
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(rect, effectiveStart, effectiveSweep, false, arcPaint);
     }
+
+    // 3. Menstrual Phase Arc (Days 1 to periodDuration, Rose)
+    final periodSweep = (periodDuration / cycleLength) * 2 * math.pi;
+    drawSegmentWithCurvedBorder(
+      startAngle: -math.pi / 2,
+      sweepAngle: periodSweep,
+      color: const Color(0xFFF43F5E),
+    );
+
+    // 4. Follicular Phase Arc (Muted Mint/Emerald #10B981)
+    final follicularStartAngle = -math.pi / 2 + periodSweep;
+    final follicularDays = (fertileStart - periodDuration - 1).clamp(0, cycleLength);
+    final follicularSweep = (follicularDays / cycleLength) * 2 * math.pi;
+    drawSegmentWithCurvedBorder(
+      startAngle: follicularStartAngle,
+      sweepAngle: follicularSweep,
+      color: const Color(0xFF10B981),
+      opacity: 0.40,
+    );
 
     // 5. Fertile Window Arc (Cyan #06B6D4)
     final fertileStartAngle = -math.pi / 2 + ((fertileStart - 1) / cycleLength) * 2 * math.pi;
-    final fertileSweep = ((fertileEnd - fertileStart + 1) / cycleLength) * 2 * math.pi;
-    final fertilePaint = Paint()
-      ..color = const Color(0xFF06B6D4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(rect, fertileStartAngle, fertileSweep, false, fertilePaint);
+    final fertileDays = (fertileEnd - fertileStart + 1).clamp(0, cycleLength);
+    final fertileSweep = (fertileDays / cycleLength) * 2 * math.pi;
+    drawSegmentWithCurvedBorder(
+      startAngle: fertileStartAngle,
+      sweepAngle: fertileSweep,
+      color: const Color(0xFF06B6D4),
+    );
 
-    // 6. Ovulation Peak Indicator (Day 14 Starburst / Circle)
+    // 6. Ovulation Peak Indicator (Day 14 Beacon)
     final ovAngle = -math.pi / 2 + ((ovulationDay - 1) / cycleLength) * 2 * math.pi;
     final ovX = center.dx + radius * math.cos(ovAngle);
     final ovY = center.dy + radius * math.sin(ovAngle);
@@ -661,15 +704,14 @@ class _TrulyInteractiveCyclePainter extends CustomPainter {
 
     // 7. Luteal Phase Arc (Warm Amber #F59E0B)
     final lutealStartAngle = -math.pi / 2 + (fertileEnd / cycleLength) * 2 * math.pi;
-    final lutealSweep = ((cycleLength - fertileEnd) / cycleLength) * 2 * math.pi;
-    if (lutealSweep > 0) {
-      final lutealPaint = Paint()
-        ..color = const Color(0xFFF59E0B).withOpacity(0.35)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.butt;
-      canvas.drawArc(rect, lutealStartAngle, lutealSweep, false, lutealPaint);
-    }
+    final lutealDays = (cycleLength - fertileEnd).clamp(0, cycleLength);
+    final lutealSweep = (lutealDays / cycleLength) * 2 * math.pi;
+    drawSegmentWithCurvedBorder(
+      startAngle: lutealStartAngle,
+      sweepAngle: lutealSweep,
+      color: const Color(0xFFF59E0B),
+      opacity: 0.40,
+    );
 
     // 8. Active Floating Thumb Badge
     final thumbAngle = -math.pi / 2 + ((activeCycleDay - 0.5) / cycleLength) * 2 * math.pi;

@@ -155,7 +155,7 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
           // 2. Interactive Gestational Dial with Week Scrubbing
           LayoutBuilder(
             builder: (context, constraints) {
-              final dialSize = math.min(constraints.maxWidth, 260.0);
+              final dialSize = math.min(constraints.maxWidth, 272.0);
 
               return Center(
                 child: SizedBox(
@@ -612,8 +612,8 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
 }
 
 /// Custom painter for the 40-week Gestational Dial.
-/// Accurately renders 3 continuous trimester segments with divider ticks,
-/// 40 micro-graduation dots, and a responsive active-week thumb badge.
+/// Accurately renders 3 continuous trimester segments with curved background borders
+/// hugging rounded caps, 40 micro-graduation dots, and a responsive active-week thumb badge.
 class _GestationalDialPainter extends CustomPainter {
   final int currentWeek;
   final int actualWeek;
@@ -630,8 +630,9 @@ class _GestationalDialPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    const strokeWidth = 20.0;
-    final radius = (size.width - strokeWidth - 10) / 2;
+    const strokeWidth = 17.5;
+    final radius = (size.width - strokeWidth - 12) / 2;
+    final cardBg = isDark ? const Color(0xFF141C17) : Colors.white;
 
     // 1. Base Track Channel
     final baseTrackPaint = Paint()
@@ -652,19 +653,56 @@ class _GestationalDialPainter extends CustomPainter {
       canvas.drawCircle(Offset(dx, dy), 1.4, dotPaint);
     }
 
-    // 3. Segmented Trimester Arcs up to currentWeek
     final rect = Rect.fromCircle(center: center, radius: radius);
 
+    void drawTrimesterArc({
+      required double startAngle,
+      required double sweepAngle,
+      required Color color,
+    }) {
+      if (sweepAngle <= 0.001) return;
+      const double gapAngle = 0.052;
+      final effectiveStart = startAngle + (gapAngle / 2);
+      final effectiveSweep = sweepAngle - gapAngle;
+      if (effectiveSweep <= 0.005) return;
+
+      final capRadius = (strokeWidth / 2) + 2.5;
+
+      // Start cap coordinates
+      final startCapX = center.dx + radius * math.cos(effectiveStart);
+      final startCapY = center.dy + radius * math.sin(effectiveStart);
+
+      // End cap coordinates
+      final endAngle = effectiveStart + effectiveSweep;
+      final endCapX = center.dx + radius * math.cos(endAngle);
+      final endCapY = center.dy + radius * math.sin(endAngle);
+
+      // Curved background mask circles hugging rounded caps
+      final maskPaint = Paint()
+        ..color = cardBg
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(startCapX, startCapY), capRadius, maskPaint);
+      canvas.drawCircle(Offset(endCapX, endCapY), capRadius, maskPaint);
+
+      // Rounded segment arc
+      final arcPaint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(rect, effectiveStart, effectiveSweep, false, arcPaint);
+    }
+
+    // 3. Segmented Trimester Arcs up to currentWeek
     // Trimester 1 (Weeks 1 to 12)
     final t1Weeks = currentWeek.clamp(0, 12);
     if (t1Weeks > 0) {
       final t1Sweep = (t1Weeks / 40.0) * 2 * math.pi;
-      final t1Paint = Paint()
-        ..color = const Color(0xFFF43F5E)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = currentWeek <= 12 ? StrokeCap.round : StrokeCap.butt;
-      canvas.drawArc(rect, -math.pi / 2, t1Sweep, false, t1Paint);
+      drawTrimesterArc(
+        startAngle: -math.pi / 2,
+        sweepAngle: t1Sweep,
+        color: const Color(0xFFF43F5E),
+      );
     }
 
     // Trimester 2 (Weeks 13 to 27)
@@ -672,12 +710,11 @@ class _GestationalDialPainter extends CustomPainter {
       final t2Weeks = (currentWeek - 12).clamp(0, 15);
       final t2StartAngle = -math.pi / 2 + (12 / 40.0) * 2 * math.pi;
       final t2Sweep = (t2Weeks / 40.0) * 2 * math.pi;
-      final t2Paint = Paint()
-        ..color = const Color(0xFFA855F7)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = currentWeek <= 27 ? StrokeCap.round : StrokeCap.butt;
-      canvas.drawArc(rect, t2StartAngle, t2Sweep, false, t2Paint);
+      drawTrimesterArc(
+        startAngle: t2StartAngle,
+        sweepAngle: t2Sweep,
+        color: const Color(0xFFA855F7),
+      );
     }
 
     // Trimester 3 (Weeks 28 to 40)
@@ -685,19 +722,14 @@ class _GestationalDialPainter extends CustomPainter {
       final t3Weeks = (currentWeek - 27).clamp(0, 13);
       final t3StartAngle = -math.pi / 2 + (27 / 40.0) * 2 * math.pi;
       final t3Sweep = (t3Weeks / 40.0) * 2 * math.pi;
-      final t3Paint = Paint()
-        ..color = const Color(0xFFF59E0B)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round;
-      canvas.drawArc(rect, t3StartAngle, t3Sweep, false, t3Paint);
+      drawTrimesterArc(
+        startAngle: t3StartAngle,
+        sweepAngle: t3Sweep,
+        color: const Color(0xFFF59E0B),
+      );
     }
 
-    // 4. Trimester dividing notches at Week 12 and Week 27
-    _drawTrimesterDivider(canvas, center, radius, strokeWidth, 12);
-    _drawTrimesterDivider(canvas, center, radius, strokeWidth, 27);
-
-    // 5. Active Floating Week Thumb Badge
+    // 4. Active Floating Week Thumb Badge
     final thumbAngle = -math.pi / 2 + (currentWeek / 40.0) * 2 * math.pi;
     final thumbX = center.dx + radius * math.cos(thumbAngle);
     final thumbY = center.dy + radius * math.sin(thumbAngle);
@@ -739,26 +771,6 @@ class _GestationalDialPainter extends CustomPainter {
       canvas,
       Offset(thumbX - textPainter.width / 2, thumbY - textPainter.height / 2),
     );
-  }
-
-  void _drawTrimesterDivider(
-    Canvas canvas,
-    Offset center,
-    double radius,
-    double strokeWidth,
-    int week,
-  ) {
-    final angle = -math.pi / 2 + (week / 40.0) * 2 * math.pi;
-    final rInner = radius - (strokeWidth / 2) - 2;
-    final rOuter = radius + (strokeWidth / 2) + 2;
-
-    final p1 = Offset(center.dx + rInner * math.cos(angle), center.dy + rInner * math.sin(angle));
-    final p2 = Offset(center.dx + rOuter * math.cos(angle), center.dy + rOuter * math.sin(angle));
-
-    final dividerPaint = Paint()
-      ..color = isDark ? Colors.white54 : Colors.black45
-      ..strokeWidth = 1.5;
-    canvas.drawLine(p1, p2, dividerPaint);
   }
 
   @override

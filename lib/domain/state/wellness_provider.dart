@@ -62,17 +62,22 @@ class WellnessProvider extends ChangeNotifier {
     if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
       calculatedAge--;
     }
-    _age = calculatedAge.clamp(1, 120);
+    _age = calculatedAge.clamp(13, 100);
     notifyListeners();
   }
 
   void setAge(int age) {
-    _age = age;
+    _age = age.clamp(13, 100);
     notifyListeners();
   }
 
   void setGender(String gender) {
     _gender = gender;
+    // Reproductive health tracking (period & pregnancy) is exclusive to female profiles
+    if (gender.toLowerCase() == 'male') {
+      _isPeriodTrackingEnabled = false;
+      _isPregnancyTrackingEnabled = false;
+    }
     notifyListeners();
   }
 
@@ -115,17 +120,28 @@ class WellnessProvider extends ChangeNotifier {
       if (now.month < dateOfBirth.month || (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
         calculatedAge--;
       }
-      _age = calculatedAge.clamp(1, 120);
+      _age = calculatedAge.clamp(13, 100);
     } else if (age != null) {
-      _age = age;
+      _age = age.clamp(13, 100);
     }
-    if (gender != null) _gender = gender;
+    if (gender != null) {
+      _gender = gender;
+      if (gender.toLowerCase() == 'male') {
+        _isPeriodTrackingEnabled = false;
+        _isPregnancyTrackingEnabled = false;
+      }
+    }
     if (heightCm != null) _heightCm = heightCm;
     if (weightKg != null) _weightKg = weightKg;
     if (targetWeightKg != null) _targetWeightKg = targetWeightKg;
     if (primaryGoal != null) _primaryGoal = primaryGoal;
     if (activityLevel != null) _activityLevel = activityLevel;
-    if (isPregnancyTrackingEnabled == true) {
+
+    // Biological Sex Guard & Mutual Exclusivity:
+    if (_gender.toLowerCase() == 'male') {
+      _isPeriodTrackingEnabled = false;
+      _isPregnancyTrackingEnabled = false;
+    } else if (isPregnancyTrackingEnabled == true) {
       _isPregnancyTrackingEnabled = true;
       _isPeriodTrackingEnabled = false;
     } else if (isPeriodTrackingEnabled == true) {
@@ -723,8 +739,15 @@ class WellnessProvider extends ChangeNotifier {
   final List<PregnancyAppointment> _pregnancyAppointments = [];
   List<PregnancyAppointment> get pregnancyAppointments => List.unmodifiable(_pregnancyAppointments);
 
+  bool get isReproductiveTrackingEligible => _gender.toLowerCase() == 'female';
+
   void setPeriodTrackingEnabled(bool enabled) {
+    // Male users cannot enable menstrual cycle tracking
+    if (enabled && !isReproductiveTrackingEligible) {
+      return;
+    }
     _isPeriodTrackingEnabled = enabled;
+    // Strict biological mutual exclusivity: True periods do not occur during pregnancy
     if (enabled) {
       _isPregnancyTrackingEnabled = false;
     }
@@ -732,11 +755,47 @@ class WellnessProvider extends ChangeNotifier {
   }
 
   void setPregnancyTrackingEnabled(bool enabled) {
+    // Male users cannot enable pregnancy tracking
+    if (enabled && !isReproductiveTrackingEligible) {
+      return;
+    }
     _isPregnancyTrackingEnabled = enabled;
+    // Strict biological mutual exclusivity: True periods do not occur during pregnancy
     if (enabled) {
       _isPeriodTrackingEnabled = false;
     }
     notifyListeners();
+  }
+
+  /// Clinical Basal Metabolic Rate using the validated Mifflin-St Jeor equation
+  double get bmr {
+    final w = _weightKg > 0 ? _weightKg : 70.0;
+    final h = _heightCm > 0 ? _heightCm : 175.0;
+    final a = _age;
+    if (_gender.toLowerCase() == 'female') {
+      return (10 * w) + (6.25 * h) - (5 * a) - 161;
+    } else {
+      return (10 * w) + (6.25 * h) - (5 * a) + 5;
+    }
+  }
+
+  /// Clinically calculated daily caloric recommendation based on BMR & activity level
+  int get recommendedDailyCalories {
+    final baseBmr = bmr;
+    double factor = 1.35;
+    if (_activityLevel.toLowerCase().contains('sedentary')) {
+      factor = 1.2;
+    } else if (_activityLevel.toLowerCase().contains('high') || _activityLevel.toLowerCase().contains('athletic')) {
+      factor = 1.725;
+    }
+    return (baseBmr * factor).round();
+  }
+
+  /// Recommended daily hydration glasses based on weight (35ml per kg / 250ml per glass)
+  int get recommendedHydrationGlasses {
+    final w = _weightKg > 0 ? _weightKg : 70.0;
+    final liters = (w * 0.035).clamp(1.5, 4.5);
+    return (liters / 0.25).round();
   }
 
   void setDefaultCycleParameters({int? cycleLength, int? periodDuration}) {

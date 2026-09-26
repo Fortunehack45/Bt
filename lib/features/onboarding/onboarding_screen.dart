@@ -69,7 +69,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       if (now.month < newDob.month || (now.month == newDob.month && now.day < newDob.day)) {
         age--;
       }
-      _selectedAge = age.clamp(1, 120);
+      _selectedAge = age.clamp(13, 100);
     });
   }
 
@@ -486,13 +486,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.date,
                   initialDateTime: _selectedDob,
-                  minimumDate: DateTime(1930, 1, 1),
-                  maximumDate: DateTime(DateTime.now().year - 10, 12, 31),
+                  minimumDate: DateTime(DateTime.now().year - 100, 1, 1),
+                  maximumDate: DateTime(DateTime.now().year - 13, DateTime.now().month, DateTime.now().day),
                   onDateTimeChanged: (newDate) {
                     _onDobChanged(newDate);
                   },
                 ),
               ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              'Wellnest requires a minimum age of 13 for biometric calibration.',
+              style: AppTypography.caption(isDark).copyWith(fontSize: 11, fontStyle: FontStyle.italic),
             ),
           ),
         ],
@@ -692,6 +699,251 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  void _handleOnboardingPeriodSelection(bool isDark) {
+    if (_trackPeriod) {
+      setState(() => _trackPeriod = false);
+      return;
+    }
+
+    // Age Guard: Adolescents (age <= 15)
+    if (_selectedAge <= 15) {
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: isDark ? const Color(0xFF1E2822) : Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (ctx) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: const Color(0xFFF43F5E).withOpacity(0.15), shape: BoxShape.circle),
+                        child: const Icon(Icons.water_drop_rounded, color: Color(0xFFF43F5E), size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Adolescent Cycle Setup',
+                          style: AppTypography.h3(isDark).copyWith(fontSize: 17),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Have you started having your menstrual period yet? Many teens begin between ages 12 and 15.',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 13,
+                      height: 1.4,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      HapticService.selection();
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _trackPeriod = true;
+                        _trackPregnancy = false;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
+                    child: const Text('Yes, I have started my period', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () {
+                      HapticService.selection();
+                      Navigator.pop(ctx);
+                      setState(() => _trackPeriod = false);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Noted! Cycle tracking will be available whenever you are ready.'),
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    },
+                    child: const Text('Not yet (Preparing for first period)'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      return;
+    }
+
+    // Age Guard: Perimenopause / Menopause (age >= 48)
+    if (_selectedAge >= 48) {
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: isDark ? const Color(0xFF1E2822) : Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (ctx) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: const Color(0xFFF43F5E).withOpacity(0.15), shape: BoxShape.circle),
+                        child: const Icon(Icons.insights_rounded, color: Color(0xFFF43F5E), size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Perimenopause & Cycle Health',
+                          style: AppTypography.h3(isDark).copyWith(fontSize: 17),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'At age $_selectedAge, many women transition into perimenopause or have completed menopause. Are you still experiencing active menstrual cycles?',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 13,
+                      height: 1.4,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      HapticService.selection();
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _trackPeriod = true;
+                        _trackPregnancy = false;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
+                    child: const Text('I am still having periods (Track Cycle)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () {
+                      HapticService.selection();
+                      Navigator.pop(ctx);
+                      setState(() => _trackPeriod = false);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Noted: Post-menopausal wellness profile enabled.'),
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    },
+                    child: const Text('I have reached menopause (Periods stopped)'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      return;
+    }
+
+    setState(() {
+      _trackPeriod = true;
+      _trackPregnancy = false;
+    });
+  }
+
+  void _handleOnboardingPregnancySelection(bool isDark) {
+    if (_trackPregnancy) {
+      setState(() => _trackPregnancy = false);
+      return;
+    }
+
+    // Age confirmation for age >= 50 or <= 15
+    if (_selectedAge >= 50 || _selectedAge <= 15) {
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: isDark ? const Color(0xFF1E2822) : Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (ctx) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: const Color(0xFFA855F7).withOpacity(0.15), shape: BoxShape.circle),
+                        child: const Icon(Icons.child_care_rounded, color: Color(0xFFA855F7), size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Pregnancy Confirmation',
+                          style: AppTypography.h3(isDark).copyWith(fontSize: 17),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'You selected pregnancy tracking at age $_selectedAge. Please confirm you would like to track an active 40-week pregnancy.',
+                    style: TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 13,
+                      height: 1.4,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      HapticService.celebrate();
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _trackPregnancy = true;
+                        _trackPeriod = false;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFA855F7)),
+                    child: const Text("I'm sure I'm pregnant", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      return;
+    }
+
+    setState(() {
+      _trackPregnancy = true;
+      _trackPeriod = false;
+    });
+  }
+
   // STEP 4: Goals & Aspiration
   Widget _buildStep4Goals(bool isDark) {
     final goals = [
@@ -836,10 +1088,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               isSelected: _trackPeriod,
               onTap: () {
                 HapticService.selection();
-                setState(() {
-                  _trackPeriod = !_trackPeriod;
-                  if (_trackPeriod) _trackPregnancy = false;
-                });
+                _handleOnboardingPeriodSelection(isDark);
               },
               isDark: isDark,
             ),
@@ -854,10 +1103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               isSelected: _trackPregnancy,
               onTap: () {
                 HapticService.selection();
-                setState(() {
-                  _trackPregnancy = !_trackPregnancy;
-                  if (_trackPregnancy) _trackPeriod = false;
-                });
+                _handleOnboardingPregnancySelection(isDark);
               },
               isDark: isDark,
             ),

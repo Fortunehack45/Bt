@@ -1,5 +1,6 @@
 package com.biothrix.app
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.core.view.WindowCompat
@@ -10,6 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity: FlutterActivity() {
     private val SHORTCUTS_CHANNEL = "com.biothrix.app/shortcuts"
     private var initialAction: String? = null
+    private var methodChannel: MethodChannel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,9 +30,21 @@ class MainActivity: FlutterActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.action?.let { action ->
+            if (action.startsWith("com.biothrix.app.ACTION_")) {
+                methodChannel?.invokeMethod("onShortcutAction", action)
+            }
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SHORTCUTS_CHANNEL).setMethodCallHandler { call, result ->
+        val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SHORTCUTS_CHANNEL)
+        methodChannel = channel
+        channel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getInitialAction" -> {
                     result.success(initialAction)

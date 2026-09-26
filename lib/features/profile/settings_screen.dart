@@ -164,6 +164,221 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _handlePeriodToggle(BuildContext context, WellnessProvider provider, bool newValue) {
+    if (!newValue) {
+      provider.setPeriodTrackingEnabled(false);
+      return;
+    }
+
+    // Guard: Pregnancy and Period tracking are mutually exclusive
+    if (provider.isPregnancyTrackingEnabled) {
+      WellnessBottomSheet.show<void>(
+        context: context,
+        title: 'Switch to Period Tracking?',
+        subtitle: 'Biological mutual exclusivity',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'True menstruation does not occur during pregnancy. Switching to menstrual cycle tracking will pause your active pregnancy journey while keeping all historical records safely stored.',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 13,
+                height: 1.4,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      HapticService.selection();
+                      provider.setPeriodTrackingEnabled(true);
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
+                    child: const Text('Confirm Switch', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Age Guard: Perimenopause / Menopause Intelligence
+    if (provider.age >= 48) {
+      WellnessBottomSheet.show<void>(
+        context: context,
+        title: 'Perimenopause & Cycle Health',
+        subtitle: 'Age-appropriate biological guidance',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'At age ${provider.age}, many women experience perimenopausal cycle irregularity or have reached natural menopause. How would you describe your cycle status?',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 13,
+                height: 1.4,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            ElevatedButton(
+              onPressed: () {
+                HapticService.selection();
+                provider.setPeriodTrackingEnabled(true);
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
+              child: const Text('I am still having periods (Track Cycle)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: () {
+                HapticService.selection();
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Noted: Menopause profile active. Period tracking remains off.'),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              },
+              child: const Text('I have reached menopause (Periods stopped)'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    provider.setPeriodTrackingEnabled(true);
+  }
+
+  void _handlePregnancyToggle(BuildContext context, WellnessProvider provider, bool newValue) {
+    if (!newValue) {
+      provider.setPregnancyTrackingEnabled(false);
+      return;
+    }
+
+    // Age Confirmation: For age >= 50 or <= 15
+    if (provider.age >= 50 || provider.age <= 15) {
+      WellnessBottomSheet.show<void>(
+        context: context,
+        title: 'Pregnancy Confirmation',
+        subtitle: 'Age ${provider.age} verification',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'You are enabling pregnancy tracking at age ${provider.age}. Please confirm you wish to initiate a 40-week gestational monitoring session.',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 13,
+                height: 1.4,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      HapticService.celebrate();
+                      provider.setPregnancyTrackingEnabled(true);
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFA855F7)),
+                    child: const Text("I'm sure I'm pregnant", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Guard: Pregnancy and Period tracking are mutually exclusive
+    if (provider.isPeriodTrackingEnabled) {
+      WellnessBottomSheet.show<void>(
+        context: context,
+        title: 'Switch to Pregnancy Mode?',
+        subtitle: 'Biological mutual exclusivity',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'True menstrual bleeding naturally ceases during pregnancy. Activating pregnancy mode will pause cycle predictions and activate your gestational growth portal.',
+              style: TextStyle(
+                fontFamily: AppTypography.fontFamily,
+                fontSize: 13,
+                height: 1.4,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      HapticService.celebrate();
+                      provider.setPregnancyTrackingEnabled(true);
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFA855F7)),
+                    child: const Text('Confirm Switch', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    provider.setPregnancyTrackingEnabled(true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -496,43 +711,83 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // Section: Reproductive Health Focus
                     Text('Reproductive Health Focus', style: AppTypography.h3(isDark)),
                     const SizedBox(height: AppSpacing.sm),
-                    SolidWellnessCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: Column(
-                        children: [
-                          _buildSwitchRow(
-                            title: 'Period Tracking',
-                            subtitle: provider.isPeriodTrackingEnabled
-                                ? 'Active • Flow, symptoms & cycle calendar (data preserved)'
-                                : 'Disabled • Historical cycle logs remain safely stored',
-                            value: provider.isPeriodTrackingEnabled,
-                            onChanged: (val) {
-                              HapticService.selection();
-                              provider.setPeriodTrackingEnabled(val);
-                            },
-                          ),
-                          const Divider(height: 1),
-                          _buildSwitchRow(
-                            title: 'Pregnancy Tracking',
-                            subtitle: provider.isPregnancyTrackingEnabled
-                                ? 'Active • Trimester milestones & maternal wellbeing'
-                                : 'Disabled • Historical pregnancy records remain safely stored',
-                            value: provider.isPregnancyTrackingEnabled,
-                            onChanged: (val) {
-                              HapticService.selection();
-                              provider.setPregnancyTrackingEnabled(val);
-                            },
-                          ),
-                        ],
+                    if (!provider.isReproductiveTrackingEligible)
+                      SolidWellnessCard(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF2C3930) : AppColors.primaryTint,
+                                borderRadius: AppRadii.roundedSm,
+                              ),
+                              child: const Icon(
+                                Icons.shield_outlined,
+                                color: AppColors.primaryDark,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Tailored for Female Biology',
+                                    style: AppTypography.h3(isDark).copyWith(fontSize: 15),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'Your profile is set to Male. Menstrual cycle and pregnancy tracking are reserved exclusively for female biological profiles.',
+                                    style: AppTypography.caption(isDark).copyWith(fontSize: 12, height: 1.3),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else ...[
+                      SolidWellnessCard(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Column(
+                          children: [
+                            _buildSwitchRow(
+                              title: 'Period Tracking',
+                              subtitle: provider.isPeriodTrackingEnabled
+                                  ? 'Active • Flow, symptoms & cycle calendar (data preserved)'
+                                  : 'Disabled • Historical cycle logs remain safely stored',
+                              value: provider.isPeriodTrackingEnabled,
+                              onChanged: (val) {
+                                HapticService.selection();
+                                _handlePeriodToggle(context, provider, val);
+                              },
+                            ),
+                            const Divider(height: 1),
+                            _buildSwitchRow(
+                              title: 'Pregnancy Tracking',
+                              subtitle: provider.isPregnancyTrackingEnabled
+                                  ? 'Active • Trimester milestones & maternal wellbeing'
+                                  : 'Disabled • Historical pregnancy records remain safely stored',
+                              value: provider.isPregnancyTrackingEnabled,
+                              onChanged: (val) {
+                                HapticService.selection();
+                                _handlePregnancyToggle(context, provider, val);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
-                      child: Text(
-                        'Note: Menstrual cycles naturally cease during pregnancy. Activating one mode automatically pauses the live status of the other while 100% of your historical records remain safely preserved.',
-                        style: AppTypography.caption(isDark).copyWith(fontSize: 11.5, fontStyle: FontStyle.italic),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
+                        child: Text(
+                          'Note: True menstruation does not occur during pregnancy. Activating one mode automatically pauses the live status of the other while 100% of your historical records remain safely preserved.',
+                          style: AppTypography.caption(isDark).copyWith(fontSize: 11.5, fontStyle: FontStyle.italic),
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: AppSpacing.lg),
 
                     // Section 5: Units & Data Management

@@ -43,30 +43,43 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
+    _shortcutsChannel.setMethodCallHandler((call) async {
+      if (call.method == 'onShortcutAction') {
+        final action = call.arguments as String?;
+        if (action != null && mounted) {
+          _executeShortcutAction(action);
+        }
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkShortcutsIntent();
     });
+  }
+
+  void _executeShortcutAction(String action) {
+    if (!mounted) return;
+    final provider = WellnessStateScope.of(context);
+    switch (action) {
+      case 'com.biothrix.app.ACTION_LOG_WATER':
+        showLogWaterSheet(context, provider);
+        break;
+      case 'com.biothrix.app.ACTION_RECORD_BPM':
+        _navigateToSubpage(context, BpmScreen(onBack: () => Navigator.of(context).pop()));
+        break;
+      case 'com.biothrix.app.ACTION_ADD_MEAL':
+        showLogMealSheet(context, provider);
+        break;
+      case 'com.biothrix.app.ACTION_TRACK_ACTIVITY':
+        showLogActivitySheet(context, provider);
+        break;
+    }
   }
 
   Future<void> _checkShortcutsIntent() async {
     try {
       final action = await _shortcutsChannel.invokeMethod<String>('getInitialAction');
       if (action != null && mounted) {
-        final provider = WellnessStateScope.of(context);
-        switch (action) {
-          case 'com.biothrix.app.ACTION_LOG_WATER':
-            showLogWaterSheet(context, provider);
-            break;
-          case 'com.biothrix.app.ACTION_RECORD_BPM':
-            _navigateToSubpage(context, BpmScreen(onBack: () => Navigator.of(context).pop()));
-            break;
-          case 'com.biothrix.app.ACTION_ADD_MEAL':
-            showLogMealSheet(context, provider);
-            break;
-          case 'com.biothrix.app.ACTION_TRACK_ACTIVITY':
-            showLogActivitySheet(context, provider);
-            break;
-        }
+        _executeShortcutAction(action);
       }
     } catch (_) {}
   }
