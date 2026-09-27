@@ -8,6 +8,7 @@ class HabitItem {
   final Color color;
   final int streakDays;
   final bool isCompletedToday;
+  final int targetDaysPerWeek;
 
   const HabitItem({
     required this.id,
@@ -17,6 +18,7 @@ class HabitItem {
     required this.color,
     required this.streakDays,
     this.isCompletedToday = false,
+    this.targetDaysPerWeek = 7,
   });
 
   HabitItem copyWith({
@@ -27,6 +29,7 @@ class HabitItem {
     Color? color,
     int? streakDays,
     bool? isCompletedToday,
+    int? targetDaysPerWeek,
   }) {
     return HabitItem(
       id: id ?? this.id,
@@ -36,6 +39,7 @@ class HabitItem {
       color: color ?? this.color,
       streakDays: streakDays ?? this.streakDays,
       isCompletedToday: isCompletedToday ?? this.isCompletedToday,
+      targetDaysPerWeek: targetDaysPerWeek ?? this.targetDaysPerWeek,
     );
   }
 }

@@ -1650,69 +1650,6 @@ class WellnessProvider extends ChangeNotifier {
     ]);
   }
 
-  // Real Streaks & Habit Consistency
-  int get overallStreakDays {
-    if (_isDemoMode) return 14;
-    int streak = 0;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    final todayMet = (_steps >= _stepGoal * 0.4) || (_waterGlasses >= _waterGoal * 0.4) || (_calories >= _targetCalories * 0.4) || _habits.any((h) => h.isCompletedToday);
-    if (todayMet) streak++;
-
-    for (int i = 1; i <= 365; i++) {
-      final prevDate = today.subtract(Duration(days: i));
-      final key = '${prevDate.year}-${prevDate.month}-${prevDate.day}';
-      final snap = _pastDaysData[key];
-      if (snap != null) {
-        final snapMet = (snap.steps >= _stepGoal * 0.4) || (snap.waterGlasses >= _waterGoal * 0.4) || (snap.calories >= _targetCalories * 0.4);
-        if (snapMet) {
-          streak++;
-        } else {
-          break;
-        }
-      } else {
-        break;
-      }
-    }
-
-    if (_habits.isNotEmpty) {
-      final maxHabitStreak = _habits.map((h) => h.streakDays).fold(0, (max, s) => s > max ? s : max);
-      if (maxHabitStreak > streak) return maxHabitStreak;
-    }
-
-    return streak;
-  }
-
-  List<bool> get thirtyDayConsistency {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final result = <bool>[];
-
-    for (int i = 29; i >= 0; i--) {
-      final d = today.subtract(Duration(days: i));
-      if (_isDemoMode) {
-        result.add((i % 7 != 0) && (i % 9 != 0));
-        continue;
-      }
-
-      if (i == 0) {
-        final metToday = (_steps >= _stepGoal * 0.4) || (_waterGlasses >= _waterGoal * 0.4) || (_calories >= _targetCalories * 0.4) || _habits.any((h) => h.isCompletedToday);
-        result.add(metToday);
-      } else {
-        final key = '${d.year}-${d.month}-${d.day}';
-        final snap = _pastDaysData[key];
-        if (snap != null) {
-          final met = (snap.steps >= _stepGoal * 0.4) || (snap.waterGlasses >= _waterGoal * 0.4) || (snap.calories >= _targetCalories * 0.4);
-          result.add(met);
-        } else {
-          result.add(false);
-        }
-      }
-    }
-    return result;
-  }
-
   // --- Persistence & State Restoration ---
   void _persistProfile() {
     try {
@@ -1836,7 +1773,7 @@ class WellnessProvider extends ChangeNotifier {
       final habitsStr = await NativePlatformService.instance.getString(NativePlatformService.keyHabitsData);
       if (habitsStr != null && habitsStr.isNotEmpty) {
         final list = jsonDecode(habitsStr) as List<dynamic>;
-        _habits = list.map((item) {
+        _habits = list.map<HabitItem>((item) {
           final map = item as Map<String, dynamic>;
           return HabitItem(
             id: map['id'] as String? ?? 'habit-${DateTime.now().millisecondsSinceEpoch}',

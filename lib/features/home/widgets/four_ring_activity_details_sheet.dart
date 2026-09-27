@@ -5,6 +5,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 import '../../../core/widgets/concentric_activity_rings.dart';
 import '../../../core/widgets/solid_wellness_card.dart';
+import '../../../domain/models/wellness_models.dart';
 import '../../../domain/state/wellness_provider.dart';
 
 /// Shows the slide-up 4-Ring Activity & Biometric Details sheet.

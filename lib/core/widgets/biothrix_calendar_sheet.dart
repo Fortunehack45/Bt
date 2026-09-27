@@ -4,6 +4,7 @@ import '../theme/app_radii.dart';
 import '../theme/app_typography.dart';
 import '../utils/haptic_service.dart';
 import 'wellness_bottom_sheet.dart';
+import '../../domain/models/wellness_models.dart';
 import '../../domain/state/wellness_provider.dart';
 
 /// Shows the custom Biothrix slide-up calendar sheet with date telemetry marking.
