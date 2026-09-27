@@ -223,7 +223,7 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                           padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               Icon(Icons.bolt_rounded, color: brandEmerald, size: 20),
                               SizedBox(width: 8),
                               Text(

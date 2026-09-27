@@ -9,6 +9,7 @@ import '../../core/utils/responsive_layout.dart';
 import '../../core/widgets/circular_progress_ring.dart';
 import '../../core/widgets/screen_header.dart';
 import '../../core/widgets/solid_wellness_card.dart';
+import '../../core/services/pedometer_service.dart';
 import '../../domain/state/wellness_provider.dart';
 
 enum WidgetPreviewTheme { dark, light, mint }
@@ -695,7 +696,7 @@ class _WidgetStudioScreenState extends State<WidgetStudioScreen> {
         );
 
       case 4: // Habits
-        final completedCount = provider.habits.where((h) => h.isCompleted).length;
+        final completedCount = provider.habits.where((h) => h.isCompletedToday).length;
         final totalCount = provider.habits.length;
         final leadHabit = provider.habits.isNotEmpty ? provider.habits.first : null;
 
