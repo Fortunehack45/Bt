@@ -338,7 +338,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.biothrix.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wellnest.vitality.health;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/GeneratedPluginRegistrant.h";
 				SWIFT_VERSION = 5.0;
@@ -359,7 +359,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.biothrix.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wellnest.vitality.health;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/GeneratedPluginRegistrant.h";
 				SWIFT_VERSION = 5.0;

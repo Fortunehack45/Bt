@@ -1,4 +1,4 @@
-package com.biothrix.app
+package com.wellnest.vitality.health
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -19,10 +19,10 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity: FlutterActivity(), SensorEventListener {
-    private val SHORTCUTS_CHANNEL = "com.biothrix.app/shortcuts"
-    private val NOTIFICATIONS_CHANNEL = "com.biothrix.app/notifications"
-    private val PREFERENCES_CHANNEL = "com.biothrix.app/preferences"
-    private val PEDOMETER_CHANNEL = "com.biothrix.app/pedometer"
+    private val SHORTCUTS_CHANNEL = "com.wellnest.vitality.health/shortcuts"
+    private val NOTIFICATIONS_CHANNEL = "com.wellnest.vitality.health/notifications"
+    private val PREFERENCES_CHANNEL = "com.wellnest.vitality.health/preferences"
+    private val PEDOMETER_CHANNEL = "com.wellnest.vitality.health/pedometer"
     private val NOTIFICATION_CHANNEL_ID = "wellnest_alerts"
 
     private var initialAction: String? = null
@@ -52,7 +52,7 @@ class MainActivity: FlutterActivity(), SensorEventListener {
 
         // Handle app shortcut intent actions
         intent?.action?.let { action ->
-            if (action.startsWith("com.biothrix.app.ACTION_")) {
+            if (action.startsWith("com.wellnest.vitality.health.ACTION_")) {
                 initialAction = action
             }
         }
@@ -95,7 +95,7 @@ class MainActivity: FlutterActivity(), SensorEventListener {
         super.onNewIntent(intent)
         setIntent(intent)
         intent.action?.let { action ->
-            if (action.startsWith("com.biothrix.app.ACTION_")) {
+            if (action.startsWith("com.wellnest.vitality.health.ACTION_")) {
                 methodChannel?.invokeMethod("onShortcutAction", action)
             }
         }
@@ -196,6 +196,15 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                 "setInt" -> {
                     val value = call.argument<Int>("value") ?: 0
                     prefs.edit().putInt(key, value).apply()
+                    result.success(true)
+                }
+                "getDouble" -> {
+                    val defVal = (call.argument<Double>("defaultValue") ?: 0.0).toFloat()
+                    result.success(prefs.getFloat(key, defVal).toDouble())
+                }
+                "setDouble" -> {
+                    val value = (call.argument<Double>("value") ?: 0.0).toFloat()
+                    prefs.edit().putFloat(key, value).apply()
                     result.success(true)
                 }
                 "remove" -> {

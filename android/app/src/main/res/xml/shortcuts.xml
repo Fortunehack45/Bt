@@ -7,9 +7,9 @@
         android:shortcutShortLabel="@string/shortcut_water_short"
         android:shortcutLongLabel="@string/shortcut_water_long">
         <intent
-            android:action="com.biothrix.app.ACTION_LOG_WATER"
-            android:targetPackage="com.biothrix.app"
-            android:targetClass="com.biothrix.app.MainActivity" />
+            android:action="com.wellnest.vitality.health.ACTION_LOG_WATER"
+            android:targetPackage="com.wellnest.vitality.health"
+            android:targetClass="com.wellnest.vitality.health.MainActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
 
@@ -20,9 +20,9 @@
         android:shortcutShortLabel="@string/shortcut_heart_short"
         android:shortcutLongLabel="@string/shortcut_heart_long">
         <intent
-            android:action="com.biothrix.app.ACTION_RECORD_BPM"
-            android:targetPackage="com.biothrix.app"
-            android:targetClass="com.biothrix.app.MainActivity" />
+            android:action="com.wellnest.vitality.health.ACTION_RECORD_BPM"
+            android:targetPackage="com.wellnest.vitality.health"
+            android:targetClass="com.wellnest.vitality.health.MainActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
 
@@ -33,9 +33,9 @@
         android:shortcutShortLabel="@string/shortcut_meal_short"
         android:shortcutLongLabel="@string/shortcut_meal_long">
         <intent
-            android:action="com.biothrix.app.ACTION_ADD_MEAL"
-            android:targetPackage="com.biothrix.app"
-            android:targetClass="com.biothrix.app.MainActivity" />
+            android:action="com.wellnest.vitality.health.ACTION_ADD_MEAL"
+            android:targetPackage="com.wellnest.vitality.health"
+            android:targetClass="com.wellnest.vitality.health.MainActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
 
@@ -46,9 +46,9 @@
         android:shortcutShortLabel="@string/shortcut_activity_short"
         android:shortcutLongLabel="@string/shortcut_activity_long">
         <intent
-            android:action="com.biothrix.app.ACTION_TRACK_ACTIVITY"
-            android:targetPackage="com.biothrix.app"
-            android:targetClass="com.biothrix.app.MainActivity" />
+            android:action="com.wellnest.vitality.health.ACTION_TRACK_ACTIVITY"
+            android:targetPackage="com.wellnest.vitality.health"
+            android:targetClass="com.wellnest.vitality.health.MainActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
 </shortcuts>

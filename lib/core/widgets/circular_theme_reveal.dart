@@ -3,12 +3,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-/// Clipper creating an expanding circular mask originating from a specific anchor point (e.g. top-right corner).
-class CircularRevealClipper extends CustomClipper<Path> {
+/// Clipper creating an organic liquid water ripple wave mask that smoothly spreads outward like water.
+class LiquidWaterRippleClipper extends CustomClipper<Path> {
   final double fraction;
   final Offset center;
 
-  const CircularRevealClipper({
+  const LiquidWaterRippleClipper({
     required this.fraction,
     required this.center,
   });
@@ -16,18 +16,42 @@ class CircularRevealClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    if (fraction <= 0.0) {
-      return path; // Empty path
-    }
+    if (fraction <= 0.0) return path;
     if (fraction >= 1.0) {
       path.addRect(Rect.fromLTWH(0, 0, size.width, size.height));
       return path;
     }
 
-    final maxRadius = _calcMaxRadius(size, center);
-    final radius = maxRadius * fraction;
+    final maxRadius = _calcMaxRadius(size, center) * 1.08;
+    final baseRadius = maxRadius * fraction;
 
-    path.addOval(Rect.fromCircle(center: center, radius: radius));
+    // Organic liquid ripple harmonics: amplitude is dynamic and damps gracefully as fraction approaches 1.0
+    final waveDamping = math.sin(fraction * math.pi);
+    final waveAmplitude = 16.0 * waveDamping;
+    const steps = 48;
+
+    final points = <Offset>[];
+    for (int i = 0; i < steps; i++) {
+      final theta = (i * 2 * math.pi) / steps;
+      final wave1 = math.sin(theta * 5.0 + fraction * 8.0);
+      final wave2 = math.cos(theta * 3.0 - fraction * 5.0) * 0.45;
+      final r = math.max(0.0, baseRadius + waveAmplitude * (wave1 + wave2));
+      final x = center.dx + r * math.cos(theta);
+      final y = center.dy + r * math.sin(theta);
+      points.add(Offset(x, y));
+    }
+
+    if (points.isNotEmpty) {
+      path.moveTo((points[0].dx + points.last.dx) / 2, (points[0].dy + points.last.dy) / 2);
+      for (int i = 0; i < points.length; i++) {
+        final current = points[i];
+        final next = points[(i + 1) % points.length];
+        final mid = Offset((current.dx + next.dx) / 2, (current.dy + next.dy) / 2);
+        path.quadraticBezierTo(current.dx, current.dy, mid.dx, mid.dy);
+      }
+      path.close();
+    }
+
     return path;
   }
 
@@ -40,10 +64,13 @@ class CircularRevealClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(CircularRevealClipper oldClipper) {
+  bool shouldReclip(LiquidWaterRippleClipper oldClipper) {
     return oldClipper.fraction != fraction || oldClipper.center != center;
   }
 }
+
+// Backward compatibility alias
+typedef CircularRevealClipper = LiquidWaterRippleClipper;
 
 /// Provides access to the circular reveal theme animator from anywhere in the widget hierarchy.
 class ThemeReveal extends StatefulWidget {
@@ -75,12 +102,12 @@ class ThemeRevealState extends State<ThemeReveal>
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 480),
+      duration: const Duration(milliseconds: 620),
     );
 
     _curvedAnimation = CurvedAnimation(
       parent: _animController,
-      curve: Curves.easeInOutCubic,
+      curve: Curves.easeOutCubic,
     );
 
     _animController.addStatusListener((status) {

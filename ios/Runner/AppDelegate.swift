@@ -27,7 +27,7 @@ import CoreMotion
     UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
 
     // 1. Shortcuts Channel
-    let sChannel = FlutterMethodChannel(name: "com.biothrix.app/shortcuts", binaryMessenger: messenger)
+    let sChannel = FlutterMethodChannel(name: "com.wellnest.vitality.health/shortcuts", binaryMessenger: messenger)
     shortcutsChannel = sChannel
 
     if let shortcutItem = launchOptions?[UIApplication.LaunchOptionsKey.shortcutItem] as? UIApplicationShortcutItem {
@@ -44,7 +44,7 @@ import CoreMotion
     }
 
     // 2. Real System Notifications Channel
-    let nChannel = FlutterMethodChannel(name: "com.biothrix.app/notifications", binaryMessenger: messenger)
+    let nChannel = FlutterMethodChannel(name: "com.wellnest.vitality.health/notifications", binaryMessenger: messenger)
     notificationsChannel = nChannel
     nChannel.setMethodCallHandler { (call, result) in
       if call.method == "showNotification" {
@@ -77,7 +77,7 @@ import CoreMotion
     }
 
     // 3. Persistent Preferences Channel (UserDefaults)
-    let pChannel = FlutterMethodChannel(name: "com.biothrix.app/preferences", binaryMessenger: messenger)
+    let pChannel = FlutterMethodChannel(name: "com.wellnest.vitality.health/preferences", binaryMessenger: messenger)
     preferencesChannel = pChannel
     pChannel.setMethodCallHandler { (call, result) in
       guard let args = call.arguments as? [String: Any],
@@ -116,6 +116,17 @@ import CoreMotion
         } else {
           result(false)
         }
+      case "getDouble":
+        let defVal = args["defaultValue"] as? Double ?? 0.0
+        let val = defaults.object(forKey: key) != nil ? defaults.double(forKey: key) : defVal
+        result(val)
+      case "setDouble":
+        if let val = args["value"] as? Double {
+          defaults.set(val, forKey: key)
+          result(true)
+        } else {
+          result(false)
+        }
       case "remove":
         defaults.removeObject(forKey: key)
         result(true)
@@ -125,7 +136,7 @@ import CoreMotion
     }
 
     // 4. Onboard Device Hardware Pedometer Channel (CoreMotion)
-    let pedChannel = FlutterMethodChannel(name: "com.biothrix.app/pedometer", binaryMessenger: messenger)
+    let pedChannel = FlutterMethodChannel(name: "com.wellnest.vitality.health/pedometer", binaryMessenger: messenger)
     pedometerChannel = pedChannel
     pedChannel.setMethodCallHandler { [weak self] (call, result) in
       guard let self = self else { return }

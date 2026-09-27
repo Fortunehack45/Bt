@@ -8,15 +8,20 @@ class NativePlatformService {
   NativePlatformService._();
   static final NativePlatformService instance = NativePlatformService._();
 
-  static const MethodChannel _notificationChannel = MethodChannel('com.biothrix.app/notifications');
-  static const MethodChannel _preferencesChannel = MethodChannel('com.biothrix.app/preferences');
+  static const MethodChannel _notificationChannel = MethodChannel('com.wellnest.vitality.health/notifications');
+  static const MethodChannel _preferencesChannel = MethodChannel('com.wellnest.vitality.health/preferences');
 
   // In-memory fallback map for test environments & web
   final Map<String, dynamic> _fallbackPrefs = {};
 
-  // Keys
+  // Persistent Keys
   static const String keyOnboardingComplete = 'wellnest_onboarding_completed';
   static const String keyUserProfileName = 'wellnest_user_profile_name';
+  static const String keySpotlightTourSeen = 'wellnest_spotlight_tour_seen';
+  static const String keyThemeMode = 'wellnest_theme_mode';
+  static const String keyProfileData = 'wellnest_profile_data';
+  static const String keyVitalsData = 'wellnest_vitals_data';
+  static const String keyHabitsData = 'wellnest_habits_data';
 
   /// Displays an authentic system-level status-bar notification on Android & iOS.
   Future<bool> showSystemNotification({
@@ -68,6 +73,108 @@ class NativePlatformService {
     }
   }
 
+  /// Retrieves a string from persistent storage.
+  Future<String?> getString(String key, {String? defaultValue}) async {
+    try {
+      final res = await _preferencesChannel.invokeMethod<String>('getString', {
+        'key': key,
+        'defaultValue': defaultValue,
+      });
+      if (res != null) {
+        _fallbackPrefs[key] = res;
+        return res;
+      }
+    } catch (_) {
+      // In-memory fallback
+    }
+    return _fallbackPrefs[key] as String? ?? defaultValue;
+  }
+
+  /// Persists a string value to native storage.
+  Future<void> setString(String key, String value) async {
+    _fallbackPrefs[key] = value;
+    try {
+      await _preferencesChannel.invokeMethod<bool>('setString', {
+        'key': key,
+        'value': value,
+      });
+    } catch (_) {
+      // Ignored for non-native test environments
+    }
+  }
+
+  /// Retrieves an integer from persistent storage.
+  Future<int> getInt(String key, {int defaultValue = 0}) async {
+    try {
+      final res = await _preferencesChannel.invokeMethod<int>('getInt', {
+        'key': key,
+        'defaultValue': defaultValue,
+      });
+      if (res != null) {
+        _fallbackPrefs[key] = res;
+        return res;
+      }
+    } catch (_) {
+      // In-memory fallback
+    }
+    return _fallbackPrefs[key] as int? ?? defaultValue;
+  }
+
+  /// Persists an integer value to native storage.
+  Future<void> setInt(String key, int value) async {
+    _fallbackPrefs[key] = value;
+    try {
+      await _preferencesChannel.invokeMethod<bool>('setInt', {
+        'key': key,
+        'value': value,
+      });
+    } catch (_) {
+      // Ignored for non-native test environments
+    }
+  }
+
+  /// Retrieves a double from persistent storage.
+  Future<double> getDouble(String key, {double defaultValue = 0.0}) async {
+    try {
+      final res = await _preferencesChannel.invokeMethod<double>('getDouble', {
+        'key': key,
+        'defaultValue': defaultValue,
+      });
+      if (res != null) {
+        _fallbackPrefs[key] = res;
+        return res;
+      }
+    } catch (_) {
+      // In-memory fallback
+    }
+    return _fallbackPrefs[key] as double? ?? defaultValue;
+  }
+
+  /// Persists a double value to native storage.
+  Future<void> setDouble(String key, double value) async {
+    _fallbackPrefs[key] = value;
+    try {
+      await _preferencesChannel.invokeMethod<bool>('setDouble', {
+        'key': key,
+        'value': value,
+      });
+    } catch (_) {
+      // Ignored for non-native test environments
+    }
+  }
+
+  /// Removes a key from persistent storage.
+  Future<void> remove(String key) async {
+    _fallbackPrefs.remove(key);
+    try {
+      await _preferencesChannel.invokeMethod<bool>('remove', {
+        'key': key,
+      });
+    } catch (_) {
+      // Ignored for non-native test environments
+    }
+  }
+
   /// Checks if the user has previously completed onboarding.
   Future<bool> isOnboardingCompleted() async {
     return getBool(keyOnboardingComplete, defaultValue: false);
@@ -76,5 +183,15 @@ class NativePlatformService {
   /// Flags onboarding as completed permanently across cold starts.
   Future<void> setOnboardingCompleted(bool completed) async {
     await setBool(keyOnboardingComplete, completed);
+  }
+
+  /// Checks if the spotlight tour has been seen.
+  Future<bool> hasSeenSpotlightTour() async {
+    return getBool(keySpotlightTourSeen, defaultValue: false);
+  }
+
+  /// Records spotlight tour as completed permanently.
+  Future<void> setSpotlightTourSeen(bool seen) async {
+    await setBool(keySpotlightTourSeen, seen);
   }
 }

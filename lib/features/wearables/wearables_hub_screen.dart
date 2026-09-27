@@ -96,7 +96,7 @@ class _WearablesHubScreenState extends State<WearablesHubScreen>
                 tooltip: 'Scan for Devices',
                 color: const Color(0xFF10B981),
                 onPressed: () {
-                  WearableDeviceService.instance.startScan();
+                  WearableDeviceService.instance.startScan(isDemoMode: provider.isDemoMode);
                   _showScanBottomSheet(context, provider);
                 },
               ),
@@ -212,7 +212,7 @@ class _WearablesHubScreenState extends State<WearablesHubScreen>
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () {
-                WearableDeviceService.instance.startScan();
+                WearableDeviceService.instance.startScan(isDemoMode: provider.isDemoMode);
                 _showScanBottomSheet(context, provider);
               },
               icon: const Icon(Icons.add_rounded, size: 18),
@@ -545,7 +545,7 @@ class _WearablesHubScreenState extends State<WearablesHubScreen>
             ),
             TextButton.icon(
               onPressed: () {
-                WearableDeviceService.instance.startScan();
+                WearableDeviceService.instance.startScan(isDemoMode: provider.isDemoMode);
                 _showScanBottomSheet(context, provider);
               },
               icon: const Icon(Icons.add_rounded, size: 16),
@@ -753,14 +753,76 @@ class _WearablesHubScreenState extends State<WearablesHubScreen>
                   const Divider(height: 24, thickness: 0.6),
                   Expanded(
                     child: discovered.isEmpty
-                        ? const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircularProgressIndicator(color: brandEmerald),
-                                SizedBox(height: 16),
-                                Text('Scanning Bluetooth Low Energy peripherals...'),
-                              ],
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 32),
+                              child: WearableDeviceService.instance.isScanning
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const CircularProgressIndicator(color: brandEmerald),
+                                        const SizedBox(height: 20),
+                                        Text(
+                                          'Scanning for BLE Peripherals...',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'Searching for nearby Smart Rings, Watches, and Cuffs broadcasting in pairing mode.',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.bluetooth_searching_rounded,
+                                          size: 48,
+                                          color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'No BLE Peripherals Broadcasting',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Ensure your Smart Ring, Watch, or Health Band has Bluetooth enabled and is placed in discoverable pairing mode.',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        ElevatedButton.icon(
+                                          onPressed: () {
+                                            WearableDeviceService.instance.startScan(isDemoMode: provider.isDemoMode);
+                                          },
+                                          icon: const Icon(Icons.refresh_rounded, size: 16),
+                                          label: const Text('Scan Again'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: brandEmerald,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                             ),
                           )
                         : ListView.builder(

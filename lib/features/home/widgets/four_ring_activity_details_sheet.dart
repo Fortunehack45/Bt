@@ -95,11 +95,29 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
         '${_monthNames[_weekStart.month - 1]} ${_weekStart.day} - ${_monthNames[endOfWeek.month - 1]} ${endOfWeek.day}';
 
     // Retrieve metrics for the selected day
-    final selectedSnap = p.getMetricsForDate(_selectedDate);
-    final selectedSteps = selectedSnap.steps > 0 ? selectedSnap.steps : (_isToday(_selectedDate) ? p.steps : (p.isDemoMode ? _getDemoSteps(_selectedDate) : 0));
-    final selectedWater = selectedSnap.waterGlasses > 0 ? selectedSnap.waterGlasses : (_isToday(_selectedDate) ? p.waterGlasses : (p.isDemoMode ? _getDemoWater(_selectedDate) : 0));
-    final selectedSleep = selectedSnap.sleepHours > 0 ? selectedSnap.sleepHours : (_isToday(_selectedDate) ? p.sleepHours : (p.isDemoMode ? _getDemoSleep(_selectedDate) : 0.0));
-    final selectedCalories = selectedSnap.calories > 0 ? selectedSnap.calories : (_isToday(_selectedDate) ? p.calories : (p.isDemoMode ? _getDemoCalories(_selectedDate) : 0));
+    // Retrieve metrics for the selected day (future dates strictly zeroed)
+    final isSelectedFuture = _isFuture(_selectedDate);
+    final selectedSnap = isSelectedFuture ? DaySnapshot.zero : p.getMetricsForDate(_selectedDate);
+    final selectedSteps = isSelectedFuture
+        ? 0
+        : (selectedSnap.steps > 0
+            ? selectedSnap.steps
+            : (_isToday(_selectedDate) ? p.steps : (p.isDemoMode ? _getDemoSteps(_selectedDate) : 0)));
+    final selectedWater = isSelectedFuture
+        ? 0
+        : (selectedSnap.waterGlasses > 0
+            ? selectedSnap.waterGlasses
+            : (_isToday(_selectedDate) ? p.waterGlasses : (p.isDemoMode ? _getDemoWater(_selectedDate) : 0)));
+    final selectedSleep = isSelectedFuture
+        ? 0.0
+        : (selectedSnap.sleepHours > 0
+            ? selectedSnap.sleepHours
+            : (_isToday(_selectedDate) ? p.sleepHours : (p.isDemoMode ? _getDemoSleep(_selectedDate) : 0.0)));
+    final selectedCalories = isSelectedFuture
+        ? 0
+        : (selectedSnap.calories > 0
+            ? selectedSnap.calories
+            : (_isToday(_selectedDate) ? p.calories : (p.isDemoMode ? _getDemoCalories(_selectedDate) : 0)));
 
     final selectedRingsData = ActivityRingsData.fromValues(
       steps: selectedSteps,
@@ -120,11 +138,20 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
     final ringsDataList = <ActivityRingsData>[];
 
     for (final day in weekDays) {
-      final snap = p.getMetricsForDate(day);
-      final s = (snap.steps > 0 ? snap.steps : (_isToday(day) ? p.steps : (p.isDemoMode ? _getDemoSteps(day) : 0))).toDouble();
-      final c = (snap.calories > 0 ? snap.calories : (_isToday(day) ? p.calories : (p.isDemoMode ? _getDemoCalories(day) : 0))).toDouble();
-      final w = (snap.waterGlasses > 0 ? snap.waterGlasses : (_isToday(day) ? p.waterGlasses : (p.isDemoMode ? _getDemoWater(day) : 0))).toDouble();
-      final sl = (snap.sleepHours > 0 ? snap.sleepHours : (_isToday(day) ? p.sleepHours : (p.isDemoMode ? _getDemoSleep(day) : 0.0)));
+      final isFutureDay = _isFuture(day);
+      final snap = isFutureDay ? DaySnapshot.zero : p.getMetricsForDate(day);
+      final s = isFutureDay
+          ? 0.0
+          : (snap.steps > 0 ? snap.steps : (_isToday(day) ? p.steps : (p.isDemoMode ? _getDemoSteps(day) : 0))).toDouble();
+      final c = isFutureDay
+          ? 0.0
+          : (snap.calories > 0 ? snap.calories : (_isToday(day) ? p.calories : (p.isDemoMode ? _getDemoCalories(day) : 0))).toDouble();
+      final w = isFutureDay
+          ? 0.0
+          : (snap.waterGlasses > 0 ? snap.waterGlasses : (_isToday(day) ? p.waterGlasses : (p.isDemoMode ? _getDemoWater(day) : 0))).toDouble();
+      final sl = isFutureDay
+          ? 0.0
+          : (snap.sleepHours > 0 ? snap.sleepHours : (_isToday(day) ? p.sleepHours : (p.isDemoMode ? _getDemoSleep(day) : 0.0)));
 
       stepsList.add(s);
       caloriesList.add(c);
@@ -246,6 +273,7 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: List.generate(7, (index) {
                         final day = weekDays[index];
+                        final isFutureDay = _isFuture(day);
                         final isSelected = day.year == _selectedDate.year &&
                             day.month == _selectedDate.month &&
                             day.day == _selectedDate.day;
@@ -261,7 +289,9 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
                                   fontFamily: AppTypography.fontFamily,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                                  color: isFutureDay
+                                      ? (isDark ? AppColors.textMutedDark.withOpacity(0.4) : AppColors.textMutedLight.withOpacity(0.4))
+                                      : (isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight),
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -281,7 +311,9 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
                                       fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                                       color: isSelected
                                           ? Colors.white
-                                          : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
+                                          : (isFutureDay
+                                              ? (isDark ? AppColors.textMutedDark.withOpacity(0.35) : AppColors.textMutedLight.withOpacity(0.35))
+                                              : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight)),
                                     ),
                                   ),
                                 ),
@@ -465,11 +497,30 @@ class _FourRingActivityDetailsSheetState extends State<FourRingActivityDetailsSh
     return d.year == now.year && d.month == now.month && d.day == now.day;
   }
 
-  // Realistic sample baselines for non-logged past week days
-  int _getDemoSteps(DateTime d) => [3200, 4800, 1600, 5200, 2400, 4100, 3800][d.weekday % 7];
-  int _getDemoCalories(DateTime d) => [180, 240, 95, 310, 140, 260, 210][d.weekday % 7];
-  int _getDemoWater(DateTime d) => [4, 6, 3, 7, 5, 8, 6][d.weekday % 7];
-  double _getDemoSleep(DateTime d) => [6.8, 7.4, 7.0, 8.1, 6.5, 7.8, 8.2][d.weekday % 7];
+  bool _isFuture(DateTime d) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(d.year, d.month, d.day);
+    return target.isAfter(today);
+  }
+
+  // Realistic sample baselines for non-logged past week days (strictly past only)
+  int _getDemoSteps(DateTime d) {
+    if (_isFuture(d)) return 0;
+    return [3200, 4800, 1600, 5200, 2400, 4100, 3800][d.weekday % 7];
+  }
+  int _getDemoCalories(DateTime d) {
+    if (_isFuture(d)) return 0;
+    return [180, 240, 95, 310, 140, 260, 210][d.weekday % 7];
+  }
+  int _getDemoWater(DateTime d) {
+    if (_isFuture(d)) return 0;
+    return [4, 6, 3, 7, 5, 8, 6][d.weekday % 7];
+  }
+  double _getDemoSleep(DateTime d) {
+    if (_isFuture(d)) return 0.0;
+    return [6.8, 7.4, 7.0, 8.1, 6.5, 7.8, 8.2][d.weekday % 7];
+  }
 
   Widget _buildMetricRow({
     required Color color,

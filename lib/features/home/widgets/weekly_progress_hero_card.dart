@@ -114,7 +114,7 @@ class WeeklyProgressHeroCard extends StatelessWidget {
             progressColor: AppColors.primaryDark,
             trackColor: isDark ? const Color(0xFF364837) : const Color(0xFFC2E866),
             centerPrimaryText: '$completedDays',
-            centerSecondaryText: completedDays == 1 ? 'day' : 'days',
+            centerSecondaryText: completedDays <= 1 ? 'Day' : 'Days',
             primaryTextColor: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
             secondaryTextColor: isDark ? const Color(0xFF9EBA9F) : const Color(0xFF223624),
           ),

@@ -1,10 +1,10 @@
-package com.biothrix.app.widgets
+package com.wellnest.vitality.health.widgets
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
-import com.biothrix.app.R
+import com.wellnest.vitality.health.R
 
 class HeartRateWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {

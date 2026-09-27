@@ -35,6 +35,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
 
   // Inspected cycle day (1 to cycleLength). If null, defaults to today's cycle day.
   int? _inspectedCycleDay;
+  int _slideDirection = 1; // -1 = leftward / previous, 1 = rightward / next
 
   static const List<String> _weekDayNames = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
@@ -53,6 +54,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
     if (newDay != _inspectedCycleDay) {
       HapticService.tick();
       setState(() {
+        _slideDirection = newDay >= (_inspectedCycleDay ?? todayCycleDay) ? 1 : -1;
         _inspectedCycleDay = newDay;
         // Sync _viewDate relative to today's cycle day
         final dayDiff = newDay - todayCycleDay;
@@ -140,7 +142,8 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
     // Generate 7-day strip centered on today
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final weekStart = today.subtract(const Duration(days: 3));
+    final centerDate = _viewDate;
+    final weekStart = centerDate.subtract(const Duration(days: 3));
     final weekDays = List.generate(7, (i) => weekStart.add(Duration(days: i)));
 
     return SolidWellnessCard(
@@ -165,6 +168,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
                   if (computedCycleDay <= 0) computedCycleDay += cycleLen;
 
                   setState(() {
+                    _slideDirection = d.isAfter(_viewDate) ? 1 : -1;
                     _viewDate = d;
                     _inspectedCycleDay = computedCycleDay;
                   });
@@ -271,97 +275,112 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
                           ),
                         ),
 
-                        // Center Informational Core — Guaranteed generous breathing room
+                        // Center Informational Core — Guaranteed generous breathing room with directional slide
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 6),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Phase Pill & Link
-                              GestureDetector(
-                                onTap: () {
-                                  HapticService.selection();
-                                  if (widget.onCycleDetailsTap != null) {
-                                    widget.onCycleDetailsTap!();
-                                  }
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(phaseIcon, size: 13, color: phaseColor),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      phaseName,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 260),
+                            transitionBuilder: (child, animation) {
+                              return SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: Offset(_slideDirection * 0.35, 0.0),
+                                  end: Offset.zero,
+                                ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+                                child: FadeTransition(opacity: animation, child: child),
+                              );
+                            },
+                            child: KeyedSubtree(
+                              key: ValueKey<int>(activeCycleDay),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Phase Pill & Link
+                                  GestureDetector(
+                                    onTap: () {
+                                      HapticService.selection();
+                                      if (widget.onCycleDetailsTap != null) {
+                                        widget.onCycleDetailsTap!();
+                                      }
+                                    },
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(phaseIcon, size: 13, color: phaseColor),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          phaseName,
+                                          style: TextStyle(
+                                            fontFamily: AppTypography.fontFamily,
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: phaseColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 2),
+                                        Icon(Icons.chevron_right_rounded, size: 14, color: phaseColor),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+
+                                  // Large Headline
+                                  Text(
+                                    statusHeadline,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: AppTypography.fontFamily,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.15,
+                                      letterSpacing: -0.4,
+                                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+
+                                  // Subtitle
+                                  Text(
+                                    statusSubtitle,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: AppTypography.fontFamily,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+
+                                  // Compact Fertility Badge (Short, crisp, never touching rim)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: phaseColor.withOpacity(0.14),
+                                      borderRadius: AppRadii.roundedPill,
+                                      border: Border.all(
+                                        color: phaseColor.withOpacity(0.32),
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      fertilityLabel,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: AppTypography.fontFamily,
-                                        fontSize: 11.5,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.w800,
                                         color: phaseColor,
                                       ),
                                     ),
-                                    const SizedBox(width: 2),
-                                    Icon(Icons.chevron_right_rounded, size: 14, color: phaseColor),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-
-                              // Large Headline
-                              Text(
-                                statusHeadline,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: AppTypography.fontFamily,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1.15,
-                                  letterSpacing: -0.4,
-                                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-
-                              // Subtitle
-                              Text(
-                                statusSubtitle,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: AppTypography.fontFamily,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-
-                              // Compact Fertility Badge (Short, crisp, never touching rim)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: phaseColor.withOpacity(0.14),
-                                  borderRadius: AppRadii.roundedPill,
-                                  border: Border.all(
-                                    color: phaseColor.withOpacity(0.32),
-                                    width: 0.8,
                                   ),
-                                ),
-                                child: Text(
-                                  fertilityLabel,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: AppTypography.fontFamily,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: phaseColor,
-                                  ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
@@ -385,6 +404,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
                         HapticService.tick();
                         final newDay = activeCycleDay - 1;
                         setState(() {
+                          _slideDirection = -1;
                           _inspectedCycleDay = newDay;
                           final diff = newDay - todayCycleDay;
                           _viewDate = today.add(Duration(days: diff));
@@ -394,59 +414,76 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
               ),
               const SizedBox(width: 4),
 
-              if (isInspectingDifferentDay)
-                TextButton.icon(
-                  onPressed: () {
-                    HapticService.selection();
-                    setState(() {
-                      _inspectedCycleDay = todayCycleDay;
-                      _viewDate = today;
-                    });
-                  },
-                  icon: const Icon(Icons.my_location_rounded, size: 14),
-                  label: Text(
-                    'Return to Today (Day $todayCycleDay)',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: phaseColor,
-                    backgroundColor: phaseColor.withOpacity(0.12),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: phaseColor.withOpacity(0.08),
-                    borderRadius: AppRadii.roundedPill,
-                    border: Border.all(color: phaseColor.withOpacity(0.2), width: 0.8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: phaseColor,
-                          shape: BoxShape.circle,
-                        ),
+              // Responsive Informational Day Pill + Return to Today reset chip
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: phaseColor.withOpacity(0.08),
+                  borderRadius: AppRadii.roundedPill,
+                  border: Border.all(color: phaseColor.withOpacity(0.2), width: 0.8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: phaseColor,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Today • Day $todayCycleDay of $cycleLen',
-                        style: TextStyle(
-                          fontFamily: AppTypography.fontFamily,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: phaseColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isInspectingDifferentDay
+                          ? 'Inspecting • Day $activeCycleDay of $cycleLen'
+                          : 'Today • Day $todayCycleDay of $cycleLen',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: phaseColor,
+                      ),
+                    ),
+                    if (isInspectingDifferentDay) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          HapticService.selection();
+                          setState(() {
+                            _slideDirection = activeCycleDay < todayCycleDay ? 1 : -1;
+                            _inspectedCycleDay = todayCycleDay;
+                            _viewDate = today;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: phaseColor.withOpacity(0.18),
+                            borderRadius: AppRadii.roundedPill,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.refresh_rounded, size: 12, color: phaseColor),
+                              const SizedBox(width: 2),
+                              Text(
+                                'Today',
+                                style: TextStyle(
+                                  fontFamily: AppTypography.fontFamily,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: phaseColor,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
+              ),
 
               const SizedBox(width: 4),
               IconButton(
@@ -457,6 +494,7 @@ class _InteractiveCycleWheelHeroState extends State<InteractiveCycleWheelHero> {
                         HapticService.tick();
                         final newDay = activeCycleDay + 1;
                         setState(() {
+                          _slideDirection = 1;
                           _inspectedCycleDay = newDay;
                           final diff = newDay - todayCycleDay;
                           _viewDate = today.add(Duration(days: diff));

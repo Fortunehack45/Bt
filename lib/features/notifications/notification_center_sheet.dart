@@ -317,36 +317,35 @@ class _NotificationCenterSheetState extends State<NotificationCenterSheet> {
   ) {
     final accent = item.accentColor;
 
-    return Dismissible(
-      key: Key(item.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEF4444).withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
-      ),
-      onDismissed: (_) {
-        HapticFeedback.lightImpact();
-        provider.clearNotification(item.id);
-      },
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          provider.markNotificationAsRead(item.id);
-        },
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 5),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: isDark
-                ? (item.isRead ? const Color(0xFF161E18) : const Color(0xFF1C2720))
-                : (item.isRead ? const Color(0xFFF8FAFC) : Colors.white),
-            borderRadius: BorderRadius.circular(18),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Dismissible(
+          key: Key(item.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            color: const Color(0xFFEF4444).withValues(alpha: 0.2),
+            child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
+          ),
+          onDismissed: (_) {
+            HapticFeedback.lightImpact();
+            provider.clearNotification(item.id);
+          },
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              provider.markNotificationAsRead(item.id);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? (item.isRead ? const Color(0xFF161E18) : const Color(0xFF1C2720))
+                    : (item.isRead ? const Color(0xFFF8FAFC) : Colors.white),
+                borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: !item.isRead
                   ? accent.withValues(alpha: 0.4)
@@ -442,6 +441,8 @@ class _NotificationCenterSheetState extends State<NotificationCenterSheet> {
                 ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );

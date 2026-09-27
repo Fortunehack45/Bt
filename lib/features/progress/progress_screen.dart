@@ -17,6 +17,10 @@ class ProgressScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = WellnessStateScope.of(context);
 
+    final streak = provider.overallStreakDays;
+    final streakUnit = streak <= 1 ? 'Day' : 'Days';
+    final consistencyList = provider.thirtyDayConsistency;
+
     return Scaffold(
       body: ResponsiveLayout.pageContainer(
         context: context,
@@ -75,12 +79,14 @@ class ProgressScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '14-Day Perfect Streak',
+                            streak > 0 ? '$streak-$streakUnit Active Streak' : 'Start Your Streak Today',
                             style: AppTypography.h3(isDark).copyWith(fontSize: 16),
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'You have met all primary wellness targets 14 consecutive days.',
+                            streak > 0
+                                ? 'You have met your primary wellness targets $streak consecutive ${streak <= 1 ? 'day' : 'days'}.'
+                                : 'Log steps, hydration, meals, or habits today to begin your streak!',
                             style: AppTypography.caption(isDark).copyWith(fontSize: 12),
                           ),
                         ],
@@ -105,7 +111,7 @@ class ProgressScreen extends StatelessWidget {
                       spacing: 6,
                       runSpacing: 6,
                       children: List.generate(30, (index) {
-                        final isCompleted = index % 5 != 0;
+                        final isCompleted = index < consistencyList.length ? consistencyList[index] : false;
                         return Container(
                           width: 22,
                           height: 22,
@@ -152,45 +158,75 @@ class ProgressScreen extends StatelessWidget {
                 style: AppTypography.h2(isDark).copyWith(fontSize: 18),
               ),
               const SizedBox(height: AppSpacing.sm),
-              ...provider.habits.map((habit) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: SolidWellnessCard(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
+              if (provider.habits.isEmpty)
+                SolidWellnessCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  child: Center(
+                    child: Column(
                       children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: isDark ? habit.color.withOpacity(0.18) : habit.color.withOpacity(0.12),
-                            borderRadius: AppRadii.roundedMd,
-                          ),
-                          child: Icon(habit.icon, color: habit.color, size: 22),
+                        Icon(
+                          Icons.task_alt_rounded,
+                          size: 36,
+                          color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(habit.title, style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
-                              const SizedBox(height: 2),
-                              Text('${habit.streakDays} day streak • ${habit.category}', style: AppTypography.caption(isDark)),
-                            ],
-                          ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No Active Routines',
+                          style: AppTypography.h3(isDark).copyWith(fontSize: 15),
                         ),
-                        CircularProgressRing(
-                          progress: (habit.streakDays / 21.0).clamp(0.1, 1.0),
-                          size: 38,
-                          strokeWidth: 4.5,
-                          progressColor: habit.color,
-                          trackColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                        const SizedBox(height: 4),
+                        Text(
+                          'Establish daily habits to track consecutive consistency.',
+                          style: AppTypography.caption(isDark),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                   ),
-                );
-              }),
+                )
+              else
+                ...provider.habits.map((habit) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: SolidWellnessCard(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: isDark ? habit.color.withOpacity(0.18) : habit.color.withOpacity(0.12),
+                              borderRadius: AppRadii.roundedMd,
+                            ),
+                            child: Icon(habit.icon, color: habit.color, size: 22),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(habit.title, style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${habit.streakDays} ${habit.streakDays <= 1 ? 'day' : 'days'} streak • ${habit.category}',
+                                  style: AppTypography.caption(isDark),
+                                ),
+                              ],
+                            ),
+                          ),
+                          CircularProgressRing(
+                            progress: (habit.streakDays / 21.0).clamp(0.1, 1.0),
+                            size: 38,
+                            strokeWidth: 4.5,
+                            progressColor: habit.color,
+                            trackColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
             ],
           ),
         ),

@@ -174,7 +174,8 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
             final cellDate = DateTime(_viewMonth.year, _viewMonth.month, dayNumber);
             final isSelected = _isSameDay(cellDate, _selected);
             final isToday = _isSameDay(cellDate, now);
-            final dayTel = widget.provider.getDayTelemetry(cellDate);
+            final isFuture = cellDate.isAfter(DateTime(now.year, now.month, now.day));
+            final dayTel = isFuture ? const DayTelemetryStatus() : widget.provider.getDayTelemetry(cellDate);
 
             return GestureDetector(
               onTap: () {
@@ -211,27 +212,32 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
                         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                         color: isSelected
                             ? (isDark ? AppColors.primaryLight : AppColors.textPrimaryLight)
-                            : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
+                            : (isFuture
+                                ? (isDark ? AppColors.textMutedDark.withOpacity(0.35) : AppColors.textMutedLight.withOpacity(0.35))
+                                : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight)),
                       ),
                     ),
                     const SizedBox(height: 2),
-                    // Telemetry Data Dots Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (dayTel.hasNutrition)
-                          _buildDot(const Color(0xFF10B981)), // Nutrition
-                        if (dayTel.hasWater)
-                          _buildDot(AppColors.waterBlue),      // Water
-                        if (dayTel.hasActivity)
-                          _buildDot(AppColors.stepsOrange),    // Activity
-                        if (dayTel.hasSleep)
-                          _buildDot(AppColors.sleepPurple),    // Sleep
-                        if (!dayTel.hasAny)
-                          const SizedBox(height: 3),
-                      ],
-                    ),
+                    // Telemetry Data Dots Row (never for future dates)
+                    if (!isFuture)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (dayTel.hasNutrition)
+                            _buildDot(const Color(0xFF10B981)), // Nutrition
+                          if (dayTel.hasWater)
+                            _buildDot(AppColors.waterBlue),      // Water
+                          if (dayTel.hasActivity)
+                            _buildDot(AppColors.stepsOrange),    // Activity
+                          if (dayTel.hasSleep)
+                            _buildDot(AppColors.sleepPurple),    // Sleep
+                          if (!dayTel.hasAny)
+                            const SizedBox(height: 3),
+                        ],
+                      )
+                    else
+                      const SizedBox(height: 3),
                   ],
                 ),
               ),
@@ -243,7 +249,8 @@ class _BiothrixCalendarViewState extends State<_BiothrixCalendarView> {
         // Selected Day Compact Telemetry Bar
         Builder(
           builder: (_) {
-            final metrics = widget.provider.getMetricsForDate(_selected);
+            final isSelectedFuture = _selected.isAfter(DateTime(now.year, now.month, now.day));
+            final metrics = isSelectedFuture ? DaySnapshot.zero : widget.provider.getMetricsForDate(_selected);
             final calStr = metrics.calories > 0 ? '${metrics.calories}' : '0';
             final waterStr = metrics.waterGlasses > 0 ? '${(metrics.waterGlasses * 0.25).toStringAsFixed(1)}L' : '0.0L';
             final stepStr = metrics.steps > 0 ? '${metrics.steps}' : '0';

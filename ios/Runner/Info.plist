@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.biothrix.app</string>
+	<string>com.wellnest.vitality.health</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -50,7 +50,7 @@
 	<array>
 		<dict>
 			<key>UIApplicationShortcutItemType</key>
-			<string>com.biothrix.app.ACTION_LOG_WATER</string>
+			<string>com.wellnest.vitality.health.ACTION_LOG_WATER</string>
 			<key>UIApplicationShortcutItemTitle</key>
 			<string>Log Water</string>
 			<key>UIApplicationShortcutItemIconType</key>
@@ -58,7 +58,7 @@
 		</dict>
 		<dict>
 			<key>UIApplicationShortcutItemType</key>
-			<string>com.biothrix.app.ACTION_RECORD_BPM</string>
+			<string>com.wellnest.vitality.health.ACTION_RECORD_BPM</string>
 			<key>UIApplicationShortcutItemTitle</key>
 			<string>Heart Rate</string>
 			<key>UIApplicationShortcutItemIconType</key>
@@ -66,7 +66,7 @@
 		</dict>
 		<dict>
 			<key>UIApplicationShortcutItemType</key>
-			<string>com.biothrix.app.ACTION_ADD_MEAL</string>
+			<string>com.wellnest.vitality.health.ACTION_ADD_MEAL</string>
 			<key>UIApplicationShortcutItemTitle</key>
 			<string>Add Meal</string>
 			<key>UIApplicationShortcutItemIconType</key>
@@ -74,7 +74,7 @@
 		</dict>
 		<dict>
 			<key>UIApplicationShortcutItemType</key>
-			<string>com.biothrix.app.ACTION_TRACK_ACTIVITY</string>
+			<string>com.wellnest.vitality.health.ACTION_TRACK_ACTIVITY</string>
 			<key>UIApplicationShortcutItemTitle</key>
 			<string>Log Workout</string>
 			<key>UIApplicationShortcutItemIconType</key>

@@ -35,7 +35,7 @@ class PedometerService {
   }
   static final PedometerService instance = PedometerService._();
 
-  static const MethodChannel _channel = MethodChannel('com.biothrix.app/pedometer');
+  static const MethodChannel _channel = MethodChannel('com.wellnest.vitality.health/pedometer');
 
   bool _isTracking = false;
   bool get isTracking => _isTracking;

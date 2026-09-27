@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../core/services/native_platform_service.dart';
 import '../../core/widgets/weekly_bar_chart.dart';
 import '../models/notification_item.dart';
 import '../models/reproductive_health_models.dart';
@@ -10,6 +12,7 @@ import '../models/wellness_models.dart';
 class WellnessProvider extends ChangeNotifier {
   WellnessProvider() {
     _seedInitialNotifications();
+    _loadPersistedState();
   }
 
   // User Profile
@@ -23,11 +26,13 @@ class WellnessProvider extends ChangeNotifier {
 
   void markSpotlightTourSeen() {
     _hasSeenSpotlightTour = true;
+    NativePlatformService.instance.setSpotlightTourSeen(true);
     notifyListeners();
   }
 
   void replaySpotlightTour() {
     _hasSeenSpotlightTour = false;
+    NativePlatformService.instance.setSpotlightTourSeen(false);
     notifyListeners();
   }
 
@@ -35,6 +40,7 @@ class WellnessProvider extends ChangeNotifier {
     if (name.trim().isNotEmpty) {
       _userName = name.trim();
       _isProfileConfigured = true;
+      _persistProfile();
       notifyListeners();
     }
   }
@@ -69,11 +75,13 @@ class WellnessProvider extends ChangeNotifier {
       calculatedAge--;
     }
     _age = calculatedAge.clamp(13, 100);
+    _persistProfile();
     notifyListeners();
   }
 
   void setAge(int age) {
     _age = age.clamp(13, 100);
+    _persistProfile();
     notifyListeners();
   }
 
@@ -84,26 +92,31 @@ class WellnessProvider extends ChangeNotifier {
       _isPeriodTrackingEnabled = false;
       _isPregnancyTrackingEnabled = false;
     }
+    _persistProfile();
     notifyListeners();
   }
 
   void setHeight(double cm) {
     _heightCm = cm;
+    _persistProfile();
     notifyListeners();
   }
 
   void setTargetWeight(double kg) {
     _targetWeightKg = kg;
+    _persistProfile();
     notifyListeners();
   }
 
   void setPrimaryGoal(String goal) {
     _primaryGoal = goal;
+    _persistProfile();
     notifyListeners();
   }
 
   void setActivityLevel(String level) {
     _activityLevel = level;
+    _persistProfile();
     notifyListeners();
   }
 
@@ -157,6 +170,7 @@ class WellnessProvider extends ChangeNotifier {
       if (isPeriodTrackingEnabled != null) _isPeriodTrackingEnabled = isPeriodTrackingEnabled;
       if (isPregnancyTrackingEnabled != null) _isPregnancyTrackingEnabled = isPregnancyTrackingEnabled;
     }
+    _persistProfile();
     notifyListeners();
   }
 
@@ -191,11 +205,19 @@ class WellnessProvider extends ChangeNotifier {
 
   void toggleTheme() {
     _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    NativePlatformService.instance.setString(
+      NativePlatformService.keyThemeMode,
+      _themeMode == ThemeMode.dark ? 'dark' : 'light',
+    );
     notifyListeners();
   }
 
   void setThemeMode(ThemeMode mode) {
     _themeMode = mode;
+    NativePlatformService.instance.setString(
+      NativePlatformService.keyThemeMode,
+      mode == ThemeMode.dark ? 'dark' : 'light',
+    );
     notifyListeners();
   }
 
@@ -239,12 +261,14 @@ class WellnessProvider extends ChangeNotifier {
   void setStepGoal(int goal) {
     if (goal > 0) {
       _stepGoal = goal;
+      _persistVitals();
       notifyListeners();
     }
   }
 
   void addSteps(int count) {
     _steps += count;
+    _persistVitals();
     notifyListeners();
   }
 
@@ -257,17 +281,20 @@ class WellnessProvider extends ChangeNotifier {
   void setWaterGoal(int goal) {
     if (goal > 0) {
       _waterGoal = goal;
+      _persistVitals();
       notifyListeners();
     }
   }
 
   void addWaterGlass([int amount = 1]) {
     _waterGlasses += amount;
+    _persistVitals();
     notifyListeners();
   }
 
   void resetWater() {
     _waterGlasses = 0;
+    _persistVitals();
     notifyListeners();
   }
 
@@ -280,6 +307,7 @@ class WellnessProvider extends ChangeNotifier {
   void setTargetCalories(int target) {
     if (target > 0) {
       _targetCalories = target;
+      _persistVitals();
       notifyListeners();
     }
   }
@@ -495,7 +523,19 @@ class WellnessProvider extends ChangeNotifier {
 
   List<DayBarData> get weeklyBarData {
     final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final now = DateTime.now();
+    final todayWeekdayIndex = (now.weekday - 1) % 7; // 0 = Mon ... 6 = Sun
+
     return List.generate(7, (index) {
+      // Future days in current week must strictly be unlogged (0)
+      if (index > todayWeekdayIndex) {
+        return DayBarData(
+          dayName: days[index],
+          percentage: 0,
+          value: 0,
+        );
+      }
+
       if (_isDemoMode && _weeklyStatDays.containsKey(index)) {
         final snap = _weeklyStatDays[index]!;
         final pct = _targetCalories > 0 ? ((snap.calories / _targetCalories) * 100).toInt() : 0;
@@ -505,7 +545,7 @@ class WellnessProvider extends ChangeNotifier {
           value: snap.calories,
         );
       }
-      final isToday = index == _selectedStatDayIndex;
+      final isToday = index == todayWeekdayIndex;
       final val = isToday ? _calories : 0;
       final pct = _targetCalories > 0 ? ((val / _targetCalories) * 100).toInt() : 0;
       return DayBarData(
@@ -521,23 +561,88 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Real, authentic streak calculation based on user's active history and daily goals
+  int get overallStreakDays {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    int streak = 0;
+
+    final todayActivity = _steps >= 1000 || _waterGlasses >= 2 || _calories >= 300 || _habits.any((h) => h.isCompletedToday);
+    if (todayActivity) {
+      streak = 1;
+    }
+
+    for (int i = 1; i <= 365; i++) {
+      final pastDate = today.subtract(Duration(days: i));
+      final key = '${pastDate.year}-${pastDate.month}-${pastDate.day}';
+
+      if (_isDemoMode && _pastDaysData.containsKey(key)) {
+        final snap = _pastDaysData[key]!;
+        if (snap.steps >= 1000 || snap.calories >= 300 || snap.waterGlasses >= 2) {
+          streak++;
+        } else {
+          break;
+        }
+      } else if (_pastDaysData.containsKey(key)) {
+        final snap = _pastDaysData[key]!;
+        if (snap.steps >= 1000 || snap.calories >= 300 || snap.waterGlasses >= 2) {
+          streak++;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+
+    final maxHabitStreak = _habits.isNotEmpty
+        ? _habits.map((h) => h.streakDays).reduce((a, b) => a > b ? a : b)
+        : 0;
+    return streak > maxHabitStreak ? streak : maxHabitStreak;
+  }
+
+  /// Real 30-day activity consistency list (30 booleans, index 0 is 29 days ago, index 29 is today)
+  List<bool> get thirtyDayConsistency {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return List.generate(30, (index) {
+      final daysAgo = 29 - index;
+      final date = today.subtract(Duration(days: daysAgo));
+
+      if (daysAgo == 0) {
+        return _steps > 0 || _calories > 0 || _waterGlasses > 0 || _habits.any((h) => h.isCompletedToday);
+      }
+
+      final key = '${date.year}-${date.month}-${date.day}';
+      if (_pastDaysData.containsKey(key)) {
+        final snap = _pastDaysData[key]!;
+        return snap.steps > 0 || snap.calories > 0 || snap.waterGlasses > 0;
+      }
+
+      return _habits.any((h) => h.streakDays >= daysAgo);
+    });
+  }
+
   /// Calculates the count of days in the current week where composite goal progress reached >= 70%
   int get completedDaysThisWeek {
+    final now = DateTime.now();
+    final todayWeekday = now.weekday; // 1 = Mon ... 7 = Sun
+    int count = 0;
+
     if (_isDemoMode && _weeklyStatDays.isNotEmpty) {
-      int count = 0;
-      for (final snap in _weeklyStatDays.values) {
-        final calRatio = _targetCalories > 0 ? (snap.calories / _targetCalories) : 0.0;
-        final stepRatio = _stepGoal > 0 ? (snap.steps / _stepGoal) : 0.0;
-        final waterRatio = _waterGoal > 0 ? (snap.waterGlasses / _waterGoal) : 0.0;
-        final score = (calRatio * 0.4) + (stepRatio * 0.3) + (waterRatio * 0.3);
-        if (score >= 0.7) count++;
+      for (int i = 0; i < todayWeekday; i++) {
+        if (_weeklyStatDays.containsKey(i)) {
+          final snap = _weeklyStatDays[i]!;
+          final calRatio = _targetCalories > 0 ? (snap.calories / _targetCalories) : 0.0;
+          final stepRatio = _stepGoal > 0 ? (snap.steps / _stepGoal) : 0.0;
+          final waterRatio = _waterGoal > 0 ? (snap.waterGlasses / _waterGoal) : 0.0;
+          final score = (calRatio * 0.4) + (stepRatio * 0.3) + (waterRatio * 0.3);
+          if (score >= 0.7) count++;
+        }
       }
       return count.clamp(0, 7);
     }
 
-    final now = DateTime.now();
-    final todayWeekday = now.weekday; // 1 = Mon ... 7 = Sun
-    int count = 0;
     for (int i = 1; i < todayWeekday; i++) {
       final pastDate = now.subtract(Duration(days: todayWeekday - i));
       final key = '${pastDate.year}-${pastDate.month}-${pastDate.day}';
@@ -612,6 +717,7 @@ class WellnessProvider extends ChangeNotifier {
       }
       return habit;
     }).toList();
+    _persistHabits();
     notifyListeners();
   }
 
@@ -626,11 +732,13 @@ class WellnessProvider extends ChangeNotifier {
       isCompletedToday: false,
     );
     _habits = [newHabit, ..._habits];
+    _persistHabits();
     notifyListeners();
   }
 
   void removeHabit(String id) {
     _habits.removeWhere((h) => h.id == id);
+    _persistHabits();
     notifyListeners();
   }
 
@@ -815,8 +923,19 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _isFutureDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    return target.isAfter(today);
+  }
+
   // Get full metrics snapshot for any calendar date
   DaySnapshot getMetricsForDate(DateTime date) {
+    if (_isFutureDate(date)) {
+      return DaySnapshot.zero;
+    }
+
     final key = '${date.year}-${date.month}-${date.day}';
     final now = DateTime.now();
     final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
@@ -852,6 +971,10 @@ class WellnessProvider extends ChangeNotifier {
       );
     }
 
+    if (_pastDaysData.containsKey(key)) {
+      return _pastDaysData[key]!;
+    }
+
     return DaySnapshot.zero;
   }
 
@@ -860,17 +983,23 @@ class WellnessProvider extends ChangeNotifier {
     _exerciseHours += hours;
     _calories += caloriesBurned;
     _steps += stepsCount;
+    _persistVitals();
     notifyListeners();
   }
 
   // Day Telemetry Tracking for Calendar Dots
   DayTelemetryStatus getDayTelemetry(DateTime date) {
+    if (_isFutureDate(date)) {
+      return const DayTelemetryStatus();
+    }
+
     final now = DateTime.now();
-    final isSelectedOrToday = (date.year == _selectedDate.year && date.month == _selectedDate.month && date.day == _selectedDate.day) ||
-                              (date.year == now.year && date.month == now.month && date.day == now.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    final isToday = target.isAtSameMomentAs(today);
 
     if (_isDemoMode) {
-      final diff = now.difference(date).inDays;
+      final diff = today.difference(target).inDays;
       // In demo mode, show full telemetry dots for all days within the past 30 days
       if (diff >= 0 && diff <= 30) {
         return const DayTelemetryStatus(
@@ -882,12 +1011,26 @@ class WellnessProvider extends ChangeNotifier {
       }
     }
 
-    if (isSelectedOrToday) {
+    if (isToday) {
       return DayTelemetryStatus(
         hasNutrition: _calories > 0,
         hasWater: _waterGlasses > 0,
         hasActivity: _exerciseHours > 0 || _steps > 0,
         hasSleep: _sleepHours > 0,
+        hasPeriod: _isPeriodTrackingEnabled && isPeriodDay(date),
+        hasPregnancyLog: _isPregnancyTrackingEnabled && _pregnancyLogs.any((l) => l.date.year == date.year && l.date.month == date.month && l.date.day == date.day),
+      );
+    }
+
+    // Historical past day
+    final key = '${date.year}-${date.month}-${date.day}';
+    final snap = _pastDaysData[key];
+    if (snap != null) {
+      return DayTelemetryStatus(
+        hasNutrition: snap.calories > 0,
+        hasWater: snap.waterGlasses > 0,
+        hasActivity: snap.exerciseHours > 0 || snap.steps > 0,
+        hasSleep: snap.sleepHours > 0,
         hasPeriod: _isPeriodTrackingEnabled && isPeriodDay(date),
         hasPregnancyLog: _isPregnancyTrackingEnabled && _pregnancyLogs.any((l) => l.date.year == date.year && l.date.month == date.month && l.date.day == date.day),
       );
@@ -1505,6 +1648,213 @@ class WellnessProvider extends ChangeNotifier {
         isRead: true,
       ),
     ]);
+  }
+
+  // Real Streaks & Habit Consistency
+  int get overallStreakDays {
+    if (_isDemoMode) return 14;
+    int streak = 0;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final todayMet = (_steps >= _stepGoal * 0.4) || (_waterGlasses >= _waterGoal * 0.4) || (_calories >= _targetCalories * 0.4) || _habits.any((h) => h.isCompletedToday);
+    if (todayMet) streak++;
+
+    for (int i = 1; i <= 365; i++) {
+      final prevDate = today.subtract(Duration(days: i));
+      final key = '${prevDate.year}-${prevDate.month}-${prevDate.day}';
+      final snap = _pastDaysData[key];
+      if (snap != null) {
+        final snapMet = (snap.steps >= _stepGoal * 0.4) || (snap.waterGlasses >= _waterGoal * 0.4) || (snap.calories >= _targetCalories * 0.4);
+        if (snapMet) {
+          streak++;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+
+    if (_habits.isNotEmpty) {
+      final maxHabitStreak = _habits.map((h) => h.streakDays).fold(0, (max, s) => s > max ? s : max);
+      if (maxHabitStreak > streak) return maxHabitStreak;
+    }
+
+    return streak;
+  }
+
+  List<bool> get thirtyDayConsistency {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final result = <bool>[];
+
+    for (int i = 29; i >= 0; i--) {
+      final d = today.subtract(Duration(days: i));
+      if (_isDemoMode) {
+        result.add((i % 7 != 0) && (i % 9 != 0));
+        continue;
+      }
+
+      if (i == 0) {
+        final metToday = (_steps >= _stepGoal * 0.4) || (_waterGlasses >= _waterGoal * 0.4) || (_calories >= _targetCalories * 0.4) || _habits.any((h) => h.isCompletedToday);
+        result.add(metToday);
+      } else {
+        final key = '${d.year}-${d.month}-${d.day}';
+        final snap = _pastDaysData[key];
+        if (snap != null) {
+          final met = (snap.steps >= _stepGoal * 0.4) || (snap.waterGlasses >= _waterGoal * 0.4) || (snap.calories >= _targetCalories * 0.4);
+          result.add(met);
+        } else {
+          result.add(false);
+        }
+      }
+    }
+    return result;
+  }
+
+  // --- Persistence & State Restoration ---
+  void _persistProfile() {
+    try {
+      final data = {
+        'userName': _userName,
+        'isConfigured': _isProfileConfigured,
+        'dob': _dateOfBirth.toIso8601String(),
+        'age': _age,
+        'gender': _gender,
+        'heightCm': _heightCm,
+        'targetWeightKg': _targetWeightKg,
+        'primaryGoal': _primaryGoal,
+        'activityLevel': _activityLevel,
+      };
+      NativePlatformService.instance.setString(NativePlatformService.keyProfileData, jsonEncode(data));
+      NativePlatformService.instance.setString(NativePlatformService.keyUserProfileName, _userName);
+    } catch (e) {
+      debugPrint('[WellnessProvider] Persist profile error: $e');
+    }
+  }
+
+  void _persistVitals() {
+    try {
+      final data = {
+        'steps': _steps,
+        'stepGoal': _stepGoal,
+        'waterGlasses': _waterGlasses,
+        'waterGoal': _waterGoal,
+        'calories': _calories,
+        'targetCalories': _targetCalories,
+        'exerciseHours': _exerciseHours,
+        'bpm': _bpm,
+        'weightKg': _weightKg,
+        'systolicBp': _systolicBp,
+        'diastolicBp': _diastolicBp,
+        'bodyTemp': _bodyTemperatureCelsius,
+        'spo2': _bloodOxygenSpO2,
+        'hrv': _hrvMs,
+        'sleepHours': _sleepHours,
+        'sleepGoalHours': _sleepGoalHours,
+        'sleepScore': _sleepScore,
+      };
+      NativePlatformService.instance.setString(NativePlatformService.keyVitalsData, jsonEncode(data));
+    } catch (e) {
+      debugPrint('[WellnessProvider] Persist vitals error: $e');
+    }
+  }
+
+  void _persistHabits() {
+    try {
+      final data = _habits.map((h) => {
+        'id': h.id,
+        'title': h.title,
+        'category': h.category,
+        'icon': h.icon.codePoint,
+        'color': h.color.value,
+        'streakDays': h.streakDays,
+        'isCompletedToday': h.isCompletedToday,
+        'targetDaysPerWeek': h.targetDaysPerWeek,
+      }).toList();
+      NativePlatformService.instance.setString(NativePlatformService.keyHabitsData, jsonEncode(data));
+    } catch (e) {
+      debugPrint('[WellnessProvider] Persist habits error: $e');
+    }
+  }
+
+  Future<void> _loadPersistedState() async {
+    try {
+      // 1. Tour Seen
+      _hasSeenSpotlightTour = await NativePlatformService.instance.hasSeenSpotlightTour();
+
+      // 2. Theme Mode
+      final themeStr = await NativePlatformService.instance.getString(NativePlatformService.keyThemeMode);
+      if (themeStr == 'dark') {
+        _themeMode = ThemeMode.dark;
+      } else if (themeStr == 'light') {
+        _themeMode = ThemeMode.light;
+      }
+
+      // 3. User Profile
+      final profileStr = await NativePlatformService.instance.getString(NativePlatformService.keyProfileData);
+      if (profileStr != null && profileStr.isNotEmpty) {
+        final map = jsonDecode(profileStr) as Map<String, dynamic>;
+        _userName = map['userName'] as String? ?? _userName;
+        _isProfileConfigured = map['isConfigured'] as bool? ?? _isProfileConfigured;
+        if (map['dob'] != null) {
+          _dateOfBirth = DateTime.tryParse(map['dob'] as String) ?? _dateOfBirth;
+        }
+        _age = (map['age'] as num?)?.toInt() ?? _age;
+        _gender = map['gender'] as String? ?? _gender;
+        _heightCm = (map['heightCm'] as num?)?.toDouble() ?? _heightCm;
+        _targetWeightKg = (map['targetWeightKg'] as num?)?.toDouble() ?? _targetWeightKg;
+        _primaryGoal = map['primaryGoal'] as String? ?? _primaryGoal;
+        _activityLevel = map['activityLevel'] as String? ?? _activityLevel;
+      }
+
+      // 4. Vitals & Goals
+      final vitalsStr = await NativePlatformService.instance.getString(NativePlatformService.keyVitalsData);
+      if (vitalsStr != null && vitalsStr.isNotEmpty) {
+        final map = jsonDecode(vitalsStr) as Map<String, dynamic>;
+        _steps = (map['steps'] as num?)?.toInt() ?? _steps;
+        _stepGoal = (map['stepGoal'] as num?)?.toInt() ?? _stepGoal;
+        _waterGlasses = (map['waterGlasses'] as num?)?.toInt() ?? _waterGlasses;
+        _waterGoal = (map['waterGoal'] as num?)?.toInt() ?? _waterGoal;
+        _calories = (map['calories'] as num?)?.toInt() ?? _calories;
+        _targetCalories = (map['targetCalories'] as num?)?.toInt() ?? _targetCalories;
+        _exerciseHours = (map['exerciseHours'] as num?)?.toDouble() ?? _exerciseHours;
+        _bpm = (map['bpm'] as num?)?.toInt() ?? _bpm;
+        _weightKg = (map['weightKg'] as num?)?.toDouble() ?? _weightKg;
+        _systolicBp = (map['systolicBp'] as num?)?.toInt() ?? _systolicBp;
+        _diastolicBp = (map['diastolicBp'] as num?)?.toInt() ?? _diastolicBp;
+        _bodyTemperatureCelsius = (map['bodyTemp'] as num?)?.toDouble() ?? _bodyTemperatureCelsius;
+        _bloodOxygenSpO2 = (map['spo2'] as num?)?.toInt() ?? _bloodOxygenSpO2;
+        _hrvMs = (map['hrv'] as num?)?.toInt() ?? _hrvMs;
+        _sleepHours = (map['sleepHours'] as num?)?.toDouble() ?? _sleepHours;
+        _sleepGoalHours = (map['sleepGoalHours'] as num?)?.toDouble() ?? _sleepGoalHours;
+        _sleepScore = (map['sleepScore'] as num?)?.toInt() ?? _sleepScore;
+      }
+
+      // 5. Habits
+      final habitsStr = await NativePlatformService.instance.getString(NativePlatformService.keyHabitsData);
+      if (habitsStr != null && habitsStr.isNotEmpty) {
+        final list = jsonDecode(habitsStr) as List<dynamic>;
+        _habits = list.map((item) {
+          final map = item as Map<String, dynamic>;
+          return HabitItem(
+            id: map['id'] as String? ?? 'habit-${DateTime.now().millisecondsSinceEpoch}',
+            title: map['title'] as String? ?? 'Habit',
+            category: map['category'] as String? ?? 'Wellness',
+            icon: IconData((map['icon'] as num?)?.toInt() ?? Icons.check.codePoint, fontFamily: 'MaterialIcons'),
+            color: Color((map['color'] as num?)?.toInt() ?? 0xFF10B981),
+            streakDays: (map['streakDays'] as num?)?.toInt() ?? 0,
+            isCompletedToday: map['isCompletedToday'] as bool? ?? false,
+            targetDaysPerWeek: (map['targetDaysPerWeek'] as num?)?.toInt() ?? 7,
+          );
+        }).toList();
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[WellnessProvider] Error restoring persisted state: $e');
+    }
   }
 }
 

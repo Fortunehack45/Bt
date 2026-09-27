@@ -36,6 +36,7 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
 
   // Selected week being actively inspected on the dial (1 to 40)
   int? _inspectedWeek;
+  int _slideDirection = 1; // -1 = leftward / previous, 1 = rightward / next
 
   @override
   void initState() {
@@ -61,7 +62,7 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ];
 
-  void _onDialTouch(Offset localPos, Size size) {
+  void _onDialTouch(Offset localPos, Size size, int actualWeek) {
     final center = Offset(size.width / 2, size.height / 2);
     final dx = localPos.dx - center.dx;
     final dy = localPos.dy - center.dy;
@@ -75,7 +76,10 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
 
     if (newWeek != _inspectedWeek) {
       HapticService.tick();
-      setState(() => _inspectedWeek = newWeek);
+      setState(() {
+        _slideDirection = newWeek >= (_inspectedWeek ?? actualWeek) ? 1 : -1;
+        _inspectedWeek = newWeek;
+      });
     }
   }
 
@@ -163,9 +167,9 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
                   height: dialSize,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTapDown: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize)),
-                    onPanStart: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize)),
-                    onPanUpdate: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize)),
+                    onTapDown: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize), actualWeek),
+                    onPanStart: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize), actualWeek),
+                    onPanUpdate: (details) => _onDialTouch(details.localPosition, Size(dialSize, dialSize), actualWeek),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -180,79 +184,94 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
                           ),
                         ),
 
-                        // Center Informational Hub
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Heart icon with subtle pulse
-                            ScaleTransition(
-                              scale: _pulseAnimation,
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: trimesterColor.withOpacity(0.14),
-                                  shape: BoxShape.circle,
+                        // Center Informational Hub with directional slide animation
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 260),
+                          transitionBuilder: (child, animation) {
+                            return SlideTransition(
+                              position: Tween<Offset>(
+                                begin: Offset(_slideDirection * 0.35, 0.0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+                              child: FadeTransition(opacity: animation, child: child),
+                            );
+                          },
+                          child: KeyedSubtree(
+                            key: ValueKey<int>(activeWeek),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Heart icon with subtle pulse
+                                ScaleTransition(
+                                  scale: _pulseAnimation,
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: trimesterColor.withOpacity(0.14),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.favorite_rounded,
+                                      size: 20,
+                                      color: trimesterColor,
+                                    ),
+                                  ),
                                 ),
-                                child: Icon(
-                                  Icons.favorite_rounded,
-                                  size: 20,
-                                  color: trimesterColor,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
+                                const SizedBox(height: 6),
 
-                            // Week Readout
-                            Text(
-                              'Week $activeWeek',
-                              style: TextStyle(
-                                fontFamily: AppTypography.fontFamily,
-                                fontSize: 28,
-                                fontWeight: FontWeight.w900,
-                                height: 1.1,
-                                letterSpacing: -0.6,
-                                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-
-                            // Trimester & Day Description
-                            Text(
-                              isViewingDifferentWeek
-                                  ? weekInfo.trimesterLabel
-                                  : 'Day $currentDay • ${weekInfo.trimesterLabel}',
-                              style: TextStyle(
-                                fontFamily: AppTypography.fontFamily,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: trimesterColor,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-
-                            // Percentage & Total Progress Pill
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
-                                borderRadius: AppRadii.roundedPill,
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF2C3931) : const Color(0xFFDEE7E1),
-                                  width: 0.8,
+                                // Week Readout
+                                Text(
+                                  'Week $activeWeek',
+                                  style: TextStyle(
+                                    fontFamily: AppTypography.fontFamily,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.1,
+                                    letterSpacing: -0.6,
+                                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                '${(progressRatio * 100).toInt()}% • 40 Weeks Total',
-                                style: TextStyle(
-                                  fontFamily: AppTypography.fontFamily,
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? AppColors.textSecondaryDark : AppColors.textPrimaryLight,
+                                const SizedBox(height: 2),
+
+                                // Trimester & Day Description
+                                Text(
+                                  isViewingDifferentWeek
+                                      ? weekInfo.trimesterLabel
+                                      : 'Day $currentDay • ${weekInfo.trimesterLabel}',
+                                  style: TextStyle(
+                                    fontFamily: AppTypography.fontFamily,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: trimesterColor,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 6),
+
+                                // Percentage & Total Progress Pill
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF1E2822) : const Color(0xFFF0F5F2),
+                                    borderRadius: AppRadii.roundedPill,
+                                    border: Border.all(
+                                      color: isDark ? const Color(0xFF2C3931) : const Color(0xFFDEE7E1),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '${(progressRatio * 100).toInt()}% • 40 Weeks Total',
+                                    style: TextStyle(
+                                      fontFamily: AppTypography.fontFamily,
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? AppColors.textSecondaryDark : AppColors.textPrimaryLight,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -273,62 +292,84 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
                 onPressed: activeWeek > 1
                     ? () {
                         HapticService.tick();
-                        setState(() => _inspectedWeek = activeWeek - 1);
+                        setState(() {
+                          _slideDirection = -1;
+                          _inspectedWeek = activeWeek - 1;
+                        });
                       }
                     : null,
               ),
               const SizedBox(width: 4),
 
-              if (isViewingDifferentWeek)
-                TextButton.icon(
-                  onPressed: () {
-                    HapticService.selection();
-                    setState(() => _inspectedWeek = actualWeek);
-                  },
-                  icon: const Icon(Icons.my_location_rounded, size: 14),
-                  label: Text(
-                    'Return to Current Week ($actualWeek)',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: trimesterColor,
-                    backgroundColor: trimesterColor.withOpacity(0.12),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedPill),
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: trimesterColor.withOpacity(0.08),
-                    borderRadius: AppRadii.roundedPill,
-                    border: Border.all(color: trimesterColor.withOpacity(0.2), width: 0.8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: trimesterColor,
-                          shape: BoxShape.circle,
-                        ),
+              // Responsive Informational Week Pill + Reset chip
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: trimesterColor.withOpacity(0.08),
+                  borderRadius: AppRadii.roundedPill,
+                  border: Border.all(color: trimesterColor.withOpacity(0.2), width: 0.8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: trimesterColor,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Current • Week $actualWeek of 40',
-                        style: TextStyle(
-                          fontFamily: AppTypography.fontFamily,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: trimesterColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isViewingDifferentWeek
+                          ? 'Inspecting • Week $activeWeek of 40'
+                          : 'Current • Week $actualWeek of 40',
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: trimesterColor,
+                      ),
+                    ),
+                    if (isViewingDifferentWeek) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          HapticService.selection();
+                          setState(() {
+                            _slideDirection = activeWeek < actualWeek ? 1 : -1;
+                            _inspectedWeek = actualWeek;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: trimesterColor.withOpacity(0.18),
+                            borderRadius: AppRadii.roundedPill,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.refresh_rounded, size: 12, color: trimesterColor),
+                              const SizedBox(width: 2),
+                              Text(
+                                'Current',
+                                style: TextStyle(
+                                  fontFamily: AppTypography.fontFamily,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: trimesterColor,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
+              ),
 
               const SizedBox(width: 4),
               IconButton(
@@ -337,7 +378,10 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
                 onPressed: activeWeek < 40
                     ? () {
                         HapticService.tick();
-                        setState(() => _inspectedWeek = activeWeek + 1);
+                        setState(() {
+                          _slideDirection = 1;
+                          _inspectedWeek = activeWeek + 1;
+                        });
                       }
                     : null,
               ),
@@ -363,7 +407,7 @@ class _FetalDevelopmentAliveHeroState extends State<FetalDevelopmentAliveHero>
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    '$daysUntilDue ${daysUntilDue == 1 ? 'day' : 'days'} until estimated due date (${_months[due.month - 1]} ${due.day})',
+                    '$daysUntilDue ${daysUntilDue <= 1 ? 'Day' : 'Days'} until estimated due date (${_months[due.month - 1]} ${due.day})',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

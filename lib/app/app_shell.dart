@@ -38,7 +38,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
-  static const _shortcutsChannel = MethodChannel('com.biothrix.app/shortcuts');
+  static const _shortcutsChannel = MethodChannel('com.wellnest.vitality.health/shortcuts');
 
   @override
   void initState() {
@@ -60,16 +60,16 @@ class _AppShellState extends State<AppShell> {
     if (!mounted) return;
     final provider = WellnessStateScope.of(context);
     switch (action) {
-      case 'com.biothrix.app.ACTION_LOG_WATER':
+      case 'com.wellnest.vitality.health.ACTION_LOG_WATER':
         showLogWaterSheet(context, provider);
         break;
-      case 'com.biothrix.app.ACTION_RECORD_BPM':
+      case 'com.wellnest.vitality.health.ACTION_RECORD_BPM':
         _navigateToSubpage(context, BpmScreen(onBack: () => Navigator.of(context).pop()));
         break;
-      case 'com.biothrix.app.ACTION_ADD_MEAL':
+      case 'com.wellnest.vitality.health.ACTION_ADD_MEAL':
         showLogMealSheet(context, provider);
         break;
-      case 'com.biothrix.app.ACTION_TRACK_ACTIVITY':
+      case 'com.wellnest.vitality.health.ACTION_TRACK_ACTIVITY':
         showLogActivitySheet(context, provider);
         break;
     }
@@ -199,13 +199,23 @@ class _AppShellState extends State<AppShell> {
           ),
 
           // Guided Spotlight Tour Overlay (Automatic on first run & on-demand from Settings)
-          if (!provider.hasSeenSpotlightTour)
+          if (!provider.hasSeenSpotlightTour) ...[
+            if (_currentIndex != 0)
+              Builder(builder: (context) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted && _currentIndex != 0) {
+                    setState(() => _currentIndex = 0);
+                  }
+                });
+                return const SizedBox.shrink();
+              }),
             SpotlightTourOverlay(
               onDismiss: () {
                 provider.markSpotlightTourSeen();
               },
               onOpenAiChatbot: () => showAiWellnessChatbotSheet(context, provider),
             ),
+          ],
         ],
       ),
     );

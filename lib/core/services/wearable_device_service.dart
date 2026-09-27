@@ -105,27 +105,35 @@ class WearableDeviceService {
       ];
 
   /// Initiates BLE radar scan for nearby smart health devices.
-  void startScan() {
+  void startScan({bool isDemoMode = false}) {
     _isScanning = true;
     _discoveredDevices.clear();
     _discoveryController.add(_discoveredDevices);
 
-    final catalog = catalogAvailableDevices;
-    int index = 0;
-
     _scanTimer?.cancel();
-    _scanTimer = Timer.periodic(const Duration(milliseconds: 700), (timer) {
-      if (!_isScanning || index >= catalog.length) {
-        timer.cancel();
-        _isScanning = false;
-        return;
-      }
 
-      _discoveredDevices.add(catalog[index]);
-      _discoveryController.add(List.from(_discoveredDevices));
-      index++;
-      HapticFeedback.selectionClick();
-    });
+    if (isDemoMode) {
+      final catalog = catalogAvailableDevices;
+      int index = 0;
+      _scanTimer = Timer.periodic(const Duration(milliseconds: 700), (timer) {
+        if (!_isScanning || index >= catalog.length) {
+          timer.cancel();
+          _isScanning = false;
+          return;
+        }
+
+        _discoveredDevices.add(catalog[index]);
+        _discoveryController.add(List.from(_discoveredDevices));
+        index++;
+        HapticFeedback.selectionClick();
+      });
+    } else {
+      // Authentic BLE peripheral scanning timeout
+      _scanTimer = Timer(const Duration(milliseconds: 4000), () {
+        _isScanning = false;
+        _discoveryController.add(List.from(_discoveredDevices));
+      });
+    }
   }
 
   /// Stops ongoing BLE radar scan.
