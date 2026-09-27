@@ -40,10 +40,10 @@ jobs:
         run: flutter pub get
 
       - name: Build Release APK
-        run: flutter build apk --release --android-skip-build-dependency-validation
+        run: flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
 
       - name: Build Release App Bundle (AAB)
-        run: flutter build appbundle --release --android-skip-build-dependency-validation
+        run: flutter build appbundle --release --no-tree-shake-icons --android-skip-build-dependency-validation
 
       - name: Rename Artifacts
         run: |
@@ -76,7 +76,7 @@ jobs:
         run: flutter pub get
 
       - name: Build iOS Application (Simulator / Unsigned)
-        run: flutter build ios --simulator --no-codesign
+        run: flutter build ios --simulator --no-codesign --no-tree-shake-icons
 
       - name: Package iOS IPA (Payload Archive)
         run: |

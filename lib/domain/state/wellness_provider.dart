@@ -1775,11 +1775,12 @@ class WellnessProvider extends ChangeNotifier {
         final list = jsonDecode(habitsStr) as List<dynamic>;
         _habits = list.map<HabitItem>((item) {
           final map = item as Map<String, dynamic>;
+          final iconCode = (map['icon'] as num?)?.toInt();
           return HabitItem(
             id: map['id'] as String? ?? 'habit-${DateTime.now().millisecondsSinceEpoch}',
             title: map['title'] as String? ?? 'Habit',
             category: map['category'] as String? ?? 'Wellness',
-            icon: IconData((map['icon'] as num?)?.toInt() ?? Icons.check.codePoint, fontFamily: 'MaterialIcons'),
+            icon: _resolveHabitIcon(iconCode),
             color: Color((map['color'] as num?)?.toInt() ?? 0xFF10B981),
             streakDays: (map['streakDays'] as num?)?.toInt() ?? 0,
             isCompletedToday: map['isCompletedToday'] as bool? ?? false,
@@ -1792,6 +1793,22 @@ class WellnessProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('[WellnessProvider] Error restoring persisted state: $e');
     }
+  }
+
+  static IconData _resolveHabitIcon(int? codePoint) {
+    if (codePoint == null) return Icons.check_circle_rounded;
+    if (codePoint == Icons.wb_sunny_rounded.codePoint) return Icons.wb_sunny_rounded;
+    if (codePoint == Icons.water_drop_rounded.codePoint) return Icons.water_drop_rounded;
+    if (codePoint == Icons.directions_run_rounded.codePoint) return Icons.directions_run_rounded;
+    if (codePoint == Icons.spa_rounded.codePoint) return Icons.spa_rounded;
+    if (codePoint == Icons.bedtime_rounded.codePoint) return Icons.bedtime_rounded;
+    if (codePoint == Icons.fitness_center_rounded.codePoint) return Icons.fitness_center_rounded;
+    if (codePoint == Icons.self_improvement_rounded.codePoint) return Icons.self_improvement_rounded;
+    if (codePoint == Icons.directions_walk_rounded.codePoint) return Icons.directions_walk_rounded;
+    if (codePoint == Icons.favorite_rounded.codePoint) return Icons.favorite_rounded;
+    if (codePoint == Icons.restaurant_rounded.codePoint) return Icons.restaurant_rounded;
+    if (codePoint == Icons.menu_book_rounded.codePoint) return Icons.menu_book_rounded;
+    return Icons.check_circle_rounded;
   }
 }
 
