@@ -73,6 +73,7 @@ class PedometerService {
   void processHardwareStepEvent(WellnessProvider provider, int count) {
     if (count <= 0) return;
     _activeProvider = provider;
+    _isTracking = true;
     _handleHardwareStepDetected(count);
   }
 

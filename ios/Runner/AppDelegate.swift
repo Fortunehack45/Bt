@@ -143,7 +143,7 @@ import CoreMotion
             if delta > 0 {
               self.lastStepCount = totalSteps
               DispatchQueue.main.async {
-                self.pedometerChannel?.invokeMethod("onStepDetected", delta)
+                self.pedometerChannel?.invokeMethod("onStepDetected", arguments: delta)
               }
             }
           }
@@ -161,7 +161,9 @@ import CoreMotion
             let now = Date().timeIntervalSince1970
             if mag > 11.6 && lastMag <= 11.6 && (now - lastTimestamp) > 0.28 {
               lastTimestamp = now
-              self?.pedometerChannel?.invokeMethod("onStepDetected", 1)
+              DispatchQueue.main.async {
+                self.pedometerChannel?.invokeMethod("onStepDetected", arguments: 1)
+              }
             }
             lastMag = mag
           }
