@@ -4,6 +4,8 @@ import 'package:wellnest/domain/models/reproductive_health_models.dart';
 import 'package:wellnest/domain/state/wellness_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Pregnancy Tracking & Gestational Wellness Tests', () {
     late WellnessProvider provider;
 

@@ -6,6 +6,8 @@ import 'package:wellnest/core/widgets/concentric_activity_rings.dart';
 import 'package:wellnest/domain/state/wellness_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Biothrix WellnessProvider Fresh User Tests', () {
     late WellnessProvider provider;
 
@@ -143,16 +145,18 @@ void main() {
     test('Weekly statistics chart populates all 7 days with interactive selection in demo mode', () {
       provider.toggleDemoMode(true);
 
-      // Verify all 7 days have varying non-zero percentages and calories
+      // Verify all 7 days have varying non-zero percentages and calories for past/current days, and 0 for future days
+      final todayWeekdayIndex = (DateTime.now().weekday - 1) % 7;
+      final expectedValues = [1840, 2120, 1960, 1775, 2250, 2380, 1690];
       final barData = provider.weeklyBarData;
       expect(barData.length, 7);
-      expect(barData[0].value, 1840); // Mon (92%)
-      expect(barData[1].value, 2120); // Tue (106%)
-      expect(barData[2].value, 1960); // Wed (98%)
-      expect(barData[3].value, 1775); // Thu (88%)
-      expect(barData[4].value, 2250); // Fri (112%)
-      expect(barData[5].value, 2380); // Sat (119%)
-      expect(barData[6].value, 1690); // Sun (84%)
+      for (int i = 0; i < 7; i++) {
+        if (i > todayWeekdayIndex) {
+          expect(barData[i].value, 0, reason: 'Future day ${barData[i].dayName} must not show future data');
+        } else {
+          expect(barData[i].value, expectedValues[i], reason: 'Past/current day ${barData[i].dayName} matches historical snapshot');
+        }
+      }
 
       // Selecting Wednesday (index 2) updates interactive stat metrics
       provider.selectStatDay(2);

@@ -15,8 +15,12 @@ class WellnessProvider extends ChangeNotifier {
     _seedInitialNotifications();
     _loadPersistedState().then((_) {
       // Automatically initiate live physical hardware step counting on app launch
-      PedometerService.instance.startTracking(this);
-    });
+      try {
+        if (WidgetsBinding.instance != null) {
+          PedometerService.instance.startTracking(this);
+        }
+      } catch (_) {}
+    }).catchError((_) {});
   }
 
   // User Profile

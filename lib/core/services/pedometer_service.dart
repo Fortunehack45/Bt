@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import '../utils/haptic_service.dart';
 import '../../domain/state/wellness_provider.dart';
@@ -30,9 +31,7 @@ extension PedometerPaceCategoryExtension on PedometerPaceCategory {
 /// Bridges physical phone hardware sensors (Android Sensor.TYPE_STEP_DETECTOR / Accelerometer, iOS CMPedometer / CMMotionManager)
 /// directly into the reactive wellness state without any simulations or mock data.
 class PedometerService {
-  PedometerService._() {
-    _initChannel();
-  }
+  PedometerService._();
   static final PedometerService instance = PedometerService._();
 
   static const MethodChannel _channel = MethodChannel('com.wellnest.vitality.health/pedometer');
@@ -42,6 +41,8 @@ class PedometerService {
 
   bool _isHardwareSensorActive = false;
   bool get isHardwareSensorActive => _isHardwareSensorActive;
+
+  bool _channelInitialized = false;
 
   Timer? _cadenceResetTimer;
   int _currentCadenceSpm = 0;
@@ -61,12 +62,20 @@ class PedometerService {
   }
 
   void _initChannel() {
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'onStepDetected') {
-        final count = (call.arguments as num?)?.toInt() ?? 1;
-        _handleHardwareStepDetected(count);
+    if (_channelInitialized) return;
+    try {
+      if (WidgetsBinding.instance != null) {
+        _channel.setMethodCallHandler((call) async {
+          if (call.method == 'onStepDetected') {
+            final count = (call.arguments as num?)?.toInt() ?? 1;
+            _handleHardwareStepDetected(count);
+          }
+        });
+        _channelInitialized = true;
       }
-    });
+    } catch (_) {
+      // Gracefully ignore in pure unit tests or uninitialized environments
+    }
   }
 
   /// Processes genuine physical steps from the platform hardware sensor.
@@ -126,6 +135,7 @@ class PedometerService {
   /// Requests motion & activity recognition permission from the operating system.
   Future<bool> requestPermission() async {
     try {
+      _initChannel();
       final granted = await _channel.invokeMethod<bool>('requestPedometerPermission') ?? false;
       return granted;
     } catch (_) {
@@ -139,6 +149,7 @@ class PedometerService {
     _isTracking = true;
 
     try {
+      _initChannel();
       final available = await _channel.invokeMethod<bool>('isStepCountingAvailable') ?? false;
       if (available) {
         final started = await _channel.invokeMethod<bool>('startStepTracking') ?? false;

@@ -3,6 +3,8 @@ import 'package:wellnest/domain/models/reproductive_health_models.dart';
 import 'package:wellnest/domain/state/wellness_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Period Tracking & Menstrual Vitality Tests', () {
     late WellnessProvider provider;
 

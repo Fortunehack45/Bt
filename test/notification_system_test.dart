@@ -3,6 +3,8 @@ import 'package:wellnest/domain/models/notification_item.dart';
 import 'package:wellnest/domain/state/wellness_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Notification System Tests', () {
     test('WellnestNotification data model properties and time formats', () {
       final now = DateTime.now();
