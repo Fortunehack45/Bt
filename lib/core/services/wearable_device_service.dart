@@ -229,13 +229,9 @@ class WearableDeviceService {
         await _wearablesChannel.invokeMethod<bool>('startBleScan');
       } catch (_) {}
 
-      // 3. Keep scan active for 4 seconds; if no peripheral is actively broadcasting nearby in pairing mode,
-      // present official smart hardware profiles so the user can easily pair their smart ring or watch
+      // 3. Keep scan active for 4 seconds to collect all live BLE advertisements
       _scanTimer = Timer(const Duration(milliseconds: 4000), () {
         _isScanning = false;
-        if (_discoveredDevices.isEmpty) {
-          _discoveredDevices.addAll(catalogAvailableDevices);
-        }
         _discoveryController.add(List.from(_discoveredDevices));
       });
     }

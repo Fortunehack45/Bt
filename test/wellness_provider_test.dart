@@ -142,6 +142,32 @@ void main() {
       expect(provider.meals, isEmpty);
     });
 
+    test('Toggling Investor Demo Mode preserves and restores existing user metrics without resetting data', () {
+      provider.setUserName('Fortune');
+      provider.addSteps(3500);
+      provider.addWaterGlass(4);
+      provider.addMeal('Healthy Oatmeal', 'Breakfast', 320, 'Oats and berries');
+
+      expect(provider.steps, 3500);
+      expect(provider.waterGlasses, 4);
+      expect(provider.meals.length, 1);
+
+      // Turn on demo mode
+      provider.toggleDemoMode(true);
+      expect(provider.isDemoMode, true);
+      expect(provider.steps, 8420);
+      expect(provider.waterGlasses, 7);
+      expect(provider.meals.length, 4);
+
+      // Turn off demo mode - real user data is faithfully restored!
+      provider.toggleDemoMode(false);
+      expect(provider.isDemoMode, false);
+      expect(provider.steps, 3500);
+      expect(provider.waterGlasses, 4);
+      expect(provider.meals.length, 1);
+      expect(provider.meals.first.name, 'Healthy Oatmeal');
+    });
+
     test('Weekly statistics chart populates all 7 days with interactive selection in demo mode', () {
       provider.toggleDemoMode(true);
 

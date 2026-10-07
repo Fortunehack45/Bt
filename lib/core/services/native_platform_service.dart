@@ -22,6 +22,8 @@ class NativePlatformService {
   static const String keyProfileData = 'wellnest_profile_data';
   static const String keyVitalsData = 'wellnest_vitals_data';
   static const String keyHabitsData = 'wellnest_habits_data';
+  static const String keyMealsData = 'wellnest_meals_data';
+  static const String keyPersistentSteps = 'wellnest_persistent_steps';
 
   /// Displays an authentic system-level status-bar notification on Android & iOS.
   Future<bool> showSystemNotification({

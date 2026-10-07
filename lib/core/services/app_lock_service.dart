@@ -217,8 +217,9 @@ class AppLockService extends ChangeNotifier {
   Future<bool> authenticateWithBiometrics({
     String title = 'Unlock Wellnest',
     String subtitle = 'Confirm your identity with biometric security',
+    bool force = false,
   }) async {
-    if (!_isBiometricsEnabled) return false;
+    if (!force && !_isBiometricsEnabled) return false;
 
     try {
       final res = await _biometricsChannel.invokeMapMethod<String, dynamic>('authenticate', {
@@ -228,7 +229,9 @@ class AppLockService extends ChangeNotifier {
       });
 
       if (res != null && res['success'] == true) {
-        unlock();
+        if (!force) {
+          unlock();
+        }
         return true;
       }
     } catch (_) {}

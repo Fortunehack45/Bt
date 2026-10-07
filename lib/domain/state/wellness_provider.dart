@@ -294,6 +294,9 @@ class WellnessProvider extends ChangeNotifier {
   void addSteps(int count) {
     _steps += count;
     _persistVitals();
+    if (!_isDemoMode) {
+      NativePlatformService.instance.setInt(NativePlatformService.keyPersistentSteps, _steps);
+    }
     notifyListeners();
   }
 
@@ -301,6 +304,9 @@ class WellnessProvider extends ChangeNotifier {
     if (totalSteps > _steps) {
       _steps = totalSteps;
       _persistVitals();
+      if (!_isDemoMode) {
+        NativePlatformService.instance.setInt(NativePlatformService.keyPersistentSteps, _steps);
+      }
       notifyListeners();
     }
   }
@@ -790,6 +796,8 @@ class WellnessProvider extends ChangeNotifier {
     );
     _meals = [..._meals, newMeal];
     _calories += calories;
+    _persistMeals();
+    _persistVitals();
     notifyListeners();
   }
 
@@ -804,12 +812,14 @@ class WellnessProvider extends ChangeNotifier {
   void logSleep(double hours) {
     _sleepHours = hours;
     _sleepScore = ((hours / (_sleepGoalHours > 0 ? _sleepGoalHours : 8.0)) * 100).clamp(0, 100).toInt();
+    _persistVitals();
     notifyListeners();
   }
 
   void setSleepGoalHours(double hours) {
     if (hours > 0) {
       _sleepGoalHours = hours;
+      _persistVitals();
       notifyListeners();
     }
   }
@@ -819,6 +829,8 @@ class WellnessProvider extends ChangeNotifier {
     if (meal.id.isNotEmpty) {
       _calories = (_calories - meal.calories).clamp(0, 99999);
       _meals.removeWhere((m) => m.id == id);
+      _persistMeals();
+      _persistVitals();
       notifyListeners();
     }
   }
@@ -826,6 +838,7 @@ class WellnessProvider extends ChangeNotifier {
   void addWaterAmount(int ml) {
     final glassesToAdd = (ml / 250.0).round().clamp(1, 10);
     _waterGlasses += glassesToAdd;
+    _persistVitals();
     notifyListeners();
   }
 
@@ -849,16 +862,80 @@ class WellnessProvider extends ChangeNotifier {
     _pregnancyAppointments.clear();
     _isPeriodTrackingEnabled = false;
     _isPregnancyTrackingEnabled = false;
+    _persistVitals();
+    _persistHabits();
+    _persistMeals();
+    NativePlatformService.instance.setInt(NativePlatformService.keyPersistentSteps, 0);
     notifyListeners();
   }
 
-  // Investor Presentation Demo Mode
+  // Investor Presentation Demo Mode & Safe User Data Backups
   bool _isDemoMode = false;
   bool get isDemoMode => _isDemoMode;
 
+  int? _backupSteps;
+  int? _backupWaterGlasses;
+  int? _backupCalories;
+  double? _backupExerciseHours;
+  int? _backupBpm;
+  double? _backupWeightKg;
+  double? _backupSleepHours;
+  int? _backupSleepScore;
+  int? _backupAge;
+  String? _backupGender;
+  double? _backupHeightCm;
+  double? _backupTargetWeightKg;
+  String? _backupPrimaryGoal;
+  String? _backupActivityLevel;
+  List<MealEntry>? _backupMeals;
+  List<HabitItem>? _backupHabits;
+  Map<int, DaySnapshot>? _backupWeeklyStatDays;
+  Map<String, DaySnapshot>? _backupPastDaysData;
+  List<PeriodCycleEntry>? _backupPeriodCycles;
+  bool? _backupIsPeriodTrackingEnabled;
+  PregnancyData? _backupPregnancyData;
+  List<PregnancyDailyLog>? _backupPregnancyLogs;
+  List<PregnancyAppointment>? _backupPregnancyAppointments;
+  bool? _backupIsPregnancyTrackingEnabled;
+
   void toggleDemoMode(bool enable) {
-    _isDemoMode = enable;
     if (enable) {
+      if (!_isDemoMode) {
+        // Save user's real data to disk first to ensure zero data loss
+        _persistVitals();
+        _persistHabits();
+        _persistProfile();
+        _persistMeals();
+
+        // Capture in-memory backups of real data
+        _backupSteps = _steps;
+        _backupWaterGlasses = _waterGlasses;
+        _backupCalories = _calories;
+        _backupExerciseHours = _exerciseHours;
+        _backupBpm = _bpm;
+        _backupWeightKg = _weightKg;
+        _backupSleepHours = _sleepHours;
+        _backupSleepScore = _sleepScore;
+        _backupAge = _age;
+        _backupGender = _gender;
+        _backupHeightCm = _heightCm;
+        _backupTargetWeightKg = _targetWeightKg;
+        _backupPrimaryGoal = _primaryGoal;
+        _backupActivityLevel = _activityLevel;
+        _backupMeals = List.from(_meals);
+        _backupHabits = List.from(_habits);
+        _backupWeeklyStatDays = Map.from(_weeklyStatDays);
+        _backupPastDaysData = Map.from(_pastDaysData);
+        _backupPeriodCycles = List.from(_periodCycles);
+        _backupIsPeriodTrackingEnabled = _isPeriodTrackingEnabled;
+        _backupPregnancyData = _pregnancyData;
+        _backupPregnancyLogs = List.from(_pregnancyLogs);
+        _backupPregnancyAppointments = List.from(_pregnancyAppointments);
+        _backupIsPregnancyTrackingEnabled = _isPregnancyTrackingEnabled;
+      }
+
+      _isDemoMode = true;
+
       // User's name (_userName) is strictly preserved!
       _steps = 8420;
       _waterGlasses = 7;
@@ -950,8 +1027,62 @@ class WellnessProvider extends ChangeNotifier {
         ]);
       }
     } else {
-      resetAllData();
       _isDemoMode = false;
+      // RESTORE real data from in-memory backup if available, or reload from persistent storage
+      if (_backupSteps != null) {
+        _steps = _backupSteps!;
+        _waterGlasses = _backupWaterGlasses ?? 0;
+        _calories = _backupCalories ?? 0;
+        _exerciseHours = _backupExerciseHours ?? 0.0;
+        _bpm = _backupBpm ?? 0;
+        _weightKg = _backupWeightKg ?? 0.0;
+        _sleepHours = _backupSleepHours ?? 0.0;
+        _sleepScore = _backupSleepScore ?? 0;
+        _age = _backupAge ?? _age;
+        _gender = _backupGender ?? _gender;
+        _heightCm = _backupHeightCm ?? _heightCm;
+        _targetWeightKg = _backupTargetWeightKg ?? _targetWeightKg;
+        _primaryGoal = _backupPrimaryGoal ?? _primaryGoal;
+        _activityLevel = _backupActivityLevel ?? _activityLevel;
+        _meals = _backupMeals != null ? List.from(_backupMeals!) : [];
+        _habits = _backupHabits != null ? List.from(_backupHabits!) : [];
+        _weeklyStatDays = _backupWeeklyStatDays != null ? Map.from(_backupWeeklyStatDays!) : {};
+        _pastDaysData = _backupPastDaysData != null ? Map.from(_backupPastDaysData!) : {};
+        _periodCycles = _backupPeriodCycles != null ? List.from(_backupPeriodCycles!) : [];
+        _isPeriodTrackingEnabled = _backupIsPeriodTrackingEnabled ?? false;
+        _pregnancyData = _backupPregnancyData;
+        _pregnancyLogs = _backupPregnancyLogs != null ? List.from(_backupPregnancyLogs!) : [];
+        _pregnancyAppointments = _backupPregnancyAppointments != null ? List.from(_backupPregnancyAppointments!) : [];
+        _isPregnancyTrackingEnabled = _backupIsPregnancyTrackingEnabled ?? false;
+
+        // Clear backup variables
+        _backupSteps = null;
+        _backupWaterGlasses = null;
+        _backupCalories = null;
+        _backupExerciseHours = null;
+        _backupBpm = null;
+        _backupWeightKg = null;
+        _backupSleepHours = null;
+        _backupSleepScore = null;
+        _backupAge = null;
+        _backupGender = null;
+        _backupHeightCm = null;
+        _backupTargetWeightKg = null;
+        _backupPrimaryGoal = null;
+        _backupActivityLevel = null;
+        _backupMeals = null;
+        _backupHabits = null;
+        _backupWeeklyStatDays = null;
+        _backupPastDaysData = null;
+        _backupPeriodCycles = null;
+        _backupIsPeriodTrackingEnabled = null;
+        _backupPregnancyData = null;
+        _backupPregnancyLogs = null;
+        _backupPregnancyAppointments = null;
+        _backupIsPregnancyTrackingEnabled = null;
+      } else {
+        _loadPersistedState();
+      }
     }
     notifyListeners();
   }
@@ -1685,6 +1816,7 @@ class WellnessProvider extends ChangeNotifier {
 
   // --- Persistence & State Restoration ---
   void _persistProfile() {
+    if (_isDemoMode) return;
     try {
       final data = {
         'userName': _userName,
@@ -1705,6 +1837,7 @@ class WellnessProvider extends ChangeNotifier {
   }
 
   void _persistVitals() {
+    if (_isDemoMode) return;
     try {
       final data = {
         'steps': _steps,
@@ -1732,6 +1865,7 @@ class WellnessProvider extends ChangeNotifier {
   }
 
   void _persistHabits() {
+    if (_isDemoMode) return;
     try {
       final data = _habits.map((h) => {
         'id': h.id,
@@ -1746,6 +1880,16 @@ class WellnessProvider extends ChangeNotifier {
       NativePlatformService.instance.setString(NativePlatformService.keyHabitsData, jsonEncode(data));
     } catch (e) {
       debugPrint('[WellnessProvider] Persist habits error: $e');
+    }
+  }
+
+  void _persistMeals() {
+    if (_isDemoMode) return;
+    try {
+      final data = _meals.map((m) => m.toJson()).toList();
+      NativePlatformService.instance.setString(NativePlatformService.keyMealsData, jsonEncode(data));
+    } catch (e) {
+      debugPrint('[WellnessProvider] Persist meals error: $e');
     }
   }
 
@@ -1820,6 +1964,13 @@ class WellnessProvider extends ChangeNotifier {
             targetDaysPerWeek: (map['targetDaysPerWeek'] as num?)?.toInt() ?? 7,
           );
         }).toList();
+      }
+
+      // 6. Meals
+      final mealsStr = await NativePlatformService.instance.getString(NativePlatformService.keyMealsData);
+      if (mealsStr != null && mealsStr.isNotEmpty) {
+        final list = jsonDecode(mealsStr) as List<dynamic>;
+        _meals = list.map<MealEntry>((item) => MealEntry.fromJson(item as Map<String, dynamic>)).toList();
       }
 
       notifyListeners();

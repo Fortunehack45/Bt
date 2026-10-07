@@ -168,7 +168,9 @@ class PedometerService {
 
       final available = await _channel.invokeMethod<bool>('isStepCountingAvailable') ?? false;
       if (available) {
-        final started = await _channel.invokeMethod<bool>('startStepTracking') ?? false;
+        final started = await _channel.invokeMethod<bool>('startStepTracking', {
+          'currentSteps': provider.steps,
+        }) ?? false;
         _isHardwareSensorActive = started;
         if (started) {
           _currentCadenceSpm = 0;

@@ -80,16 +80,21 @@ class _AppLockScreenState extends State<AppLockScreen>
     if (_isAuthenticatingBiometrics) return;
     setState(() => _isAuthenticatingBiometrics = true);
 
-    final success = await AppLockService.instance.authenticateWithBiometrics(
-      title: 'Unlock Wellnest',
-      subtitle: 'Scan your fingerprint to access your wellness dashboard',
-    );
+    try {
+      final success = await AppLockService.instance.authenticateWithBiometrics(
+        title: 'Unlock Wellnest',
+        subtitle: 'Scan your fingerprint to access your wellness dashboard',
+      );
 
-    if (mounted) {
-      setState(() => _isAuthenticatingBiometrics = false);
-      if (success) {
+      if (mounted && success) {
         HapticService.mediumImpact();
         widget.onUnlocked?.call();
+      }
+    } catch (_) {
+      // Graceful fallback to PIN
+    } finally {
+      if (mounted) {
+        setState(() => _isAuthenticatingBiometrics = false);
       }
     }
   }

@@ -264,6 +264,14 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                 }
                 "startStepTracking" -> {
                     lastStepCounterValue = -1.0f
+                    val currentSteps = call.argument<Int>("currentSteps") ?: 0
+                    if (currentSteps > 0) {
+                        val p = getSharedPreferences(StepTrackingService.PREFS_NAME, Context.MODE_PRIVATE)
+                        val existing = p.getInt(StepTrackingService.KEY_PERSISTENT_STEPS, 0)
+                        if (currentSteps > existing) {
+                            p.edit().putInt(StepTrackingService.KEY_PERSISTENT_STEPS, currentSteps).apply()
+                        }
+                    }
                     checkAndRequestPedometerPermission()
                     val registered = registerHardwareSensors()
                     try {
@@ -593,19 +601,40 @@ class MainActivity: FlutterActivity(), SensorEventListener {
         var hasHardware = false
         var isEnrolled = false
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val bm = getSystemService(Context.BIOMETRIC_SERVICE) as? android.hardware.biometrics.BiometricManager
-            if (bm != null) {
-                val canAuth = bm.canAuthenticate(android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_WEAK)
-                hasHardware = canAuth != android.hardware.biometrics.BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE
-                isEnrolled = canAuth == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val bm = getSystemService(Context.BIOMETRIC_SERVICE) as? android.hardware.biometrics.BiometricManager
+                if (bm != null) {
+                    val authenticators = android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                            android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_WEAK
+                    val canAuth = bm.canAuthenticate(authenticators)
+                    hasHardware = canAuth != android.hardware.biometrics.BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE
+                    isEnrolled = canAuth == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val bm = getSystemService(Context.BIOMETRIC_SERVICE) as? android.hardware.biometrics.BiometricManager
+                if (bm != null) {
+                    val canAuth = bm.canAuthenticate()
+                    hasHardware = canAuth != android.hardware.biometrics.BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE
+                    isEnrolled = canAuth == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val fp = getSystemService(Context.FINGERPRINT_SERVICE) as? android.hardware.fingerprint.FingerprintManager
+                if (fp != null) {
+                    hasHardware = fp.isHardwareDetected
+                    isEnrolled = fp.hasEnrolledFingerprints()
+                }
             }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val fp = getSystemService(Context.FINGERPRINT_SERVICE) as? android.hardware.fingerprint.FingerprintManager
-            if (fp != null) {
-                hasHardware = fp.isHardwareDetected
-                isEnrolled = fp.hasEnrolledFingerprints()
-            }
+        } catch (_: Throwable) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val fp = getSystemService(Context.FINGERPRINT_SERVICE) as? android.hardware.fingerprint.FingerprintManager
+                    if (fp != null) {
+                        hasHardware = fp.isHardwareDetected
+                        isEnrolled = fp.hasEnrolledFingerprints()
+                    }
+                }
+            } catch (_: Throwable) {}
         }
 
         return mapOf(
@@ -622,6 +651,7 @@ class MainActivity: FlutterActivity(), SensorEventListener {
         result: MethodChannel.Result
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val hasReplied = java.util.concurrent.atomic.AtomicBoolean(false)
             try {
                 cancelBiometricAuthentication()
                 val signal = CancellationSignal()
@@ -631,7 +661,9 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                     .setTitle(title)
                     .setSubtitle(subtitle)
                     .setNegativeButton(negativeButton, mainExecutor) { _, _ ->
-                        result.success(mapOf("success" to false, "error" to "user_canceled"))
+                        if (hasReplied.compareAndSet(false, true)) {
+                            result.success(mapOf("success" to false, "error" to "user_canceled"))
+                        }
                     }
                     .build()
 
@@ -642,13 +674,17 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                         override fun onAuthenticationSucceeded(authResult: android.hardware.biometrics.BiometricPrompt.AuthenticationResult?) {
                             super.onAuthenticationSucceeded(authResult)
                             currentCancellationSignal = null
-                            result.success(mapOf("success" to true))
+                            if (hasReplied.compareAndSet(false, true)) {
+                                result.success(mapOf("success" to true))
+                            }
                         }
 
                         override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
                             super.onAuthenticationError(errorCode, errString)
                             currentCancellationSignal = null
-                            result.success(mapOf("success" to false, "error" to (errString?.toString() ?: "Authentication error $errorCode")))
+                            if (hasReplied.compareAndSet(false, true)) {
+                                result.success(mapOf("success" to false, "error" to (errString?.toString() ?: "Authentication error $errorCode")))
+                            }
                         }
 
                         override fun onAuthenticationFailed() {
@@ -656,8 +692,10 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                         }
                     }
                 )
-            } catch (e: Exception) {
-                result.success(mapOf("success" to false, "error" to e.localizedMessage))
+            } catch (t: Throwable) {
+                if (hasReplied.compareAndSet(false, true)) {
+                    result.success(mapOf("success" to false, "error" to (t.localizedMessage ?: "Biometric prompt exception")))
+                }
             }
         } else {
             result.success(mapOf("success" to false, "error" to "unsupported_sdk_version"))

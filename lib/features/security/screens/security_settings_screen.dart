@@ -307,13 +307,22 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                         onChanged: (value) async {
                           HapticService.selection();
                           if (value) {
-                            // Test biometric authentication immediately
+                            // Test biometric authentication immediately with force: true
                             final verified = await _service.authenticateWithBiometrics(
                               title: 'Enable Biometrics',
                               subtitle: 'Verify your fingerprint to enable biometric unlock',
+                              force: true,
                             );
                             if (verified) {
                               await _service.setBiometricsEnabled(true);
+                            } else if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Biometric verification failed or was cancelled'),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
                             }
                           } else {
                             await _service.setBiometricsEnabled(false);

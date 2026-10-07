@@ -60,6 +60,24 @@ class MealEntry {
     required this.timeString,
     required this.description,
   });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'mealType': mealType,
+        'calories': calories,
+        'timeString': timeString,
+        'description': description,
+      };
+
+  factory MealEntry.fromJson(Map<String, dynamic> json) => MealEntry(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        mealType: json['mealType'] as String? ?? 'Snack',
+        calories: (json['calories'] as num?)?.toInt() ?? 0,
+        timeString: json['timeString'] as String? ?? '',
+        description: json['description'] as String? ?? '',
+      );
 }
 
 class WellnessRecommendation {
