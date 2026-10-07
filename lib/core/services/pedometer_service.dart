@@ -64,15 +64,13 @@ class PedometerService {
   void _initChannel() {
     if (_channelInitialized) return;
     try {
-      if (WidgetsBinding.instance != null) {
-        _channel.setMethodCallHandler((call) async {
-          if (call.method == 'onStepDetected') {
-            final count = (call.arguments as num?)?.toInt() ?? 1;
-            _handleHardwareStepDetected(count);
-          }
-        });
-        _channelInitialized = true;
-      }
+      _channel.setMethodCallHandler((call) async {
+        if (call.method == 'onStepDetected') {
+          final count = (call.arguments as num?)?.toInt() ?? 1;
+          _handleHardwareStepDetected(count);
+        }
+      });
+      _channelInitialized = true;
     } catch (_) {
       // Gracefully ignore in pure unit tests or uninitialized environments
     }

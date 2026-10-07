@@ -83,6 +83,8 @@ class AppTypography {
         color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
       );
 
+  static TextStyle body(bool isDark) => bodyMedium(isDark);
+
   static TextStyle bodyMediumBold(bool isDark) => TextStyle(
         fontFamily: fontFamily,
         fontSize: 14,

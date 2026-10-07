@@ -68,4 +68,7 @@ class HapticService {
       await HapticFeedback.heavyImpact();
     } catch (_) {}
   }
+
+  /// Error vibration for invalid passcode or access denial
+  static Future<void> error() => warning();
 }

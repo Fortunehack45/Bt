@@ -20,9 +20,7 @@ class WellnessProvider extends ChangeNotifier {
     _loadPersistedState().then((_) {
       // Automatically initiate live physical hardware step counting on app launch
       try {
-        if (WidgetsBinding.instance != null) {
-          PedometerService.instance.startTracking(this);
-        }
+        PedometerService.instance.startTracking(this);
       } catch (_) {}
     }).catchError((_) {});
   }
@@ -40,12 +38,6 @@ class WellnessProvider extends ChangeNotifier {
     final locked = AppLockService.instance.onAppResumed();
     if (locked) notifyListeners();
     return locked;
-  }
-
-  @override
-  void dispose() {
-    AppLockService.instance.removeListener(notifyListeners);
-    super.dispose();
   }
 
   // User Profile
@@ -1855,6 +1847,7 @@ class WellnessProvider extends ChangeNotifier {
   @override
   void dispose() {
     PedometerService.instance.stopTracking(this);
+    AppLockService.instance.removeListener(notifyListeners);
     super.dispose();
   }
 }

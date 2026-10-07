@@ -113,21 +113,19 @@ class WearableDeviceService {
   void _ensureChannelInitialized() {
     if (_channelInitialized) return;
     try {
-      if (WidgetsBinding.instance != null) {
-        _wearablesChannel.setMethodCallHandler((call) async {
-          if (call.method == 'onDeviceDiscovered') {
-            final map = call.arguments as Map?;
-            if (map != null) {
-              final dev = _mapNativeDeviceToSmartDevice(map);
-              if (!_discoveredDevices.any((x) => x.id == dev.id || x.macAddressOrUuid == dev.macAddressOrUuid)) {
-                _discoveredDevices.add(dev);
-                _discoveryController.add(List.from(_discoveredDevices));
-              }
+      _wearablesChannel.setMethodCallHandler((call) async {
+        if (call.method == 'onDeviceDiscovered') {
+          final map = call.arguments as Map?;
+          if (map != null) {
+            final dev = _mapNativeDeviceToSmartDevice(map);
+            if (!_discoveredDevices.any((x) => x.id == dev.id || x.macAddressOrUuid == dev.macAddressOrUuid)) {
+              _discoveredDevices.add(dev);
+              _discoveryController.add(List.from(_discoveredDevices));
             }
           }
-        });
-        _channelInitialized = true;
-      }
+        }
+      });
+      _channelInitialized = true;
     } catch (_) {}
   }
 

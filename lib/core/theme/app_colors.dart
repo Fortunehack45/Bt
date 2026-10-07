@@ -21,6 +21,8 @@ class AppColors {
 
   static const Color heartRed = Color(0xFFFF5252);
   static const Color heartRedTint = Color(0xFFFFECEC);
+  static const Color errorRed = Color(0xFFEF4444);
+  static const Color errorRedTint = Color(0xFFFEE2E2);
 
   static const Color exerciseGreen = Color(0xFF10B981);
   static const Color exerciseGreenTint = Color(0xFFE8FAF2);
