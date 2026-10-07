@@ -894,7 +894,7 @@ class WellnessProvider extends ChangeNotifier {
   List<PeriodCycleEntry>? _backupPeriodCycles;
   bool? _backupIsPeriodTrackingEnabled;
   PregnancyData? _backupPregnancyData;
-  List<PregnancyDailyLog>? _backupPregnancyLogs;
+  List<PregnancyLogEntry>? _backupPregnancyLogs;
   List<PregnancyAppointment>? _backupPregnancyAppointments;
   bool? _backupIsPregnancyTrackingEnabled;
 
@@ -1046,13 +1046,28 @@ class WellnessProvider extends ChangeNotifier {
         _activityLevel = _backupActivityLevel ?? _activityLevel;
         _meals = _backupMeals != null ? List.from(_backupMeals!) : [];
         _habits = _backupHabits != null ? List.from(_backupHabits!) : [];
-        _weeklyStatDays = _backupWeeklyStatDays != null ? Map.from(_backupWeeklyStatDays!) : {};
-        _pastDaysData = _backupPastDaysData != null ? Map.from(_backupPastDaysData!) : {};
-        _periodCycles = _backupPeriodCycles != null ? List.from(_backupPeriodCycles!) : [];
+        _weeklyStatDays.clear();
+        if (_backupWeeklyStatDays != null) {
+          _weeklyStatDays.addAll(_backupWeeklyStatDays!);
+        }
+        _pastDaysData.clear();
+        if (_backupPastDaysData != null) {
+          _pastDaysData.addAll(_backupPastDaysData!);
+        }
+        _periodCycles.clear();
+        if (_backupPeriodCycles != null) {
+          _periodCycles.addAll(_backupPeriodCycles!);
+        }
         _isPeriodTrackingEnabled = _backupIsPeriodTrackingEnabled ?? false;
         _pregnancyData = _backupPregnancyData;
-        _pregnancyLogs = _backupPregnancyLogs != null ? List.from(_backupPregnancyLogs!) : [];
-        _pregnancyAppointments = _backupPregnancyAppointments != null ? List.from(_backupPregnancyAppointments!) : [];
+        _pregnancyLogs.clear();
+        if (_backupPregnancyLogs != null) {
+          _pregnancyLogs.addAll(_backupPregnancyLogs!);
+        }
+        _pregnancyAppointments.clear();
+        if (_backupPregnancyAppointments != null) {
+          _pregnancyAppointments.addAll(_backupPregnancyAppointments!);
+        }
         _isPregnancyTrackingEnabled = _backupIsPregnancyTrackingEnabled ?? false;
 
         // Clear backup variables
