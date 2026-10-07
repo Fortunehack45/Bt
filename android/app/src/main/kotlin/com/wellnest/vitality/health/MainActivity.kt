@@ -1,11 +1,13 @@
 package com.wellnest.vitality.health
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -24,6 +26,7 @@ class MainActivity: FlutterActivity(), SensorEventListener {
     private val PREFERENCES_CHANNEL = "com.wellnest.vitality.health/preferences"
     private val PEDOMETER_CHANNEL = "com.wellnest.vitality.health/pedometer"
     private val NOTIFICATION_CHANNEL_ID = "wellnest_alerts"
+    private val ACTIVITY_RECOGNITION_REQUEST_CODE = 1001
 
     private var initialAction: String? = null
     private var methodChannel: MethodChannel? = null
@@ -61,18 +64,16 @@ class MainActivity: FlutterActivity(), SensorEventListener {
     private fun initHardwareSensors() {
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         val detector = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
+        val counter = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
         if (detector != null) {
             stepSensor = detector
             isUsingStepDetector = true
-        } else {
-            val counter = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-            if (counter != null) {
-                stepSensor = counter
-                isUsingStepDetector = false
-            } else {
-                accelerometerSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-            }
+        } else if (counter != null) {
+            stepSensor = counter
+            isUsingStepDetector = false
         }
+        // Always acquire accelerometer as fallback/instant sensor
+        accelerometerSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     }
 
     private fun createNotificationChannel() {
@@ -224,15 +225,15 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                     val available = stepSensor != null || accelerometerSensor != null
                     result.success(available)
                 }
+                "requestPedometerPermission" -> {
+                    val granted = checkAndRequestPedometerPermission()
+                    result.success(granted)
+                }
                 "startStepTracking" -> {
                     lastStepCounterValue = -1.0f
-                    val sensorToListen = stepSensor ?: accelerometerSensor
-                    if (sensorToListen != null && sensorManager != null) {
-                        sensorManager?.registerListener(this, sensorToListen, SensorManager.SENSOR_DELAY_UI)
-                        result.success(true)
-                    } else {
-                        result.success(false)
-                    }
+                    checkAndRequestPedometerPermission()
+                    val registered = registerHardwareSensors()
+                    result.success(registered)
                 }
                 "stopStepTracking" -> {
                     lastStepCounterValue = -1.0f
@@ -244,6 +245,54 @@ class MainActivity: FlutterActivity(), SensorEventListener {
         }
     }
 
+    private fun hasActivityRecognitionPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    private fun checkAndRequestPedometerPermission(): Boolean {
+        if (!hasActivityRecognitionPermission() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            requestPermissions(arrayOf(Manifest.permission.ACTIVITY_RECOGNITION), ACTIVITY_RECOGNITION_REQUEST_CODE)
+            return false
+        }
+        return true
+    }
+
+    private fun registerHardwareSensors(): Boolean {
+        val sm = sensorManager ?: return false
+        sm.unregisterListener(this)
+        var registered = false
+
+        if (hasActivityRecognitionPermission() && stepSensor != null) {
+            val ok = sm.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_GAME)
+            if (ok) {
+                registered = true
+            }
+        }
+
+        // Always register accelerometer as dynamic fallback if stepSensor is null or permission pending
+        if (!registered && accelerometerSensor != null) {
+            val ok = sm.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_GAME)
+            if (ok) {
+                registered = true
+            }
+        }
+
+        return registered
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                registerHardwareSensors()
+            }
+        }
+    }
+
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null) return
 
@@ -251,7 +300,9 @@ class MainActivity: FlutterActivity(), SensorEventListener {
             Sensor.TYPE_STEP_DETECTOR -> {
                 // Hardware step detector fires a 1.0 event per discrete step
                 if (event.values.isNotEmpty() && event.values[0] > 0.0f) {
-                    pedometerChannel?.invokeMethod("onStepDetected", 1)
+                    runOnUiThread {
+                        pedometerChannel?.invokeMethod("onStepDetected", 1)
+                    }
                 }
             }
             Sensor.TYPE_STEP_COUNTER -> {
@@ -264,7 +315,9 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                         val delta = (currentTotal - lastStepCounterValue).toInt()
                         if (delta > 0) {
                             lastStepCounterValue = currentTotal
-                            pedometerChannel?.invokeMethod("onStepDetected", delta)
+                            runOnUiThread {
+                                pedometerChannel?.invokeMethod("onStepDetected", delta)
+                            }
                         }
                     }
                 }
@@ -277,10 +330,17 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                 val magnitude = Math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
                 val now = System.currentTimeMillis()
 
-                // Walking motion produces acceleration peaks > 11.6 m/s^2 with >= 280ms human refractory period
-                if (magnitude > 11.6f && lastAccelMagnitude <= 11.6f && (now - lastStepTimestamp) > 280L) {
+                // Walking motion produces acceleration peaks > 11.0 m/s^2 with human cadence refractory period (260ms - 1800ms)
+                if (magnitude > 11.0f && lastAccelMagnitude <= 11.0f && (now - lastStepTimestamp) in 260L..1800L) {
                     lastStepTimestamp = now
-                    pedometerChannel?.invokeMethod("onStepDetected", 1)
+                    runOnUiThread {
+                        pedometerChannel?.invokeMethod("onStepDetected", 1)
+                    }
+                } else if (lastStepTimestamp == 0L && magnitude > 11.0f) {
+                    lastStepTimestamp = now
+                    runOnUiThread {
+                        pedometerChannel?.invokeMethod("onStepDetected", 1)
+                    }
                 }
                 lastAccelMagnitude = magnitude
             }

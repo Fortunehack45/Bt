@@ -31,13 +31,13 @@ class AppShadows {
     ];
   }
 
-  // Floating Glass Bar & Sheet Shadows
-  static List<BoxShadow> floatingGlass({required bool isDark, required bool isIos}) {
+  // Floating Glass Bar & Sheet Shadows (Liquid Ambient Depth)
+  static List<BoxShadow> floatingGlass({required bool isDark, bool isIos = true}) {
     if (isDark) {
       return [
         BoxShadow(
           color: Colors.black.withOpacity(0.45),
-          blurRadius: isIos ? 28 : 20,
+          blurRadius: 28,
           spreadRadius: -2,
           offset: const Offset(0, 10),
         ),
@@ -45,8 +45,8 @@ class AppShadows {
     }
     return [
       BoxShadow(
-        color: const Color(0xFF141917).withOpacity(isIos ? 0.08 : 0.06),
-        blurRadius: isIos ? 28 : 20,
+        color: const Color(0xFF141917).withOpacity(0.08),
+        blurRadius: 28,
         spreadRadius: -2,
         offset: const Offset(0, 10),
       ),
@@ -59,7 +59,7 @@ class AppShadows {
   }
 
   // Floating helper for beside-FAB and floating elements
-  static List<BoxShadow> floating(bool isDark) => floatingGlass(isDark: isDark, isIos: false);
+  static List<BoxShadow> floating(bool isDark) => floatingGlass(isDark: isDark, isIos: true);
 
 
   // Central FAB Soft Wellness Glow

@@ -31,17 +31,15 @@ class PlatformGlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isIos = theme.platform == TargetPlatform.iOS ||
-        theme.platform == TargetPlatform.macOS;
 
-    final blurSigma =
-        isIos ? GlassTokens.iosBlurSigma : GlassTokens.androidBlurSigma;
+    // Both Android and iOS now utilize the premium Liquid Glass material
+    const blurSigma = GlassTokens.liquidBlurSigma;
 
     Widget content = Container(
       width: width,
       height: height,
       padding: padding,
-      decoration: _buildDecoration(isIos, isDark),
+      decoration: _buildDecoration(isDark),
       child: child,
     );
 
@@ -52,8 +50,8 @@ class PlatformGlassSurface extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: borderRadius,
-          splashColor: Colors.white.withOpacity(0.15),
-          highlightColor: Colors.white.withOpacity(0.08),
+          splashColor: Colors.white.withOpacity(0.18),
+          highlightColor: Colors.white.withOpacity(0.10),
           child: content,
         ),
       );
@@ -63,7 +61,7 @@ class PlatformGlassSurface extends StatelessWidget {
       decoration: enableShadow
           ? BoxDecoration(
               borderRadius: borderRadius,
-              boxShadow: AppShadows.floatingGlass(isDark: isDark, isIos: isIos),
+              boxShadow: AppShadows.floatingGlass(isDark: isDark, isIos: true),
             )
           : null,
       child: ClipRRect(
@@ -76,40 +74,25 @@ class PlatformGlassSurface extends StatelessWidget {
     );
   }
 
-  BoxDecoration _buildDecoration(bool isIos, bool isDark) {
-    if (isIos) {
-      // iOS Liquid-Glass-Inspired Treatment
-      return BoxDecoration(
-        borderRadius: borderRadius,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? GlassTokens.iosDarkGradient
-              : GlassTokens.iosLightGradient,
-          stops: const [0.0, 0.40, 0.75, 1.0],
-        ),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.22)
-              : Colors.white.withOpacity(0.75),
-          width: 0.85,
-        ),
-      );
-    } else {
-      // Android Frosted Glass Treatment
-      return BoxDecoration(
+  BoxDecoration _buildDecoration(bool isDark) {
+    // Premium Liquid Glass Treatment (Android & iOS):
+    // Multi-layered specular highlights, fluid translucency, and subtle refractive contour border
+    return BoxDecoration(
+      borderRadius: borderRadius,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isDark
+            ? GlassTokens.liquidDarkGradient
+            : GlassTokens.liquidLightGradient,
+        stops: const [0.0, 0.40, 0.75, 1.0],
+      ),
+      border: Border.all(
         color: isDark
-            ? GlassTokens.androidDarkBackground
-            : GlassTokens.androidLightBackground,
-        borderRadius: borderRadius,
-        border: Border.all(
-          color: isDark
-              ? GlassTokens.androidDarkBorder
-              : GlassTokens.androidLightBorder,
-          width: 0.6,
-        ),
-      );
-    }
+            ? Colors.white.withOpacity(0.24)
+            : Colors.white.withOpacity(0.78),
+        width: 0.9,
+      ),
+    );
   }
 }

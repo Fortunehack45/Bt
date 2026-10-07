@@ -170,7 +170,7 @@ import CoreMotion
             let z = data.acceleration.z * 9.81
             let mag = sqrt(x * x + y * y + z * z)
             let now = Date().timeIntervalSince1970
-            if mag > 11.6 && lastMag <= 11.6 && (now - lastTimestamp) > 0.28 {
+            if mag > 11.0 && lastMag <= 11.0 && (now - lastTimestamp) > 0.26 {
               lastTimestamp = now
               DispatchQueue.main.async {
                 self.pedometerChannel?.invokeMethod("onStepDetected", arguments: 1)

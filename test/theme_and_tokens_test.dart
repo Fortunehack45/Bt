@@ -31,6 +31,7 @@ void main() {
       // Android frosted glass vs iOS liquid glass
       expect(GlassTokens.androidBlurSigma, 16.0);
       expect(GlassTokens.iosBlurSigma, 24.0);
+      expect(GlassTokens.liquidBlurSigma, 24.0);
     });
   });
 }

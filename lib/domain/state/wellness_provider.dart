@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../core/services/native_platform_service.dart';
+import '../../core/services/pedometer_service.dart';
 import '../../core/widgets/weekly_bar_chart.dart';
 import '../models/notification_item.dart';
 import '../models/reproductive_health_models.dart';
@@ -12,7 +13,10 @@ import '../models/wellness_models.dart';
 class WellnessProvider extends ChangeNotifier {
   WellnessProvider() {
     _seedInitialNotifications();
-    _loadPersistedState();
+    _loadPersistedState().then((_) {
+      // Automatically initiate live physical hardware step counting on app launch
+      PedometerService.instance.startTracking(this);
+    });
   }
 
   // User Profile
@@ -1809,6 +1813,12 @@ class WellnessProvider extends ChangeNotifier {
     if (codePoint == Icons.restaurant_rounded.codePoint) return Icons.restaurant_rounded;
     if (codePoint == Icons.menu_book_rounded.codePoint) return Icons.menu_book_rounded;
     return Icons.check_circle_rounded;
+  }
+
+  @override
+  void dispose() {
+    PedometerService.instance.stopTracking(this);
+    super.dispose();
   }
 }
 

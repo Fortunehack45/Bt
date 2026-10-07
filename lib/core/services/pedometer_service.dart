@@ -123,6 +123,16 @@ class PedometerService {
     return (steps * 0.04).round();
   }
 
+  /// Requests motion & activity recognition permission from the operating system.
+  Future<bool> requestPermission() async {
+    try {
+      final granted = await _channel.invokeMethod<bool>('requestPedometerPermission') ?? false;
+      return granted;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Starts live step tracking using physical phone hardware sensors.
   Future<void> startTracking(WellnessProvider provider) async {
     _activeProvider = provider;

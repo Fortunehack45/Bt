@@ -251,6 +251,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                   if (isPedometerActive) {
                                     await PedometerService.instance.stopTracking(provider);
                                   } else {
+                                    await PedometerService.instance.requestPermission();
                                     await PedometerService.instance.startTracking(provider);
                                   }
                                   setState(() {});

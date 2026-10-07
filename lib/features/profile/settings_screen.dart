@@ -520,7 +520,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text('Dark Mode', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
-                                  Text('Platform frosted & liquid glass theme', style: AppTypography.caption(isDark)),
+                                  Text('Liquid glass ambient theme', style: AppTypography.caption(isDark)),
                                 ],
                               ),
                             ],
