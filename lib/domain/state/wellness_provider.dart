@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../core/services/app_lock_service.dart';
 import '../../core/services/native_platform_service.dart';
 import '../../core/services/pedometer_service.dart';
 import '../../core/widgets/weekly_bar_chart.dart';
@@ -13,6 +14,9 @@ import '../models/wellness_models.dart';
 class WellnessProvider extends ChangeNotifier {
   WellnessProvider() {
     _seedInitialNotifications();
+    AppLockService.instance.initialize().then((_) {
+      AppLockService.instance.addListener(notifyListeners);
+    }).catchError((_) {});
     _loadPersistedState().then((_) {
       // Automatically initiate live physical hardware step counting on app launch
       try {
@@ -21,6 +25,27 @@ class WellnessProvider extends ChangeNotifier {
         }
       } catch (_) {}
     }).catchError((_) {});
+  }
+
+  // App Lock & Biometric Security
+  bool get isAppLockEnabled => AppLockService.instance.isLockEnabled;
+  bool get isAppLocked => AppLockService.instance.isLocked;
+  bool get hasAppLockPin => AppLockService.instance.hasPinSet;
+  bool get isBiometricsEnabled => AppLockService.instance.isBiometricsEnabled;
+
+  void lockAppNow() => AppLockService.instance.lock();
+  void unlockApp() => AppLockService.instance.unlock();
+  void onAppPaused() => AppLockService.instance.onAppPaused();
+  bool onAppResumed() {
+    final locked = AppLockService.instance.onAppResumed();
+    if (locked) notifyListeners();
+    return locked;
+  }
+
+  @override
+  void dispose() {
+    AppLockService.instance.removeListener(notifyListeners);
+    super.dispose();
   }
 
   // User Profile
@@ -278,6 +303,14 @@ class WellnessProvider extends ChangeNotifier {
     _steps += count;
     _persistVitals();
     notifyListeners();
+  }
+
+  void setSteps(int totalSteps) {
+    if (totalSteps > _steps) {
+      _steps = totalSteps;
+      _persistVitals();
+      notifyListeners();
+    }
   }
 
   // Water Hydration (Starts Fresh at 0)

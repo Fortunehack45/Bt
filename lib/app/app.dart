@@ -6,6 +6,7 @@ import '../core/widgets/circular_theme_reveal.dart';
 import '../domain/state/wellness_provider.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/onboarding/splash_screen.dart';
+import '../features/security/screens/app_lock_screen.dart';
 import 'app_shell.dart';
 
 /// The root Wellnest application widget.
@@ -18,7 +19,7 @@ class WellnestApp extends StatefulWidget {
 
 typedef BiothrixApp = WellnestApp;
 
-class _WellnestAppState extends State<WellnestApp> {
+class _WellnestAppState extends State<WellnestApp> with WidgetsBindingObserver {
   final WellnessProvider _wellnessProvider = WellnessProvider();
   bool _showSplash = true;
   bool _showOnboarding = true;
@@ -26,7 +27,18 @@ class _WellnestAppState extends State<WellnestApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkPersistentOnboarding();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+      _wellnessProvider.onAppPaused();
+    } else if (state == AppLifecycleState.resumed) {
+      _wellnessProvider.onAppResumed();
+    }
   }
 
   Future<void> _checkPersistentOnboarding() async {
@@ -40,6 +52,7 @@ class _WellnestAppState extends State<WellnestApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _wellnessProvider.dispose();
     super.dispose();
   }
@@ -98,6 +111,17 @@ class _WellnestAppState extends State<WellnestApp> {
             _showOnboarding = false;
           });
           NativePlatformService.instance.setOnboardingCompleted(true);
+        },
+      );
+    }
+
+    // App Lock Gate: If 6-digit PIN / Biometric lock is active, show the lock screen
+    if (_wellnessProvider.isAppLockEnabled && _wellnessProvider.isAppLocked) {
+      return AppLockScreen(
+        mode: AppLockMode.unlock,
+        canCancel: false,
+        onUnlocked: () {
+          _wellnessProvider.unlockApp();
         },
       );
     }

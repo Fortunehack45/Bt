@@ -5,6 +5,11 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -14,6 +19,9 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
+import android.os.CancellationSignal
+import android.os.Handler
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.view.WindowCompat
 import io.flutter.embedding.android.FlutterActivity
@@ -21,16 +29,35 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity: FlutterActivity(), SensorEventListener {
+    companion object {
+        @Volatile
+        private var instance: MainActivity? = null
+
+        fun dispatchStepDetectedToFlutter(count: Int) {
+            instance?.runOnUiThread {
+                instance?.pedometerChannel?.invokeMethod("onStepDetected", count)
+            }
+        }
+    }
+
     private val SHORTCUTS_CHANNEL = "com.wellnest.vitality.health/shortcuts"
     private val NOTIFICATIONS_CHANNEL = "com.wellnest.vitality.health/notifications"
     private val PREFERENCES_CHANNEL = "com.wellnest.vitality.health/preferences"
     private val PEDOMETER_CHANNEL = "com.wellnest.vitality.health/pedometer"
+    private val WEARABLES_CHANNEL = "com.wellnest.vitality.health/wearables"
+    private val BIOMETRICS_CHANNEL = "com.wellnest.vitality.health/biometrics"
     private val NOTIFICATION_CHANNEL_ID = "wellnest_alerts"
     private val ACTIVITY_RECOGNITION_REQUEST_CODE = 1001
+    private val BLUETOOTH_PERMISSION_REQUEST_CODE = 1002
 
     private var initialAction: String? = null
     private var methodChannel: MethodChannel? = null
     private var pedometerChannel: MethodChannel? = null
+    private var wearablesChannel: MethodChannel? = null
+    private var biometricsChannel: MethodChannel? = null
+    private var isScanningBle = false
+    private var bleScanCallback: ScanCallback? = null
+    private var currentCancellationSignal: CancellationSignal? = null
 
     // Hardware Sensor Properties
     private var sensorManager: SensorManager? = null
@@ -43,6 +70,7 @@ class MainActivity: FlutterActivity(), SensorEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        instance = this
         // Ensure edge-to-edge window drawing behind navigation and status bars
         WindowCompat.setDecorFitsSystemWindows(window, false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -229,20 +257,230 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                     val granted = checkAndRequestPedometerPermission()
                     result.success(granted)
                 }
+                "getPersistentStepCount" -> {
+                    val p = getSharedPreferences(StepTrackingService.PREFS_NAME, Context.MODE_PRIVATE)
+                    val steps = p.getInt(StepTrackingService.KEY_PERSISTENT_STEPS, 0)
+                    result.success(steps)
+                }
                 "startStepTracking" -> {
                     lastStepCounterValue = -1.0f
                     checkAndRequestPedometerPermission()
                     val registered = registerHardwareSensors()
+                    try {
+                        val sIntent = Intent(this, StepTrackingService::class.java)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(sIntent)
+                        } else {
+                            startService(sIntent)
+                        }
+                    } catch (_: Exception) {}
                     result.success(registered)
                 }
                 "stopStepTracking" -> {
                     lastStepCounterValue = -1.0f
                     sensorManager?.unregisterListener(this)
+                    try {
+                        val sIntent = Intent(this, StepTrackingService::class.java).apply {
+                            action = StepTrackingService.ACTION_STOP_TRACKING
+                        }
+                        startService(sIntent)
+                    } catch (_: Exception) {}
                     result.success(true)
                 }
                 else -> result.notImplemented()
             }
         }
+
+        // 5. Smart Watches, Smart Rings & BLE Peripherals Channel
+        val wearChannel = MethodChannel(messenger, WEARABLES_CHANNEL)
+        wearablesChannel = wearChannel
+        wearChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "hasBluetoothPermission" -> {
+                    result.success(hasBluetoothPermission())
+                }
+                "requestBluetoothPermission" -> {
+                    val granted = checkAndRequestBluetoothPermission()
+                    result.success(granted)
+                }
+                "getBondedWearables" -> {
+                    val devices = getBondedWearableDevices()
+                    result.success(devices)
+                }
+                "startBleScan" -> {
+                    val started = startBleScan()
+                    result.success(started)
+                }
+                "stopBleScan" -> {
+                    stopBleScan()
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // 6. Biometrics & Device Security Channel (100% Local Hardware Authentication)
+        val bioChannel = MethodChannel(messenger, BIOMETRICS_CHANNEL)
+        biometricsChannel = bioChannel
+        bioChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "isBiometricsAvailable" -> {
+                    val status = canAuthenticateBiometrics()
+                    result.success(status)
+                }
+                "authenticate" -> {
+                    val title = call.argument<String>("title") ?: "Unlock Wellnest"
+                    val subtitle = call.argument<String>("subtitle") ?: "Confirm your biometric identity to access your wellness telemetry"
+                    val negativeBtn = call.argument<String>("negativeButton") ?: "Use 6-Digit PIN"
+                    authenticateWithBiometrics(title, subtitle, negativeBtn, result)
+                }
+                "cancelAuthentication" -> {
+                    cancelBiometricAuthentication()
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    private fun hasBluetoothPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+            checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    private fun checkAndRequestBluetoothPermission(): Boolean {
+        if (!hasBluetoothPermission() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            requestPermissions(
+                arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT),
+                BLUETOOTH_PERMISSION_REQUEST_CODE
+            )
+            return false
+        }
+        return true
+    }
+
+    private fun getBondedWearableDevices(): List<Map<String, Any?>> {
+        val list = mutableListOf<Map<String, Any?>>()
+        try {
+            val bm = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+            val adapter = bm?.adapter
+            if (adapter != null && adapter.isEnabled) {
+                for (dev in adapter.bondedDevices) {
+                    val name = dev.name ?: "Bluetooth Peripheral"
+                    val address = dev.address ?: "00:00:00:00:00:00"
+                    val type = when {
+                        name.contains("watch", true) || name.contains("fit", true) || name.contains("band", true) || name.contains("garmin", true) -> "smartWatch"
+                        name.contains("ring", true) || name.contains("oura", true) -> "smartRing"
+                        name.contains("cuff", true) || name.contains("bp", true) -> "bloodPressureCuff"
+                        else -> "smartWatch"
+                    }
+                    val brand = when {
+                        name.contains("oura", true) -> "oura"
+                        name.contains("apple", true) -> "apple"
+                        name.contains("galaxy", true) || name.contains("samsung", true) -> "samsung"
+                        name.contains("garmin", true) -> "garmin"
+                        name.contains("withings", true) -> "withings"
+                        name.contains("ultrahuman", true) -> "ultrahuman"
+                        name.contains("whoop", true) -> "whoop"
+                        name.contains("fitbit", true) -> "fitbit"
+                        else -> "generic"
+                    }
+                    list.add(mapOf(
+                        "id" to "bonded-$address",
+                        "name" to name,
+                        "address" to address,
+                        "type" to type,
+                        "brand" to brand,
+                        "isConnected" to true,
+                        "batteryLevel" to 90
+                    ))
+                }
+            }
+        } catch (_: SecurityException) {} catch (_: Exception) {}
+        return list
+    }
+
+    private fun startBleScan(): Boolean {
+        if (!hasBluetoothPermission()) {
+            checkAndRequestBluetoothPermission()
+            return false
+        }
+        val bm = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        val adapter = bm?.adapter ?: return false
+        if (!adapter.isEnabled) return false
+        val scanner = adapter.bluetoothLeScanner ?: return false
+
+        stopBleScan()
+        isScanningBle = true
+        val seenAddresses = mutableSetOf<String>()
+
+        bleScanCallback = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult?) {
+                if (result == null) return
+                val dev = result.device ?: return
+                val address = dev.address ?: return
+                if (seenAddresses.contains(address)) return
+                seenAddresses.add(address)
+
+                val name = try { dev.name } catch (_: SecurityException) { null } ?: result.scanRecord?.deviceName ?: "Smart BLE Peripheral"
+                val type = when {
+                    name.contains("watch", true) || name.contains("fit", true) || name.contains("band", true) || name.contains("garmin", true) -> "smartWatch"
+                    name.contains("ring", true) || name.contains("oura", true) -> "smartRing"
+                    name.contains("cuff", true) || name.contains("bp", true) -> "bloodPressureCuff"
+                    else -> "smartWatch"
+                }
+                val brand = when {
+                    name.contains("oura", true) -> "oura"
+                    name.contains("apple", true) -> "apple"
+                    name.contains("galaxy", true) || name.contains("samsung", true) -> "samsung"
+                    name.contains("garmin", true) -> "garmin"
+                    name.contains("withings", true) -> "withings"
+                    name.contains("ultrahuman", true) -> "ultrahuman"
+                    name.contains("whoop", true) -> "whoop"
+                    name.contains("fitbit", true) -> "fitbit"
+                    else -> "generic"
+                }
+
+                val payload = mapOf(
+                    "id" to "ble-$address",
+                    "name" to name,
+                    "address" to address,
+                    "type" to type,
+                    "brand" to brand,
+                    "rssi" to result.rssi,
+                    "isConnected" to false,
+                    "batteryLevel" to 85
+                )
+                runOnUiThread {
+                    wearablesChannel?.invokeMethod("onDeviceDiscovered", payload)
+                }
+            }
+        }
+
+        try {
+            scanner.startScan(bleScanCallback)
+            Handler(Looper.getMainLooper()).postDelayed({
+                stopBleScan()
+            }, 10000L)
+            return true
+        } catch (_: SecurityException) {
+            return false
+        }
+    }
+
+    private fun stopBleScan() {
+        if (!isScanningBle) return
+        isScanningBle = false
+        try {
+            val bm = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+            val scanner = bm?.adapter?.bluetoothLeScanner
+            bleScanCallback?.let { scanner?.stopScan(it) }
+        } catch (_: SecurityException) {} catch (_: Exception) {}
+        bleScanCallback = null
     }
 
     private fun hasActivityRecognitionPermission(): Boolean {
@@ -289,6 +527,10 @@ class MainActivity: FlutterActivity(), SensorEventListener {
         if (requestCode == ACTIVITY_RECOGNITION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 registerHardwareSensors()
+            }
+        } else if (requestCode == BLUETOOTH_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startBleScan()
             }
         }
     }
@@ -347,9 +589,94 @@ class MainActivity: FlutterActivity(), SensorEventListener {
         }
     }
 
+    private fun canAuthenticateBiometrics(): Map<String, Any> {
+        var hasHardware = false
+        var isEnrolled = false
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val bm = getSystemService(Context.BIOMETRIC_SERVICE) as? android.hardware.biometrics.BiometricManager
+            if (bm != null) {
+                val canAuth = bm.canAuthenticate(android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                hasHardware = canAuth != android.hardware.biometrics.BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE
+                isEnrolled = canAuth == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val fp = getSystemService(Context.FINGERPRINT_SERVICE) as? android.hardware.fingerprint.FingerprintManager
+            if (fp != null) {
+                hasHardware = fp.isHardwareDetected
+                isEnrolled = fp.hasEnrolledFingerprints()
+            }
+        }
+
+        return mapOf(
+            "hasHardware" to hasHardware,
+            "isEnrolled" to isEnrolled,
+            "available" to (hasHardware && isEnrolled)
+        )
+    }
+
+    private fun authenticateWithBiometrics(
+        title: String,
+        subtitle: String,
+        negativeButton: String,
+        result: MethodChannel.Result
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                cancelBiometricAuthentication()
+                val signal = CancellationSignal()
+                currentCancellationSignal = signal
+
+                val prompt = android.hardware.biometrics.BiometricPrompt.Builder(this)
+                    .setTitle(title)
+                    .setSubtitle(subtitle)
+                    .setNegativeButton(negativeButton, mainExecutor) { _, _ ->
+                        result.success(mapOf("success" to false, "error" to "user_canceled"))
+                    }
+                    .build()
+
+                prompt.authenticate(
+                    signal,
+                    mainExecutor,
+                    object : android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+                        override fun onAuthenticationSucceeded(authResult: android.hardware.biometrics.BiometricPrompt.AuthenticationResult?) {
+                            super.onAuthenticationSucceeded(authResult)
+                            currentCancellationSignal = null
+                            result.success(mapOf("success" to true))
+                        }
+
+                        override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                            super.onAuthenticationError(errorCode, errString)
+                            currentCancellationSignal = null
+                            result.success(mapOf("success" to false, "error" to (errString?.toString() ?: "Authentication error $errorCode")))
+                        }
+
+                        override fun onAuthenticationFailed() {
+                            super.onAuthenticationFailed()
+                        }
+                    }
+                )
+            } catch (e: Exception) {
+                result.success(mapOf("success" to false, "error" to e.localizedMessage))
+            }
+        } else {
+            result.success(mapOf("success" to false, "error" to "unsupported_sdk_version"))
+        }
+    }
+
+    private fun cancelBiometricAuthentication() {
+        try {
+            currentCancellationSignal?.cancel()
+            currentCancellationSignal = null
+        } catch (_: Exception) {}
+    }
+
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
     override fun onDestroy() {
+        if (instance == this) instance = null
+        cancelBiometricAuthentication()
+        stopBleScan()
         sensorManager?.unregisterListener(this)
         super.onDestroy()
     }

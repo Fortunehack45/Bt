@@ -143,13 +143,31 @@ class PedometerService {
     }
   }
 
-  /// Starts live step tracking using physical phone hardware sensors.
+  /// Retrieves step count accumulated in background while app was closed or swiped away.
+  Future<int> getPersistentStepCount() async {
+    try {
+      _initChannel();
+      final count = await _channel.invokeMethod<int>('getPersistentStepCount') ?? 0;
+      return count;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Starts live step tracking using physical phone hardware sensors and persistent background service.
   Future<void> startTracking(WellnessProvider provider) async {
     _activeProvider = provider;
     _isTracking = true;
 
     try {
       _initChannel();
+
+      // Sync any steps counted in the background while app was closed
+      final bgSteps = await getPersistentStepCount();
+      if (bgSteps > provider.steps) {
+        provider.setSteps(bgSteps);
+      }
+
       final available = await _channel.invokeMethod<bool>('isStepCountingAvailable') ?? false;
       if (available) {
         final started = await _channel.invokeMethod<bool>('startStepTracking') ?? false;

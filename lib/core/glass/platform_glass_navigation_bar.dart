@@ -148,12 +148,14 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
                 child: PlatformGlassSurface(
                   borderRadius: AppRadii.roundedNav,
                   height: 64.0,
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                  padding: const EdgeInsets.all(4.0),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(_items.length, (index) {
-                      return _buildNavItem(index, _items[index], isDark);
-                    }),
+                    children: [
+                      for (int i = 0; i < _items.length; i++)
+                        _buildNavItem(i, _items[i], isDark),
+                    ],
                   ),
                 ),
               ),
@@ -171,6 +173,16 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
 
   Widget _buildNavItem(int index, NavItemData item, bool isDark) {
     final isSelected = widget.currentIndex == index;
+    final isFirst = index == 0;
+    final isLast = index == _items.length - 1;
+
+    // Concentric pill radius: 64 outer height - 8 padding = 56 inner height.
+    // 56 / 2 = 28 radius creates a true stadium capsule that concentrically echoes
+    // the outer capsule's 32 radius (32 - 4 = 28).
+    final margin = EdgeInsets.only(
+      left: isFirst ? 0 : 2,
+      right: isLast ? 0 : 2,
+    );
 
     return Expanded(
       child: GestureDetector(
@@ -182,32 +194,54 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          margin: margin,
+          padding: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
             color: isSelected
                 ? (isDark ? const Color(0xFF242F2A) : const Color(0xFFE5EBE7))
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(28),
+            border: isSelected
+                ? Border.all(
+                    color: isDark
+                        ? AppColors.primary.withOpacity(0.24)
+                        : AppColors.primary.withOpacity(0.18),
+                    width: 1.0,
+                  )
+                : Border.all(color: Colors.transparent, width: 1.0),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: isDark
+                          ? Colors.black.withOpacity(0.18)
+                          : AppColors.primary.withOpacity(0.06),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                isSelected ? item.activeIcon : item.icon,
-                size: 22,
-                color: isSelected
-                    ? AppColors.primary
-                    : (isDark
-                        ? AppColors.textMutedDark
-                        : AppColors.textSecondaryLight),
+              AnimatedScale(
+                scale: isSelected ? 1.08 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutBack,
+                child: Icon(
+                  isSelected ? item.activeIcon : item.icon,
+                  size: 22,
+                  color: isSelected
+                      ? AppColors.primary
+                      : (isDark
+                          ? AppColors.textMutedDark
+                          : AppColors.textSecondaryLight),
+                ),
               ),
               const SizedBox(height: 2),
-              Text(
-                item.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
                 style: TextStyle(
                   fontFamily: 'SF Pro Display',
                   fontSize: 10,
@@ -217,6 +251,11 @@ class _PlatformGlassNavigationBarState extends State<PlatformGlassNavigationBar>
                       : (isDark
                           ? AppColors.textMutedDark
                           : AppColors.textSecondaryLight),
+                ),
+                child: Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

@@ -31,8 +31,27 @@ class AppShadows {
     ];
   }
 
-  // Floating Glass Bar & Sheet Shadows (Liquid Ambient Depth)
+  // Floating Glass Bar & Sheet Shadows (Adaptive: Frosted on Android, Liquid on iOS)
   static List<BoxShadow> floatingGlass({required bool isDark, bool isIos = true}) {
+    if (!isIos) {
+      if (isDark) {
+        return [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ];
+      }
+      return [
+        BoxShadow(
+          color: const Color(0xFF141917).withOpacity(0.06),
+          blurRadius: 16,
+          offset: const Offset(0, 5),
+        ),
+      ];
+    }
+
     if (isDark) {
       return [
         BoxShadow(

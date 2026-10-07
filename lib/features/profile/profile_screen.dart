@@ -12,6 +12,7 @@ import '../../core/widgets/solid_wellness_card.dart';
 import '../../core/widgets/wellness_bottom_sheet.dart';
 import '../../domain/state/wellness_provider.dart';
 import '../../domain/models/smart_device_models.dart';
+import '../security/screens/security_settings_screen.dart';
 import '../widgets/widget_studio_screen.dart';
 import '../wearables/wearables_hub_screen.dart';
 import 'personal_profile_screen.dart';
@@ -412,6 +413,73 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ),
                           const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Privacy, Security & App Lock (Local 6-digit PIN & Biometrics)
+                    Text('Security & Privacy', style: AppTypography.h2(isDark).copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.sm),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.all(16.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => SecuritySettingsScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: provider.isAppLockEnabled
+                                  ? AppColors.primary.withOpacity(0.18)
+                                  : (isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceSubtle),
+                              borderRadius: AppRadii.roundedMd,
+                            ),
+                            child: Icon(
+                              provider.isAppLockEnabled
+                                  ? Icons.lock_rounded
+                                  : Icons.lock_open_rounded,
+                              color: provider.isAppLockEnabled
+                                  ? AppColors.primary
+                                  : (isDark ? Colors.white60 : Colors.black54),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'App Lock & Biometric Security',
+                                  style: AppTypography.h3(isDark).copyWith(fontSize: 15),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  provider.isAppLockEnabled
+                                      ? 'Protected • 6-Digit PIN & Fingerprint'
+                                      : 'Set up 6-digit PIN & Fingerprint lock',
+                                  style: AppTypography.caption(isDark),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            provider.isAppLockEnabled
+                                ? Icons.verified_user_rounded
+                                : Icons.arrow_forward_ios_rounded,
+                            size: 16,
+                            color: provider.isAppLockEnabled
+                                ? AppColors.primary
+                                : (isDark ? Colors.white38 : Colors.black38),
+                          ),
                         ],
                       ),
                     ),

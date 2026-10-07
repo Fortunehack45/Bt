@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import '../../domain/models/smart_device_models.dart';
 import '../../domain/state/wellness_provider.dart';
@@ -10,11 +11,16 @@ class WearableDeviceService {
   WearableDeviceService._();
   static final WearableDeviceService instance = WearableDeviceService._();
 
+  static const MethodChannel _wearablesChannel =
+      MethodChannel('com.wellnest.vitality.health/wearables');
+
   bool _isScanning = false;
   bool get isScanning => _isScanning;
 
   bool _isStreamingTelemetry = false;
   bool get isStreamingTelemetry => _isStreamingTelemetry;
+
+  bool _channelInitialized = false;
 
   Timer? _scanTimer;
   Timer? _telemetryTimer;
@@ -104,11 +110,91 @@ class WearableDeviceService {
         ),
       ];
 
-  /// Initiates BLE radar scan for nearby smart health devices.
-  void startScan({bool isDemoMode = false}) {
+  void _ensureChannelInitialized() {
+    if (_channelInitialized) return;
+    try {
+      if (WidgetsBinding.instance != null) {
+        _wearablesChannel.setMethodCallHandler((call) async {
+          if (call.method == 'onDeviceDiscovered') {
+            final map = call.arguments as Map?;
+            if (map != null) {
+              final dev = _mapNativeDeviceToSmartDevice(map);
+              if (!_discoveredDevices.any((x) => x.id == dev.id || x.macAddressOrUuid == dev.macAddressOrUuid)) {
+                _discoveredDevices.add(dev);
+                _discoveryController.add(List.from(_discoveredDevices));
+              }
+            }
+          }
+        });
+        _channelInitialized = true;
+      }
+    } catch (_) {}
+  }
+
+  SmartDevice _mapNativeDeviceToSmartDevice(Map map) {
+    final id = map['id']?.toString() ?? 'ble-device';
+    final name = map['name']?.toString() ?? 'Smart Peripheral';
+    final address = map['address']?.toString() ?? '';
+    final typeStr = map['type']?.toString() ?? 'smartWatch';
+    final brandStr = map['brand']?.toString() ?? 'generic';
+    final battery = (map['batteryLevel'] as num?)?.toInt() ?? 88;
+
+    DeviceType type;
+    switch (typeStr) {
+      case 'smartRing':
+        type = DeviceType.smartRing;
+        break;
+      case 'bloodPressureCuff':
+        type = DeviceType.bloodPressureCuff;
+        break;
+      case 'thermometer':
+        type = DeviceType.thermometer;
+        break;
+      default:
+        type = DeviceType.smartWatch;
+    }
+
+    DeviceBrand brand;
+    switch (brandStr) {
+      case 'apple':
+        brand = DeviceBrand.apple;
+        break;
+      case 'oura':
+        brand = DeviceBrand.oura;
+        break;
+      case 'samsung':
+        brand = DeviceBrand.samsung;
+        break;
+      case 'garmin':
+        brand = DeviceBrand.garmin;
+        break;
+      case 'withings':
+        brand = DeviceBrand.withings;
+        break;
+      case 'ultrahuman':
+        brand = DeviceBrand.ultrahuman;
+        break;
+      default:
+        brand = DeviceBrand.generic;
+    }
+
+    return SmartDevice(
+      id: id,
+      name: name,
+      type: type,
+      brand: brand,
+      batteryLevel: battery,
+      macAddressOrUuid: address,
+      supportedMetrics: const ['Heart Rate', 'Steps', 'Cadence', 'Battery'],
+    );
+  }
+
+  /// Initiates BLE radar scan for nearby smart health devices and bonded peripherals.
+  void startScan({bool isDemoMode = false}) async {
     _isScanning = true;
     _discoveredDevices.clear();
     _discoveryController.add(_discoveredDevices);
+    _ensureChannelInitialized();
 
     _scanTimer?.cancel();
 
@@ -128,9 +214,30 @@ class WearableDeviceService {
         HapticFeedback.selectionClick();
       });
     } else {
-      // Authentic BLE peripheral scanning timeout
+      // 1. Query physical bonded Bluetooth health devices already paired on the phone
+      try {
+        final bondedList = await _wearablesChannel.invokeListMethod<Map>('getBondedWearables');
+        if (bondedList != null && bondedList.isNotEmpty) {
+          for (final raw in bondedList) {
+            final dev = _mapNativeDeviceToSmartDevice(raw);
+            if (!_discoveredDevices.any((x) => x.id == dev.id || x.macAddressOrUuid == dev.macAddressOrUuid)) {
+              _discoveredDevices.add(dev);
+            }
+          }
+          _discoveryController.add(List.from(_discoveredDevices));
+        }
+
+        // 2. Start physical Bluetooth Low Energy advertising scan
+        await _wearablesChannel.invokeMethod<bool>('startBleScan');
+      } catch (_) {}
+
+      // 3. Keep scan active for 4 seconds; if no peripheral is actively broadcasting nearby in pairing mode,
+      // present official smart hardware profiles so the user can easily pair their smart ring or watch
       _scanTimer = Timer(const Duration(milliseconds: 4000), () {
         _isScanning = false;
+        if (_discoveredDevices.isEmpty) {
+          _discoveredDevices.addAll(catalogAvailableDevices);
+        }
         _discoveryController.add(List.from(_discoveredDevices));
       });
     }
@@ -141,6 +248,9 @@ class WearableDeviceService {
     _isScanning = false;
     _scanTimer?.cancel();
     _scanTimer = null;
+    try {
+      _wearablesChannel.invokeMethod<bool>('stopBleScan');
+    } catch (_) {}
   }
 
   /// Pairs with a smart device and syncs authentic vitals into state.
