@@ -77,6 +77,10 @@ class AppLockService extends ChangeNotifier {
   bool get isLocked => _isLocked;
 
   DateTime? _lastPausedTime;
+  DateTime? _lastUnlockedTime;
+
+  bool _isAuthenticatingBiometrics = false;
+  bool get isAuthenticatingBiometrics => _isAuthenticatingBiometrics;
 
   BiometricStatus _biometricStatus = const BiometricStatus.unavailable();
   BiometricStatus get biometricStatus => _biometricStatus;
@@ -137,6 +141,9 @@ class AppLockService extends ChangeNotifier {
     _storedSalt = salt;
     _storedHash = hash;
     _isLockEnabled = true;
+    _isLocked = false;
+    _lastPausedTime = null;
+    _lastUnlockedTime = DateTime.now();
 
     final prefs = NativePlatformService.instance;
     await prefs.setString(keyPinSalt, salt);
@@ -165,6 +172,8 @@ class AppLockService extends ChangeNotifier {
     _isLockEnabled = false;
     _isBiometricsEnabled = false;
     _isLocked = false;
+    _lastPausedTime = null;
+    _lastUnlockedTime = null;
 
     final prefs = NativePlatformService.instance;
     await prefs.setString(keyPinHash, '');
@@ -206,10 +215,11 @@ class AppLockService extends ChangeNotifier {
     }
   }
 
-  /// Unlocks the app.
+  /// Unlocks the app and stamps the unlock timestamp.
   void unlock() {
     _isLocked = false;
     _lastPausedTime = null;
+    _lastUnlockedTime = DateTime.now();
     notifyListeners();
   }
 
@@ -220,7 +230,9 @@ class AppLockService extends ChangeNotifier {
     bool force = false,
   }) async {
     if (!force && !_isBiometricsEnabled) return false;
+    if (_isAuthenticatingBiometrics) return false;
 
+    _isAuthenticatingBiometrics = true;
     try {
       final res = await _biometricsChannel.invokeMapMethod<String, dynamic>('authenticate', {
         'title': title,
@@ -234,13 +246,20 @@ class AppLockService extends ChangeNotifier {
         }
         return true;
       }
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      // 800ms grace window for Android OS activity resume dispatch to complete
+      Future.delayed(const Duration(milliseconds: 800), () {
+        _isAuthenticatingBiometrics = false;
+      });
+    }
 
     return false;
   }
 
   /// Cancels any active biometric prompt.
   void cancelBiometrics() {
+    _isAuthenticatingBiometrics = false;
     try {
       _biometricsChannel.invokeMethod<bool>('cancelAuthentication');
     } catch (_) {}
@@ -248,6 +267,9 @@ class AppLockService extends ChangeNotifier {
 
   /// Lifecycle callback when the app moves into background / pauses.
   void onAppPaused() {
+    // If biometric prompt is showing, do not treat as user backgrounding the app
+    if (_isAuthenticatingBiometrics) return;
+
     if (_isLockEnabled && hasPinSet) {
       _lastPausedTime = DateTime.now();
     }
@@ -257,17 +279,36 @@ class AppLockService extends ChangeNotifier {
   bool onAppResumed() {
     if (!_isLockEnabled || !hasPinSet || _isLocked) return false;
 
+    // Do not lock if biometric prompt is actively displayed
+    if (_isAuthenticatingBiometrics) return false;
+
+    // Grace period: If user recently unlocked (within 3 seconds), ignore resume
+    if (_lastUnlockedTime != null &&
+        DateTime.now().difference(_lastUnlockedTime!).inMilliseconds < 3000) {
+      _lastPausedTime = null;
+      return false;
+    }
+
+    // App was never paused in the background: user has been continuously in the app.
+    // NEVER lock if _lastPausedTime is null!
     if (_lastPausedTime == null) {
-      // First resume or immediate lock
-      if (_timeout == AutoLockTimeout.immediately) {
+      return false;
+    }
+
+    final pauseDuration = DateTime.now().difference(_lastPausedTime!);
+    _lastPausedTime = null; // Consume the pause timestamp
+
+    if (_timeout == AutoLockTimeout.immediately) {
+      // Require at least 1500ms in background so transient system overlays
+      // (notification bar pulls, permission prompts, volume sliders) do not falsely lock.
+      if (pauseDuration.inMilliseconds >= 1500) {
         lock();
         return true;
       }
       return false;
     }
 
-    final diffSeconds = DateTime.now().difference(_lastPausedTime!).inSeconds;
-    if (diffSeconds >= _timeout.seconds) {
+    if (pauseDuration.inSeconds >= _timeout.seconds) {
       lock();
       return true;
     }

@@ -85,5 +85,32 @@ void main() {
       expect(service.isBiometricsEnabled, isFalse);
       expect(service.isLocked, isFalse);
     });
+
+    test('onAppResumed does NOT lock if app was never paused (continuous foreground usage)', () async {
+      await service.setPin('123456');
+      service.unlock();
+      expect(service.isLocked, isFalse);
+
+      // App is actively in foreground, never paused:
+      final locked = service.onAppResumed();
+      expect(locked, isFalse);
+      expect(service.isLocked, isFalse);
+    });
+
+    test('onAppResumed does NOT lock during recent unlock grace period', () async {
+      await service.setPin('123456');
+      service.lock();
+      expect(service.isLocked, isTrue);
+
+      service.unlock();
+      expect(service.isLocked, isFalse);
+
+      // Even if onAppPaused had set a timestamp before unlocking:
+      service.onAppPaused();
+      // Right after unlock, resume events must not re-lock:
+      final locked = service.onAppResumed();
+      expect(locked, isFalse);
+      expect(service.isLocked, isFalse);
+    });
   });
 }

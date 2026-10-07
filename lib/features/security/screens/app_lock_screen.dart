@@ -260,8 +260,15 @@ class _AppLockScreenState extends State<AppLockScreen>
         break;
     }
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+    return PopScope(
+      canPop: widget.canCancel,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && widget.canCancel) {
+          widget.onCancelled?.call();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       body: ResponsiveLayout.pageContainer(
         context: context,
         padding: EdgeInsets.zero,
@@ -459,8 +466,9 @@ class _AppLockScreenState extends State<AppLockScreen>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildKeypadRow(List<String> digits, List<String> letters, bool isDark) {
     return Row(
