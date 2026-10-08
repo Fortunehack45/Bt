@@ -69,4 +69,6 @@ class AppColors {
   // Frosted Modern Wellness Accents
   static const Color emeraldTeal = Color(0xFF00D084);
   static const Color warningAmber = Color(0xFFF59E0B);
+  static const Color purpleSleep = Color(0xFF818CF8);
+  static const Color hydrationBlue = Color(0xFF2EB5FA);
 }

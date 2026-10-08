@@ -30,6 +30,7 @@ class FirebaseSyncService extends ChangeNotifier {
 
   final List<SupportTicket> _tickets = [];
   List<SupportTicket> get tickets => List.unmodifiable(_tickets);
+  List<SupportTicket> get supportTickets => tickets;
 
   final List<SharedGoal> _sharedGoals = [];
   List<SharedGoal> get sharedGoals => List.unmodifiable(_sharedGoals);
@@ -41,6 +42,40 @@ class FirebaseSyncService extends ChangeNotifier {
 
   // Real-time security callback for screenshot alerts
   Function(ScreenshotAuditEntry entry)? onScreenshotAlert;
+
+  /// Convenience wrapper for creating clinician grants
+  Future<ClinicianPairGrant> createClinicianGrant({
+    required String legalName,
+    required String secretColor,
+    required int durationHours,
+    List<String>? allowedCategories,
+  }) => createClinicianPairGrant(
+    patientName: legalName,
+    securityQuestion1: 'Patient Legal Name',
+    securityAnswer1: legalName,
+    securityQuestion2: 'Favorite Color',
+    securityAnswer2: secretColor,
+    permittedSections: allowedCategories ?? ['vitals', 'sleep', 'steps', 'water'],
+    duration: Duration(hours: durationHours),
+  );
+
+  /// Convenience wrapper for verifying clinician code
+  Future<ClinicianPairGrant?> verifyClinicianCode({
+    required String code,
+    required String ans1,
+    required String ans2,
+  }) => verifyClinicianAccess(
+    pairCode: code,
+    ans1: ans1,
+    ans2: ans2,
+  );
+
+  /// Convenience wrapper for sending goal nudge
+  Future<void> sendGoalNudge({
+    required String goalId,
+    required String targetUserId,
+    required String message,
+  }) => sendGoalReminder(goalId, message);
 
   bool _isInitialized = false;
 

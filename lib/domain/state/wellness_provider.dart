@@ -34,10 +34,14 @@ class WellnessProvider extends ChangeNotifier {
       FirebaseSyncService.instance.addListener(notifyListeners);
       FirebaseSyncService.instance.onScreenshotAlert = (entry) {
         _lastScreenshotAlert = entry;
-        addSystemNotification(
-          title: 'Security Alert: Screenshot Captured',
-          body: 'Examiner (${entry.examinerCode}) captured a screenshot on ${entry.sectionName}.',
-          category: NotificationCategory.insights,
+        addNotification(
+          WellnestNotification(
+            id: 'scr_notif_${DateTime.now().millisecondsSinceEpoch}',
+            title: 'Security Alert: Screenshot Captured',
+            body: 'Examiner (${entry.examinerCode}) captured a screenshot on ${entry.sectionName}.',
+            timestamp: DateTime.now(),
+            type: NotificationType.system,
+          ),
         );
         notifyListeners();
       };

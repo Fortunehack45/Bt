@@ -404,7 +404,6 @@ class _SharedGoalsScreenState extends State<SharedGoalsScreen> {
 
           // Participants Avatars & Breakdown
           ...goal.participants.values.map((p) {
-            final pRatio = (p.currentProgress / goal.targetValue).clamp(0.0, 1.0);
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(

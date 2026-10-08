@@ -228,8 +228,8 @@ class _ClinicianViewScreenState extends State<ClinicianViewScreen> {
                       children: [
                         _buildClinicalStat('Age', '28 yrs', isDark),
                         _buildClinicalStat('Blood Group', 'O+', isDark),
-                        _buildClinicalStat('Weight', '${provider.weight.toStringAsFixed(1)} kg', isDark),
-                        _buildClinicalStat('Height', '${provider.height.toStringAsFixed(0)} cm', isDark),
+                        _buildClinicalStat('Weight', '${provider.weightKg.toStringAsFixed(1)} kg', isDark),
+                        _buildClinicalStat('Height', '${provider.heightCm.toStringAsFixed(0)} cm', isDark),
                       ],
                     ),
                   ],
@@ -261,7 +261,7 @@ class _ClinicianViewScreenState extends State<ClinicianViewScreen> {
                             ],
                           ),
                           Text(
-                            '${provider.currentBpm} BPM',
+                            '${provider.bpm} BPM',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w800,

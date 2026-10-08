@@ -92,6 +92,11 @@ class SharedGoal {
     this.reminders = const [],
   });
 
+  /// Convenient getters
+  String get id => goalId;
+  double get totalProgressPercent => collectiveProgressRatio * 100.0;
+  List<GoalReminderNudge> get recentNudges => reminders;
+
   /// Overall collective progress ratio (0.0 to 1.0)
   double get collectiveProgressRatio {
     if (participants.isEmpty || targetValue <= 0) return 0.0;

@@ -189,6 +189,9 @@ class FirebaseAuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Alias for continueAsGuest
+  Future<void> signInAsGuest() => continueAsGuest();
+
   /// Sign Out
   Future<void> signOut() async {
     _currentUser = AuthUser.createGuest();
@@ -203,6 +206,9 @@ class FirebaseAuthService extends ChangeNotifier {
     await _persistSession(_currentUser!);
     notifyListeners();
   }
+
+  /// Upgrades user directly to Premium tier
+  Future<void> upgradeToPremium() => updatePlanTier(UserPlanTier.premium);
 
   Future<void> _persistSession(AuthUser user) async {
     try {
