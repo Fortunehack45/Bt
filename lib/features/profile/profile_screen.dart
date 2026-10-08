@@ -12,7 +12,11 @@ import '../../core/widgets/solid_wellness_card.dart';
 import '../../core/widgets/wellness_bottom_sheet.dart';
 import '../../domain/state/wellness_provider.dart';
 import '../../domain/models/smart_device_models.dart';
+import '../auth/auth_screen.dart';
+import '../clinician/clinician_sharing_settings_screen.dart';
 import '../security/screens/security_settings_screen.dart';
+import '../social/shared_goals_screen.dart';
+import '../support/support_chat_screen.dart';
 import '../widgets/widget_studio_screen.dart';
 import '../wearables/wearables_hub_screen.dart';
 import 'personal_profile_screen.dart';
@@ -480,6 +484,189 @@ class ProfileScreen extends StatelessWidget {
                                 ? AppColors.primary
                                 : (isDark ? Colors.white38 : Colors.black38),
                           ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Doctor & Examiner Sharing (Pair Code + Screenshot Alerts)
+                    Text('Clinical Sharing & Consultations', style: AppTypography.h2(isDark).copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.sm),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.all(16.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => ClinicianSharingSettingsScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.emeraldTeal.withOpacity(0.18),
+                              borderRadius: AppRadii.roundedMd,
+                            ),
+                            child: const Icon(Icons.medical_services_rounded, color: AppColors.emeraldTeal, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Doctor & Examiner Pair Pass', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  provider.clinicianGrants.isNotEmpty
+                                      ? '${provider.clinicianGrants.length} active passes • Instant screenshot alerts'
+                                      : 'Generate zero-email pair pass for doctor',
+                                  style: AppTypography.caption(isDark),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Social & Partner Goals
+                    Text('Community & Accountability', style: AppTypography.h2(isDark).copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.sm),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.all(16.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => SharedGoalsScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.18),
+                              borderRadius: AppRadii.roundedMd,
+                            ),
+                            child: const Icon(Icons.people_alt_rounded, color: AppColors.primary, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Partner Challenges & Goals', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                                const SizedBox(height: 2),
+                                Text('Team up with partners & send reminder nudges', style: AppTypography.caption(isDark)),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Help & Customer Care
+                    Text('Assistance & Customer Care', style: AppTypography.h2(isDark).copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.sm),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.all(16.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => SupportChatScreen(onBack: () => Navigator.of(context).pop()),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.hydrationBlue.withOpacity(0.18),
+                              borderRadius: AppRadii.roundedMd,
+                            ),
+                            child: const Icon(Icons.support_agent_rounded, color: AppColors.hydrationBlue, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Live Care Team & Support Desk', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+                                const SizedBox(height: 2),
+                                Text('Chat with support for enquiries & device assistance', style: AppTypography.caption(isDark)),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Cloud Account & Authentication
+                    Text('Cloud Account & Security', style: AppTypography.h2(isDark).copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.sm),
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.all(16.0),
+                      onTap: () {
+                        HapticService.selection();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => AuthScreen(
+                              onAuthenticated: () => Navigator.of(context).pop(),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.18),
+                              borderRadius: AppRadii.roundedMd,
+                            ),
+                            child: Icon(
+                              provider.isAuthenticated ? Icons.cloud_done_rounded : Icons.cloud_outlined,
+                              color: AppColors.primary,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  provider.isAuthenticated ? 'Cloud Account Active' : 'Sign In / Connect Cloud',
+                                  style: AppTypography.h3(isDark).copyWith(fontSize: 15),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  provider.isAuthenticated
+                                      ? '${provider.authUser?.email} • ${provider.planTier.label} Plan'
+                                      : 'Connect Google / Email for cross-device cloud sync',
+                                  style: AppTypography.caption(isDark),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                         ],
                       ),
                     ),

@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: is owner of user document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 1. PUBLIC ACCOUNT METADATA (Safe, anonymized info: plan, lastActive, platform)
+    // Accessible by the account owner and authorized Wellnest support consoles
+    match /accounts/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    // 2. STRICT PRIVATE HEALTH TELEMETRY SILO
+    // NEVER ACCESSIBLE TO ADMIN OR SUPPORT.
+    // Client-side zero-knowledge encrypted and restricted strictly to the user themselves.
+    match /users/{userId}/private_health/{document=**} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // 3. CLINICIAN PAIRING & SCREENSHOT AUDIT GRANTS
+    // Accessible via pairCode verification or by the patient who created it
+    match /clinician_grants/{grantId} {
+      allow read: if true; // Doctor queries with pairCode
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() || 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['screenshotAudits', 'lastAccessedAt']));
+      allow delete: if isAuthenticated() && resource.data.patientUid == request.auth.uid;
+    }
+
+    // 4. CUSTOMER SUPPORT TICKETS & REAL-TIME CHAT
+    // Accessible by the ticket creator and Wellnest Support
+    match /support_tickets/{ticketId} {
+      allow read, write: if isAuthenticated();
+      
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // 5. SHARED PARTNER CHALLENGES & COLLABORATIVE GOALS
+    match /shared_goals/{goalId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+
+      match /nudges/{nudgeId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+  }
+}

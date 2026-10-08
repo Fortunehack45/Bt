@@ -1,12 +1,18 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../core/services/app_lock_service.dart';
+import '../../core/services/firebase_auth_service.dart';
+import '../../core/services/firebase_sync_service.dart';
 import '../../core/services/native_platform_service.dart';
 import '../../core/services/pedometer_service.dart';
 import '../../core/widgets/weekly_bar_chart.dart';
+import '../models/auth_user_model.dart';
+import '../models/clinician_pair_model.dart';
 import '../models/notification_item.dart';
 import '../models/reproductive_health_models.dart';
+import '../models/shared_goal_model.dart';
 import '../models/smart_device_models.dart';
+import '../models/support_ticket_model.dart';
 import '../models/wellness_models.dart';
 
 /// Central reactive state store for Biothrix Wellness.
@@ -17,6 +23,25 @@ class WellnessProvider extends ChangeNotifier {
     AppLockService.instance.initialize().then((_) {
       AppLockService.instance.addListener(notifyListeners);
     }).catchError((_) {});
+    FirebaseAuthService.instance.initialize().then((_) {
+      FirebaseAuthService.instance.addListener(notifyListeners);
+      final u = FirebaseAuthService.instance.currentUser;
+      if (u != null && u.displayName.isNotEmpty) {
+        _userName = u.displayName;
+      }
+    }).catchError((_) {});
+    FirebaseSyncService.instance.initialize().then((_) {
+      FirebaseSyncService.instance.addListener(notifyListeners);
+      FirebaseSyncService.instance.onScreenshotAlert = (entry) {
+        _lastScreenshotAlert = entry;
+        addSystemNotification(
+          title: 'Security Alert: Screenshot Captured',
+          body: 'Examiner (${entry.examinerCode}) captured a screenshot on ${entry.sectionName}.',
+          category: NotificationCategory.insights,
+        );
+        notifyListeners();
+      };
+    }).catchError((_) {});
     _loadPersistedState().then((_) {
       // Automatically initiate live physical hardware step counting on app launch
       try {
@@ -24,6 +49,26 @@ class WellnessProvider extends ChangeNotifier {
       } catch (_) {}
     }).catchError((_) {});
   }
+
+  // Firebase Auth & Account Tier
+  AuthUser? get authUser => FirebaseAuthService.instance.currentUser;
+  bool get isAuthenticated => FirebaseAuthService.instance.isAuthenticated;
+  bool get isGuest => FirebaseAuthService.instance.isGuest;
+  UserPlanTier get planTier => authUser?.plan ?? UserPlanTier.freemium;
+  bool get isPremium => planTier == UserPlanTier.premium;
+
+  // Clinician Pairing & Doctor Session
+  ClinicianPairGrant? get activeClinicianSession => FirebaseSyncService.instance.activeClinicianSession;
+  bool get isClinicianMode => FirebaseSyncService.instance.isClinicianSessionActive;
+  List<ClinicianPairGrant> get clinicianGrants => FirebaseSyncService.instance.pairGrants;
+  ScreenshotAuditEntry? _lastScreenshotAlert;
+  ScreenshotAuditEntry? get lastScreenshotAlert => _lastScreenshotAlert;
+
+  // Support Tickets & Inquiries
+  List<SupportTicket> get supportTickets => FirebaseSyncService.instance.tickets;
+
+  // Collaborative Shared Goals
+  List<SharedGoal> get sharedGoals => FirebaseSyncService.instance.sharedGoals;
 
   // App Lock & Biometric Security
   bool get isAppLockEnabled => AppLockService.instance.isLockEnabled;
@@ -2014,6 +2059,8 @@ class WellnessProvider extends ChangeNotifier {
   void dispose() {
     PedometerService.instance.stopTracking(this);
     AppLockService.instance.removeListener(notifyListeners);
+    FirebaseAuthService.instance.removeListener(notifyListeners);
+    FirebaseSyncService.instance.removeListener(notifyListeners);
     super.dispose();
   }
 }

@@ -81,6 +81,17 @@ class MainActivity: FlutterActivity(), SensorEventListener {
         createNotificationChannel()
         initHardwareSensors()
 
+        // Android 14+ (API 34+) Hardware Screen Capture & Screenshot Detection
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            try {
+                registerScreenCaptureCallback(mainExecutor) {
+                    runOnUiThread {
+                        biometricsChannel?.invokeMethod("onScreenshotDetected", null)
+                    }
+                }
+            } catch (_: Throwable) {}
+        }
+
         // Handle app shortcut intent actions
         intent?.action?.let { action ->
             if (action.startsWith("com.wellnest.vitality.health.ACTION_")) {

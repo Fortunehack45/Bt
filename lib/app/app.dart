@@ -4,6 +4,7 @@ import '../core/services/native_platform_service.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/circular_theme_reveal.dart';
 import '../domain/state/wellness_provider.dart';
+import '../features/clinician/clinician_view_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/onboarding/splash_screen.dart';
 import '../features/security/screens/app_lock_screen.dart';
@@ -124,6 +125,11 @@ class _WellnestAppState extends State<WellnestApp> with WidgetsBindingObserver {
           _wellnessProvider.unlockApp();
         },
       );
+    }
+
+    // Clinician Session Gate: If in Doctor mode, render restricted Clinician View
+    if (_wellnessProvider.isClinicianMode && _wellnessProvider.activeClinicianSession != null) {
+      return ClinicianViewScreen(grant: _wellnessProvider.activeClinicianSession!);
     }
 
     return const AppShell();
