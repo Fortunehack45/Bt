@@ -210,6 +210,7 @@ class FirebaseAuthService extends ChangeNotifier {
         createdAt: now,
         lastActiveAt: now,
         isEmailVerified: true,
+        hasCompletedOnboarding: false,
       );
 
       accounts[trimmedEmail] = {
@@ -268,20 +269,33 @@ class FirebaseAuthService extends ChangeNotifier {
       final avatarUrl = photoUrl ??
           'https://ui-avatars.com/api/?name=${Uri.encodeComponent(resolvedName)}&background=0D9488&color=fff&bold=true';
 
-      final user = AuthUser(
-        uid: 'google_${resolvedEmail.hashCode.abs()}',
-        email: resolvedEmail,
-        displayName: resolvedName,
-        photoUrl: avatarUrl,
-        plan: UserPlanTier.freemium,
-        createdAt: now.subtract(const Duration(days: 7)),
-        lastActiveAt: now,
-        isEmailVerified: true,
-      );
-
       await addSavedGoogleAccount(resolvedEmail, resolvedName);
 
       final accounts = await _loadAccounts();
+      final existingRecord = accounts[resolvedEmail];
+      AuthUser user;
+      if (existingRecord != null && existingRecord['user'] != null) {
+        final existingUser = AuthUser.fromJson(existingRecord['user'] as Map<String, dynamic>);
+        user = existingUser.copyWith(
+          displayName: resolvedName.isNotEmpty ? resolvedName : existingUser.displayName,
+          photoUrl: avatarUrl,
+          lastActiveAt: now,
+        );
+      } else {
+        // Brand new Google account registration: requires onboarding calibration
+        user = AuthUser(
+          uid: 'google_${resolvedEmail.hashCode.abs()}',
+          email: resolvedEmail,
+          displayName: resolvedName,
+          photoUrl: avatarUrl,
+          plan: UserPlanTier.freemium,
+          createdAt: now.subtract(const Duration(days: 7)),
+          lastActiveAt: now,
+          isEmailVerified: true,
+          hasCompletedOnboarding: false,
+        );
+      }
+
       accounts[resolvedEmail] = {
         'email': resolvedEmail,
         'passwordHash': 'GOOGLE_OAUTH_VERIFIED',
@@ -352,6 +366,43 @@ class FirebaseAuthService extends ChangeNotifier {
 
   /// Upgrades user directly to Premium tier
   Future<void> upgradeToPremium() => updatePlanTier(UserPlanTier.premium);
+
+  /// Updates and persists the user's health profile and blood group in local and cloud DB.
+  Future<void> updateUserHealthProfile({
+    String? bloodGroup,
+    Map<String, dynamic>? healthProfile,
+    bool? hasCompletedOnboarding,
+  }) async {
+    if (_currentUser == null) return;
+    _currentUser = _currentUser!.copyWith(
+      bloodGroup: bloodGroup ?? _currentUser!.bloodGroup,
+      healthProfile: healthProfile ?? _currentUser!.healthProfile,
+      hasCompletedOnboarding: hasCompletedOnboarding ?? _currentUser!.hasCompletedOnboarding,
+    );
+    await _persistSession(_currentUser!);
+
+    // Also update registered accounts database
+    if (_currentUser!.email.isNotEmpty) {
+      final accounts = await _loadAccounts();
+      if (accounts.containsKey(_currentUser!.email)) {
+        accounts[_currentUser!.email]!['user'] = _currentUser!.toJson();
+        await _saveAccounts(accounts);
+      }
+    }
+    notifyListeners();
+  }
+
+  /// Marks onboarding completed for the current user and persists their calibrated profile.
+  Future<void> markOnboardingComplete({
+    required String bloodGroup,
+    required Map<String, dynamic> healthProfile,
+  }) async {
+    await updateUserHealthProfile(
+      bloodGroup: bloodGroup,
+      healthProfile: healthProfile,
+      hasCompletedOnboarding: true,
+    );
+  }
 
   Future<void> _persistSession(AuthUser user) async {
     try {

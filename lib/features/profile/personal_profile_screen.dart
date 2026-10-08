@@ -26,6 +26,7 @@ class PersonalProfileScreen extends StatelessWidget {
     final weightController = TextEditingController(text: (provider.weightKg > 0 ? provider.weightKg : 70.0).toStringAsFixed(1));
     final targetWeightController = TextEditingController(text: provider.targetWeightKg.toStringAsFixed(1));
     String selectedGender = provider.gender;
+    String selectedBloodGroup = provider.bloodGroup;
     String selectedGoal = provider.primaryGoal;
     bool selectedTrackPeriod = provider.isPeriodTrackingEnabled;
     bool selectedTrackPregnancy = provider.isPregnancyTrackingEnabled;
@@ -93,6 +94,29 @@ class PersonalProfileScreen extends StatelessWidget {
                               if (val) setState(() => selectedGender = g);
                             },
                           ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Blood Group Choice
+                    Text('Blood Group', style: AppTypography.caption(isDark)),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'].map((bg) {
+                        final isSel = selectedBloodGroup == bg;
+                        return ChoiceChip(
+                          label: Text(bg, style: const TextStyle(fontWeight: FontWeight.w700)),
+                          selected: isSel,
+                          selectedColor: AppColors.heartRed,
+                          labelStyle: TextStyle(
+                            color: isSel ? Colors.white : (isDark ? Colors.white : Colors.black87),
+                          ),
+                          onSelected: (val) {
+                            if (val) setState(() => selectedBloodGroup = bg);
+                          },
                         );
                       }).toList(),
                     ),
@@ -199,6 +223,7 @@ class PersonalProfileScreen extends StatelessWidget {
                             weightKg: parsedWeight,
                             targetWeightKg: parsedTarget,
                             primaryGoal: selectedGoal,
+                            bloodGroup: selectedBloodGroup,
                             isPeriodTrackingEnabled: selectedGender == 'Female' ? selectedTrackPeriod : false,
                             isPregnancyTrackingEnabled: selectedGender == 'Female' ? selectedTrackPregnancy : false,
                           );
@@ -518,6 +543,56 @@ class PersonalProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildBiometricTile(
+                            label: 'Blood Group',
+                            value: 'Type ${provider.bloodGroup}',
+                            icon: Icons.bloodtype_rounded,
+                            color: AppColors.heartRed,
+                            isDark: isDark,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildBiometricTile(
+                            label: 'Resting BMR',
+                            value: '${provider.bmr.round()} kcal',
+                            icon: Icons.local_fire_department_rounded,
+                            color: AppColors.nutritionGold,
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildBiometricTile(
+                            label: 'Daily TDEE',
+                            value: '${provider.tdee} kcal',
+                            icon: Icons.bolt_rounded,
+                            color: AppColors.stepsOrange,
+                            isDark: isDark,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildBiometricTile(
+                            label: 'Optimal Hydration',
+                            value: '${provider.recommendedWaterMl} ml',
+                            icon: Icons.water_drop_rounded,
+                            color: AppColors.waterBlue,
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: AppSpacing.md),
 
                     // Primary Goal Card
@@ -544,6 +619,99 @@ class PersonalProfileScreen extends StatelessWidget {
                               ],
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // Blood Group Genetic Intelligence & Health Predictions
+                    SolidWellnessCard(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.heartRed.withOpacity(0.14),
+                                  borderRadius: AppRadii.roundedSm,
+                                ),
+                                child: const Icon(Icons.bloodtype_rounded, color: AppColors.heartRed, size: 24),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Blood Group Intelligence', style: AppTypography.caption(isDark)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Type ${provider.bloodGroup} • ${provider.bloodGroupReport.archetype}',
+                                      style: AppTypography.h3(isDark).copyWith(fontSize: 15),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF261D1D) : const Color(0xFFFFF1F2),
+                              borderRadius: AppRadii.roundedSm,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.verified_rounded, size: 16, color: AppColors.heartRed),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    provider.bloodGroupReport.cellularTag,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                      color: AppColors.heartRed,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          _buildInsightRow('Metabolic Trait', provider.bloodGroupReport.metabolicTrait, isDark),
+                          const Divider(height: 18),
+                          _buildInsightRow('Vascular Profile', provider.bloodGroupReport.cardiovascularProfile, isDark),
+                          const Divider(height: 18),
+                          _buildInsightRow('Optimal Workouts', provider.bloodGroupReport.optimalWorkouts, isDark),
+                          const Divider(height: 18),
+                          _buildInsightRow('Dietary Affinity', provider.bloodGroupReport.dietaryFocus, isDark),
+                          const Divider(height: 18),
+                          _buildInsightRow('Stress Response', provider.bloodGroupReport.stressResponse, isDark),
+                          const SizedBox(height: 14),
+                          Text('Clinical Lifestyle Directives', style: AppTypography.caption(isDark).copyWith(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          ...provider.bloodGroupReport.clinicalRecommendations.map((rec) => Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('• ', style: TextStyle(color: AppColors.heartRed, fontWeight: FontWeight.w800)),
+                                    Expanded(
+                                      child: Text(
+                                        rec,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          height: 1.35,
+                                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )),
                         ],
                       ),
                     ),
@@ -649,6 +817,31 @@ class PersonalProfileScreen extends StatelessWidget {
             fontWeight: FontWeight.w700,
             fontSize: 13,
             color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInsightRow(String label, String value, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12.5,
+            height: 1.35,
+            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
           ),
         ),
       ],

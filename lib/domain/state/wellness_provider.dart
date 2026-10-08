@@ -7,6 +7,7 @@ import '../../core/services/native_platform_service.dart';
 import '../../core/services/pedometer_service.dart';
 import '../../core/widgets/weekly_bar_chart.dart';
 import '../models/auth_user_model.dart';
+import '../models/blood_group_model.dart';
 import '../models/clinician_pair_model.dart';
 import '../models/notification_item.dart';
 import '../models/reproductive_health_models.dart';
@@ -26,8 +27,12 @@ class WellnessProvider extends ChangeNotifier {
     FirebaseAuthService.instance.initialize().then((_) {
       FirebaseAuthService.instance.addListener(notifyListeners);
       final u = FirebaseAuthService.instance.currentUser;
-      if (u != null && u.displayName.isNotEmpty) {
-        _userName = u.displayName;
+      if (u != null) {
+        if (u.displayName.isNotEmpty) _userName = u.displayName;
+        if (u.bloodGroup != null && u.bloodGroup!.isNotEmpty) _bloodGroup = u.bloodGroup!;
+        if (u.healthProfile != null && u.healthProfile!.isNotEmpty) {
+          _restoreFromHealthProfile(u.healthProfile!);
+        }
       }
     }).catchError((_) {});
     FirebaseSyncService.instance.initialize().then((_) {
@@ -141,6 +146,82 @@ class WellnessProvider extends ChangeNotifier {
   String _activityLevel = 'Moderate Activity';
   String get activityLevel => _activityLevel;
 
+  // Blood Group & Genetic Metabolic Profile
+  String _bloodGroup = 'O+';
+  String get bloodGroup => _bloodGroup;
+
+  void setBloodGroup(String group) {
+    if (group.trim().isNotEmpty) {
+      _bloodGroup = group.trim();
+      _persistProfile();
+      notifyListeners();
+    }
+  }
+
+  BloodGroupHealthReport get bloodGroupReport => BloodGroupHealthReport.forGroup(_bloodGroup);
+
+  /// Basal Metabolic Rate (BMR) via clinically validated Mifflin-St Jeor formula
+  double get bmr {
+    final w = _weightKg > 0 ? _weightKg : 70.0;
+    final h = _heightCm > 0 ? _heightCm : 178.0;
+    final a = _age > 0 ? _age : 26;
+    if (_gender.toLowerCase() == 'male') {
+      return (10 * w) + (6.25 * h) - (5 * a) + 5;
+    } else if (_gender.toLowerCase() == 'female') {
+      return (10 * w) + (6.25 * h) - (5 * a) - 161;
+    } else {
+      return (10 * w) + (6.25 * h) - (5 * a) - 78;
+    }
+  }
+
+  /// Total Daily Energy Expenditure (TDEE) based on BMR and lifestyle activity
+  int get tdee {
+    double factor = 1.55;
+    final act = _activityLevel.toLowerCase();
+    if (act.contains('sedentary')) {
+      factor = 1.2;
+    } else if (act.contains('light')) {
+      factor = 1.375;
+    } else if (act.contains('moderate')) {
+      factor = 1.55;
+    } else if (act.contains('very') || act.contains('active')) {
+      factor = 1.725;
+    } else if (act.contains('extreme') || act.contains('athletic')) {
+      factor = 1.9;
+    }
+    return (bmr * factor).round();
+  }
+
+  /// Calibrated recommended daily water intake (ml) based on body mass and activity
+  int get recommendedWaterMl {
+    final w = _weightKg > 0 ? _weightKg : 70.0;
+    double base = w * 35.0; // 35 ml per kg of body mass
+    if (_activityLevel.toLowerCase().contains('moderate')) {
+      base += 350;
+    } else if (_activityLevel.toLowerCase().contains('active')) {
+      base += 700;
+    }
+    return base.round().clamp(1500, 4500);
+  }
+
+  /// Recommended daily water intake in 250ml glasses
+  int get recommendedWaterGlasses => (recommendedWaterMl / 250).ceil();
+
+  /// Estimated maximum cardiovascular heart rate (Fox formula)
+  int get maxHeartRateBpm => (220 - _age).clamp(120, 210);
+
+  /// Karvonen cardiovascular training zones
+  Map<int, String> get heartRateZones {
+    final maxHr = maxHeartRateBpm;
+    return {
+      1: '${(maxHr * 0.50).round()}–${(maxHr * 0.60).round()} bpm (Warm Up & Recovery)',
+      2: '${(maxHr * 0.60).round()}–${(maxHr * 0.70).round()} bpm (Aerobic Base & Fat Oxidation)',
+      3: '${(maxHr * 0.70).round()}–${(maxHr * 0.80).round()} bpm (Cardio Endurance)',
+      4: '${(maxHr * 0.80).round()}–${(maxHr * 0.90).round()} bpm (Anaerobic Threshold)',
+      5: '${(maxHr * 0.90).round()}–$maxHr bpm (Peak VO2 Max)',
+    };
+  }
+
   void setDateOfBirth(DateTime dob) {
     _dateOfBirth = dob;
     final now = DateTime.now();
@@ -203,6 +284,7 @@ class WellnessProvider extends ChangeNotifier {
     double? targetWeightKg,
     String? primaryGoal,
     String? activityLevel,
+    String? bloodGroup,
     bool? isPeriodTrackingEnabled,
     bool? isPregnancyTrackingEnabled,
   }) {
@@ -229,6 +311,7 @@ class WellnessProvider extends ChangeNotifier {
     if (targetWeightKg != null) _targetWeightKg = targetWeightKg;
     if (primaryGoal != null) _primaryGoal = primaryGoal;
     if (activityLevel != null) _activityLevel = activityLevel;
+    if (bloodGroup != null && bloodGroup.trim().isNotEmpty) _bloodGroup = bloodGroup.trim();
 
     // Biological Sex Guard & Mutual Exclusivity:
     if (_gender.toLowerCase() == 'male') {
@@ -1889,15 +1972,51 @@ class WellnessProvider extends ChangeNotifier {
         'age': _age,
         'gender': _gender,
         'heightCm': _heightCm,
+        'weightKg': _weightKg,
         'targetWeightKg': _targetWeightKg,
         'primaryGoal': _primaryGoal,
         'activityLevel': _activityLevel,
+        'bloodGroup': _bloodGroup,
+        'targetCalories': _targetCalories,
+        'waterGoal': _waterGoal,
       };
       NativePlatformService.instance.setString(NativePlatformService.keyProfileData, jsonEncode(data));
       NativePlatformService.instance.setString(NativePlatformService.keyUserProfileName, _userName);
+
+      // Cross-device database sync to persistent cloud account
+      FirebaseAuthService.instance.updateUserHealthProfile(
+        bloodGroup: _bloodGroup,
+        healthProfile: data,
+        hasCompletedOnboarding: _isProfileConfigured,
+      ).catchError((_) {});
     } catch (e) {
       debugPrint('[WellnessProvider] Persist profile error: $e');
     }
+  }
+
+  void _restoreFromHealthProfile(Map<String, dynamic> map) {
+    _userName = map['userName'] as String? ?? _userName;
+    _isProfileConfigured = map['isConfigured'] as bool? ?? true;
+    if (map['dob'] != null) {
+      _dateOfBirth = DateTime.tryParse(map['dob'] as String) ?? _dateOfBirth;
+    }
+    _age = (map['age'] as num?)?.toInt() ?? _age;
+    _gender = map['gender'] as String? ?? _gender;
+    _heightCm = (map['heightCm'] as num?)?.toDouble() ?? _heightCm;
+    if (map['weightKg'] != null) {
+      _weightKg = (map['weightKg'] as num).toDouble();
+    }
+    _targetWeightKg = (map['targetWeightKg'] as num?)?.toDouble() ?? _targetWeightKg;
+    _primaryGoal = map['primaryGoal'] as String? ?? _primaryGoal;
+    _activityLevel = map['activityLevel'] as String? ?? _activityLevel;
+    _bloodGroup = map['bloodGroup'] as String? ?? _bloodGroup;
+    if (map['targetCalories'] != null) {
+      _targetCalories = (map['targetCalories'] as num).toInt();
+    }
+    if (map['waterGoal'] != null) {
+      _waterGoal = (map['waterGoal'] as num).toInt();
+    }
+    notifyListeners();
   }
 
   void _persistVitals() {
@@ -1985,6 +2104,13 @@ class WellnessProvider extends ChangeNotifier {
         _targetWeightKg = (map['targetWeightKg'] as num?)?.toDouble() ?? _targetWeightKg;
         _primaryGoal = map['primaryGoal'] as String? ?? _primaryGoal;
         _activityLevel = map['activityLevel'] as String? ?? _activityLevel;
+        _bloodGroup = map['bloodGroup'] as String? ?? _bloodGroup;
+      }
+
+      // Cross-Device Sync: If authenticated user has saved healthProfile in database, restore it
+      final user = FirebaseAuthService.instance.currentUser;
+      if (user != null && user.healthProfile != null && user.healthProfile!.isNotEmpty) {
+        _restoreFromHealthProfile(user.healthProfile!);
       }
 
       // 4. Vitals & Goals

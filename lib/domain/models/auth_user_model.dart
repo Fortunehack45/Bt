@@ -25,6 +25,9 @@ class AuthUser {
   final DateTime lastActiveAt;
   final bool isEmailVerified;
   final String platform; // 'android', 'ios', 'web'
+  final String? bloodGroup; // 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'
+  final bool hasCompletedOnboarding;
+  final Map<String, dynamic>? healthProfile;
 
   const AuthUser({
     required this.uid,
@@ -36,6 +39,9 @@ class AuthUser {
     required this.lastActiveAt,
     this.isEmailVerified = false,
     this.platform = 'android',
+    this.bloodGroup,
+    this.hasCompletedOnboarding = false,
+    this.healthProfile,
   });
 
   /// Anonymized ID safe for Admin and Support dashboards (e.g. "USR-A83F")
@@ -59,6 +65,9 @@ class AuthUser {
     UserPlanTier? plan,
     DateTime? lastActiveAt,
     bool? isEmailVerified,
+    String? bloodGroup,
+    bool? hasCompletedOnboarding,
+    Map<String, dynamic>? healthProfile,
   }) {
     return AuthUser(
       uid: uid,
@@ -70,6 +79,9 @@ class AuthUser {
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       platform: platform,
+      bloodGroup: bloodGroup ?? this.bloodGroup,
+      hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      healthProfile: healthProfile ?? this.healthProfile,
     );
   }
 
@@ -84,6 +96,9 @@ class AuthUser {
       'lastActiveAt': lastActiveAt.toIso8601String(),
       'isEmailVerified': isEmailVerified,
       'platform': platform,
+      'bloodGroup': bloodGroup,
+      'hasCompletedOnboarding': hasCompletedOnboarding,
+      'healthProfile': healthProfile,
     };
   }
 
@@ -102,6 +117,11 @@ class AuthUser {
           : DateTime.now(),
       isEmailVerified: map['isEmailVerified'] as bool? ?? false,
       platform: map['platform'] as String? ?? 'android',
+      bloodGroup: map['bloodGroup'] as String?,
+      hasCompletedOnboarding: map['hasCompletedOnboarding'] as bool? ?? false,
+      healthProfile: map['healthProfile'] != null
+          ? Map<String, dynamic>.from(map['healthProfile'] as Map)
+          : null,
     );
   }
 
@@ -115,6 +135,7 @@ class AuthUser {
       createdAt: now,
       lastActiveAt: now,
       isEmailVerified: false,
+      hasCompletedOnboarding: false,
     );
   }
 }

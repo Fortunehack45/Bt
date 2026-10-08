@@ -5,8 +5,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';
+import '../onboarding/onboarding_screen.dart';
 import 'clinician_login_sheet.dart';
-import 'widgets/google_account_selector_sheet.dart';
+import 'widgets/google_in_app_browser_sheet.dart';
 
 /// Ultra-premium frosted glass authentication screen.
 /// Supports Google Sign-In, Email/Password login/registration, and guest offline mode.
@@ -41,6 +42,27 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  void _onSuccessfulAuth() {
+    final user = _authService.currentUser;
+    final needsOnboarding = user != null && !user.hasCompletedOnboarding;
+
+    if (needsOnboarding) {
+      // New user from Google or Email: must complete onboarding calibration questions!
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => OnboardingScreen(
+            onGetStarted: () {
+              Navigator.of(context).pop();
+              widget.onAuthenticated();
+            },
+          ),
+        ),
+      );
+    } else {
+      widget.onAuthenticated();
+    }
+  }
+
   Future<void> _handleEmailAuth() async {
     HapticService.mediumImpact();
     setState(() => _localError = null);
@@ -70,7 +92,7 @@ class _AuthScreenState extends State<AuthScreen> {
     if (mounted) {
       if (success) {
         HapticService.success();
-        widget.onAuthenticated();
+        _onSuccessfulAuth();
       } else {
         HapticService.error();
         setState(() {
@@ -88,7 +110,7 @@ class _AuthScreenState extends State<AuthScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => GoogleAccountSelectorSheet(
+      builder: (ctx) => GoogleInAppBrowserSheet(
         onAccountSelected: (email, displayName) async {
           Navigator.of(ctx).pop();
           final success = await _authService.signInWithGoogle(
@@ -98,7 +120,7 @@ class _AuthScreenState extends State<AuthScreen> {
           if (mounted) {
             if (success) {
               HapticService.success();
-              widget.onAuthenticated();
+              _onSuccessfulAuth();
             } else {
               HapticService.error();
               setState(() {

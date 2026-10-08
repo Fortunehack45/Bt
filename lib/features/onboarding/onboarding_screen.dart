@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../core/services/firebase_auth_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/theme/app_spacing.dart';
@@ -36,6 +37,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   double _selectedHeightCm = 178.0;
   double _selectedWeightKg = 70.0;
   String _selectedGoal = 'Vitality & Daily Energy';
+  String _selectedBloodGroup = 'O+';
   bool _trackPeriod = false;
   bool _trackPregnancy = false;
 
@@ -85,6 +87,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (name.isNotEmpty) {
       provider.setUserName(name);
     }
+    provider.setBloodGroup(_selectedBloodGroup);
     provider.updateBiometrics(
       dateOfBirth: _selectedDob,
       age: _selectedAge,
@@ -93,9 +96,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       weightKg: _selectedWeightKg,
       targetWeightKg: (_selectedWeightKg * 0.96),
       primaryGoal: _selectedGoal,
+      bloodGroup: _selectedBloodGroup,
       isPeriodTrackingEnabled: _selectedGender == 'Female' && _trackPeriod,
       isPregnancyTrackingEnabled: _selectedGender == 'Female' && _trackPregnancy,
     );
+
+    // Save user profile to persistent cloud accounts database
+    FirebaseAuthService.instance.markOnboardingComplete(
+      bloodGroup: _selectedBloodGroup,
+      healthProfile: {
+        'userName': name.isNotEmpty ? name : provider.userName,
+        'isConfigured': true,
+        'dob': _selectedDob.toIso8601String(),
+        'age': _selectedAge,
+        'gender': _selectedGender,
+        'heightCm': _selectedHeightCm,
+        'weightKg': _selectedWeightKg,
+        'targetWeightKg': (_selectedWeightKg * 0.96),
+        'primaryGoal': _selectedGoal,
+        'bloodGroup': _selectedBloodGroup,
+        'isPeriodTrackingEnabled': _selectedGender == 'Female' && _trackPeriod,
+        'isPregnancyTrackingEnabled': _selectedGender == 'Female' && _trackPregnancy,
+      },
+    ).catchError((_) {});
 
     // Persist rich answers from the reproductive health questionnaire
     if (_selectedGender == 'Female' && _trackPeriod) {
@@ -397,9 +420,166 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 10),
           _buildDobSelector(isDark),
+          const SizedBox(height: 28),
+
+          // Blood Group Selector
+          _buildBloodGroupSelector(isDark),
+          const SizedBox(height: 16),
         ],
       ),
     );
+  }
+
+  Widget _buildBloodGroupSelector(bool isDark) {
+    const groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Blood Group', style: AppTypography.h3(isDark).copyWith(fontSize: 15)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.heartRed.withOpacity(0.15),
+                borderRadius: AppRadii.roundedPill,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.bloodtype_rounded, size: 14, color: AppColors.heartRed),
+                  const SizedBox(width: 4),
+                  Text(
+                    _selectedBloodGroup,
+                    style: const TextStyle(
+                      fontFamily: AppTypography.fontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.heartRed,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Calibrates genetic metabolic archetype and cardiovascular predictions.',
+          style: AppTypography.caption(isDark).copyWith(fontSize: 12),
+        ),
+        const SizedBox(height: 14),
+
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: groups.map((g) {
+            final isSel = _selectedBloodGroup == g;
+            return GestureDetector(
+              onTap: () {
+                HapticService.selection();
+                setState(() => _selectedBloodGroup = g);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 68,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSel
+                      ? AppColors.heartRed
+                      : (isDark ? AppColors.darkSurfaceSubtle : AppColors.lightSurfaceElevated),
+                  borderRadius: AppRadii.roundedMd,
+                  border: Border.all(
+                    color: isSel
+                        ? AppColors.heartRed
+                        : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                    width: isSel ? 1.5 : 1.0,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  g,
+                  style: TextStyle(
+                    fontFamily: AppTypography.fontFamily,
+                    fontSize: 14,
+                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                    color: isSel
+                        ? Colors.white
+                        : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 14),
+
+        // Live biological snippet preview
+        SolidWellnessCard(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.heartRed.withOpacity(0.12),
+                  borderRadius: AppRadii.roundedSm,
+                ),
+                child: const Icon(Icons.insights_rounded, size: 20, color: AppColors.heartRed),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getBloodGroupHeadline(_selectedBloodGroup),
+                      style: TextStyle(
+                        fontFamily: AppTypography.fontFamily,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _getBloodGroupSummary(_selectedBloodGroup),
+                      style: AppTypography.caption(isDark).copyWith(fontSize: 11.5, height: 1.3),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getBloodGroupHeadline(String group) {
+    if (group.startsWith('O')) return 'Type $group: Hunter-Gatherer Archetype';
+    if (group.startsWith('A')) return 'Type $group: Cultivator Agrarian Archetype';
+    if (group.startsWith('B')) return 'Type $group: Nomadic Adaptability Archetype';
+    if (group.startsWith('AB')) return 'Type $group: Modern Synthesizer Archetype';
+    return 'Standard Genetic Calibration';
+  }
+
+  String _getBloodGroupSummary(String group) {
+    if (group.startsWith('O')) {
+      return 'Higher metabolic vitality, robust digestion, excels with high-intensity cardio and resistance training.';
+    }
+    if (group.startsWith('A')) {
+      return 'Superior plant-based nutrient absorption, cortisol-sensitive; thrives with zone 2 movement, yoga, and breathwork.';
+    }
+    if (group.startsWith('B')) {
+      return 'Balanced digestive flexibility, adaptable immune recognition; thrives with cycling, hiking, and agility sports.';
+    }
+    if (group.startsWith('AB')) {
+      return 'Complex metabolic synthesis; benefits from mixed workouts, antioxidant-rich greens, and structured rest.';
+    }
+    return 'Standard physiological metabolic baseline calibrated to biological age, sex, and weight.';
   }
 
   Widget _buildDobSelector(bool isDark) {
@@ -2087,11 +2267,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             padding: const EdgeInsets.all(18),
             child: Column(
               children: [
-                _buildTargetSummaryTile('Daily Hydration Target', '8 glasses (2,000 ml)', Icons.water_drop_rounded, AppColors.waterBlue, isDark),
+                _buildTargetSummaryTile(
+                  'Blood Group Genetic Profile',
+                  'Type $_selectedBloodGroup • ${_getBloodGroupHeadline(_selectedBloodGroup)}',
+                  Icons.bloodtype_rounded,
+                  AppColors.heartRed,
+                  isDark,
+                ),
+                const Divider(height: 20),
+                _buildTargetSummaryTile(
+                  'Daily Hydration Target',
+                  '${((_selectedWeightKg * 35) / 250).ceil()} glasses (${(_selectedWeightKg * 35).round()} ml)',
+                  Icons.water_drop_rounded,
+                  AppColors.waterBlue,
+                  isDark,
+                ),
+                const Divider(height: 20),
+                _buildTargetSummaryTile(
+                  'Metabolic Energy (TDEE / BMR)',
+                  '${_calculateTdee()} kcal/day (BMR: ${_calculateBmr()} kcal)',
+                  Icons.local_fire_department_rounded,
+                  AppColors.nutritionGold,
+                  isDark,
+                ),
+                const Divider(height: 20),
+                _buildTargetSummaryTile(
+                  'Max Heart Rate & Aerobic Zone',
+                  '${220 - _selectedAge} bpm max • Zone 2: ${((220 - _selectedAge) * 0.6).round()}–${((220 - _selectedAge) * 0.7).round()} bpm',
+                  Icons.favorite_rounded,
+                  AppColors.heartRed,
+                  isDark,
+                ),
                 const Divider(height: 20),
                 _buildTargetSummaryTile('Active Movement', '10,000 steps (~7.5 km)', Icons.directions_walk_rounded, AppColors.stepsOrange, isDark),
-                const Divider(height: 20),
-                _buildTargetSummaryTile('Nutrition Intake', '2,000 kcal daily balance', Icons.local_fire_department_rounded, AppColors.nutritionGold, isDark),
                 if (_selectedGender == 'Female' && _trackPeriod) ...[
                   const Divider(height: 20),
                   _buildTargetSummaryTile(
@@ -2186,5 +2394,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ],
     );
+  }
+
+  int _calculateBmr() {
+    if (_selectedGender == 'Male') {
+      return ((10 * _selectedWeightKg) + (6.25 * _selectedHeightCm) - (5 * _selectedAge) + 5).round();
+    } else {
+      return ((10 * _selectedWeightKg) + (6.25 * _selectedHeightCm) - (5 * _selectedAge) - 161).round();
+    }
+  }
+
+  int _calculateTdee() {
+    return (_calculateBmr() * 1.55).round();
   }
 }

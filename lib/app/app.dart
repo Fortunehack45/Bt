@@ -44,6 +44,15 @@ class _WellnestAppState extends State<WellnestApp> with WidgetsBindingObserver {
 
   Future<void> _checkPersistentOnboarding() async {
     final isDone = await NativePlatformService.instance.isOnboardingCompleted();
+    final authUser = _wellnessProvider.authUser;
+    if (authUser != null && !authUser.isGuest && !authUser.hasCompletedOnboarding) {
+      if (mounted) {
+        setState(() {
+          _showOnboarding = true;
+        });
+      }
+      return;
+    }
     if (mounted && isDone) {
       setState(() {
         _showOnboarding = false;
@@ -105,7 +114,10 @@ class _WellnestAppState extends State<WellnestApp> with WidgetsBindingObserver {
       );
     }
 
-    if (_showOnboarding) {
+    final authUser = _wellnessProvider.authUser;
+    final userNeedsOnboarding = authUser != null && !authUser.isGuest && !authUser.hasCompletedOnboarding;
+
+    if (_showOnboarding || userNeedsOnboarding) {
       return OnboardingScreen(
         onGetStarted: () {
           setState(() {
