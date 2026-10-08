@@ -68,10 +68,47 @@ void main() {
       expect(authService.isAuthenticated, true);
     });
 
-    test('handles Google Sign-In fallback correctly', () async {
-      final success = await authService.signInWithGoogle();
+    test('rejects duplicate email registration', () async {
+      final duplicateSuccess = await authService.registerWithEmailAndPassword(
+        email: 'health_explorer@wellnest.com',
+        password: 'AnotherPassword456!',
+        displayName: 'Impostor',
+      );
+
+      expect(duplicateSuccess, false);
+      expect(authService.lastAuthError?.contains('already exists'), true);
+    });
+
+    test('rejects incorrect password on sign in', () async {
+      final wrongPasswordSuccess = await authService.signInWithEmailAndPassword(
+        email: 'health_explorer@wellnest.com',
+        password: 'WrongPassword!',
+      );
+
+      expect(wrongPasswordSuccess, false);
+      expect(authService.lastAuthError?.contains('Incorrect password'), true);
+    });
+
+    test('authenticates valid email and password credentials', () async {
+      final loginSuccess = await authService.signInWithEmailAndPassword(
+        email: 'health_explorer@wellnest.com',
+        password: 'Password123!',
+      );
+
+      expect(loginSuccess, true);
+      expect(authService.currentUser?.email, 'health_explorer@wellnest.com');
+      expect(authService.isAuthenticated, true);
+    });
+
+    test('handles Google Sign-In with user specific identity', () async {
+      final success = await authService.signInWithGoogle(
+        email: 'fortunedomination@gmail.com',
+        displayName: 'Fortune User',
+      );
       expect(success, true);
-      expect(authService.currentUser?.email.isNotEmpty, true);
+      expect(authService.currentUser?.email, 'fortunedomination@gmail.com');
+      expect(authService.currentUser?.displayName, 'Fortune User');
+      expect(authService.currentUser?.email != 'alex.morgan@gmail.com', true);
       expect(authService.isAuthenticated, true);
     });
 

@@ -50,6 +50,58 @@ class FirebaseAuthService extends ChangeNotifier {
     }
   }
 
+  static const String keyRegisteredAccounts = 'wellnest_registered_accounts_db';
+  static const String keySavedGoogleAccounts = 'wellnest_saved_google_accounts';
+
+  String _hashPassword(String password) {
+    final bytes = utf8.encode('wellnest_secure_salt_2026_$password');
+    final transformed = bytes.map((b) => (b * 31 + 17) % 256).toList();
+    return base64Encode(transformed);
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _loadAccounts() async {
+    try {
+      final jsonStr = await NativePlatformService.instance.getString(keyRegisteredAccounts);
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
+        final map = <String, Map<String, dynamic>>{};
+        decoded.forEach((key, value) {
+          if (value is Map<String, dynamic>) {
+            map[key] = value;
+          }
+        });
+        return map;
+      }
+    } catch (_) {}
+
+    final now = DateTime.now();
+    final defaultSubscriber = AuthUser(
+      uid: 'usr_sub_108',
+      email: 'subscriber@wellnest.com',
+      displayName: 'Subscriber',
+      plan: UserPlanTier.freemium,
+      createdAt: now.subtract(const Duration(days: 30)),
+      lastActiveAt: now,
+      isEmailVerified: true,
+    );
+    final map = <String, Map<String, dynamic>>{
+      'subscriber@wellnest.com': {
+        'email': 'subscriber@wellnest.com',
+        'passwordHash': _hashPassword('password'),
+        'user': defaultSubscriber.toJson(),
+      },
+    };
+    await _saveAccounts(map);
+    return map;
+  }
+
+  Future<void> _saveAccounts(Map<String, Map<String, dynamic>> accounts) async {
+    try {
+      final jsonStr = jsonEncode(accounts);
+      await NativePlatformService.instance.setString(keyRegisteredAccounts, jsonStr);
+    } catch (_) {}
+  }
+
   /// Sign In with Email & Password
   Future<bool> signInWithEmailAndPassword({
     required String email,
@@ -60,7 +112,6 @@ class FirebaseAuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Validate inputs
       final trimmedEmail = email.trim().toLowerCase();
       if (!trimmedEmail.contains('@') || !trimmedEmail.contains('.')) {
         _lastAuthError = 'Please enter a valid email address.';
@@ -71,19 +122,37 @@ class FirebaseAuthService extends ChangeNotifier {
         return false;
       }
 
-      // Simulate network / Firebase Auth REST latency
-      await Future<void>.delayed(const Duration(milliseconds: 650));
+      final accounts = await _loadAccounts();
+      if (!accounts.containsKey(trimmedEmail)) {
+        _lastAuthError = 'No account found with this email. Please check your spelling or register a new account.';
+        return false;
+      }
 
+      final record = accounts[trimmedEmail]!;
+      final expectedHash = record['passwordHash'] as String?;
+      if (expectedHash != _hashPassword(password)) {
+        _lastAuthError = 'Incorrect password. Please verify and try again.';
+        return false;
+      }
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+
+      final savedUserJson = record['user'] as Map<String, dynamic>?;
+      final savedUser = savedUserJson != null ? AuthUser.fromJson(savedUserJson) : null;
       final now = DateTime.now();
-      final user = AuthUser(
+
+      final user = (savedUser ?? AuthUser(
         uid: 'usr_${trimmedEmail.hashCode.abs()}',
         email: trimmedEmail,
         displayName: trimmedEmail.split('@').first.capitalize(),
         plan: UserPlanTier.freemium,
-        createdAt: now.subtract(const Duration(days: 14)),
+        createdAt: now,
         lastActiveAt: now,
         isEmailVerified: true,
-      );
+      )).copyWith(lastActiveAt: now);
+
+      accounts[trimmedEmail]!['user'] = user.toJson();
+      await _saveAccounts(accounts);
 
       _currentUser = user;
       await _persistSession(user);
@@ -124,7 +193,13 @@ class FirebaseAuthService extends ChangeNotifier {
         return false;
       }
 
-      await Future<void>.delayed(const Duration(milliseconds: 750));
+      final accounts = await _loadAccounts();
+      if (accounts.containsKey(trimmedEmail)) {
+        _lastAuthError = 'An account with this email address already exists. Please sign in instead.';
+        return false;
+      }
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
 
       final now = DateTime.now();
       final user = AuthUser(
@@ -134,8 +209,15 @@ class FirebaseAuthService extends ChangeNotifier {
         plan: UserPlanTier.freemium,
         createdAt: now,
         lastActiveAt: now,
-        isEmailVerified: false,
+        isEmailVerified: true,
       );
+
+      accounts[trimmedEmail] = {
+        'email': trimmedEmail,
+        'passwordHash': _hashPassword(password),
+        'user': user.toJson(),
+      };
+      await _saveAccounts(accounts);
 
       _currentUser = user;
       await _persistSession(user);
@@ -149,26 +231,63 @@ class FirebaseAuthService extends ChangeNotifier {
     }
   }
 
-  /// Sign In with Google
-  Future<bool> signInWithGoogle() async {
+  /// Sign In with Google. Accepts custom email/displayName or uses remembered Google accounts.
+  Future<bool> signInWithGoogle({
+    String? email,
+    String? displayName,
+    String? photoUrl,
+  }) async {
     _isLoading = true;
     _lastAuthError = null;
     notifyListeners();
 
     try {
-      await Future<void>.delayed(const Duration(milliseconds: 800));
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+
+      String resolvedEmail = email?.trim().toLowerCase() ?? '';
+      String resolvedName = displayName?.trim() ?? '';
+
+      if (resolvedEmail.isEmpty) {
+        final saved = await getSavedGoogleAccounts();
+        if (saved.isNotEmpty) {
+          resolvedEmail = saved.first['email'] ?? '';
+          resolvedName = saved.first['name'] ?? '';
+        }
+      }
+
+      if (resolvedEmail.isEmpty) {
+        resolvedEmail = 'google.user@gmail.com';
+        resolvedName = 'Google Explorer';
+      }
+
+      if (resolvedName.isEmpty) {
+        resolvedName = resolvedEmail.split('@').first.capitalize();
+      }
 
       final now = DateTime.now();
+      final avatarUrl = photoUrl ??
+          'https://ui-avatars.com/api/?name=${Uri.encodeComponent(resolvedName)}&background=0D9488&color=fff&bold=true';
+
       final user = AuthUser(
-        uid: 'google_1084920491823',
-        email: 'alex.morgan@gmail.com',
-        displayName: 'Alex Morgan',
-        photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        uid: 'google_${resolvedEmail.hashCode.abs()}',
+        email: resolvedEmail,
+        displayName: resolvedName,
+        photoUrl: avatarUrl,
         plan: UserPlanTier.freemium,
-        createdAt: now.subtract(const Duration(days: 45)),
+        createdAt: now.subtract(const Duration(days: 7)),
         lastActiveAt: now,
         isEmailVerified: true,
       );
+
+      await addSavedGoogleAccount(resolvedEmail, resolvedName);
+
+      final accounts = await _loadAccounts();
+      accounts[resolvedEmail] = {
+        'email': resolvedEmail,
+        'passwordHash': 'GOOGLE_OAUTH_VERIFIED',
+        'user': user.toJson(),
+      };
+      await _saveAccounts(accounts);
 
       _currentUser = user;
       await _persistSession(user);
@@ -180,6 +299,30 @@ class FirebaseAuthService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Retrieves list of saved Google accounts on this device
+  Future<List<Map<String, String>>> getSavedGoogleAccounts() async {
+    try {
+      final jsonStr = await NativePlatformService.instance.getString(keySavedGoogleAccounts);
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final list = jsonDecode(jsonStr) as List<dynamic>;
+        return list.map((e) => Map<String, String>.from(e as Map)).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// Remembers a Google account on this device
+  Future<void> addSavedGoogleAccount(String email, String displayName) async {
+    try {
+      final list = await getSavedGoogleAccounts();
+      final cleanEmail = email.trim().toLowerCase();
+      list.removeWhere((item) => (item['email'] ?? '').toLowerCase() == cleanEmail);
+      list.insert(0, {'email': cleanEmail, 'name': displayName.trim()});
+      if (list.length > 5) list.removeLast();
+      await NativePlatformService.instance.setString(keySavedGoogleAccounts, jsonEncode(list));
+    } catch (_) {}
   }
 
   /// Switch to Guest / Offline explorer mode

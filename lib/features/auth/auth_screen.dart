@@ -7,6 +7,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';
 import 'clinician_login_sheet.dart';
+import 'widgets/google_account_selector_sheet.dart';
 
 /// Ultra-premium frosted glass authentication screen.
 /// Supports Google Sign-In, Email/Password login/registration, and guest offline mode.
@@ -80,22 +81,35 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    HapticService.mediumImpact();
+  void _handleGoogleSignIn() {
+    HapticService.selection();
     setState(() => _localError = null);
 
-    final success = await _authService.signInWithGoogle();
-    if (mounted) {
-      if (success) {
-        HapticService.success();
-        widget.onAuthenticated();
-      } else {
-        HapticService.error();
-        setState(() {
-          _localError = _authService.lastAuthError ?? 'Google sign-in cancelled.';
-        });
-      }
-    }
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => GoogleAccountSelectorSheet(
+        onAccountSelected: (email, displayName) async {
+          Navigator.of(ctx).pop();
+          final success = await _authService.signInWithGoogle(
+            email: email,
+            displayName: displayName,
+          );
+          if (mounted) {
+            if (success) {
+              HapticService.success();
+              widget.onAuthenticated();
+            } else {
+              HapticService.error();
+              setState(() {
+                _localError = _authService.lastAuthError ?? 'Google sign-in failed.';
+              });
+            }
+          }
+        },
+      ),
+    );
   }
 
   void _handleContinueAsGuest() async {

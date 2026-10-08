@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "114751278349",
+    "project_id": "bt-wellnest-2026",
+    "storage_bucket": "bt-wellnest-2026.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:114751278349:android:958cef3cba7d76c9f8b444",
+        "android_client_info": {
+          "package_name": "com.wellnest.vitality.health"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANy_8omcMrvOqZJ3LRC0W-2LdSpfyMkg4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

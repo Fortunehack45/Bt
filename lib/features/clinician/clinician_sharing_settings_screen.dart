@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/glass/platform_frosted_container.dart';
+import '../../core/services/firebase_auth_service.dart';
 import '../../core/services/firebase_sync_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -415,8 +416,11 @@ class _GeneratePairCodeSheetState extends State<_GeneratePairCodeSheet> {
   @override
   void initState() {
     super.initState();
-    _nameController.text = 'Patient';
-    _secretController.text = 'Blue';
+    final user = FirebaseAuthService.instance.currentUser;
+    _nameController.text = (user != null && !user.isGuest && user.displayName.isNotEmpty)
+        ? user.displayName
+        : '';
+    _secretController.text = '';
   }
 
   @override
@@ -493,14 +497,14 @@ class _GeneratePairCodeSheetState extends State<_GeneratePairCodeSheet> {
               // Q1: Name
               Text('QUESTION 1: PATIENT NAME', style: _labelStyle(isDark)),
               const SizedBox(height: 6),
-              _buildInput(_nameController, 'e.g. Alex Morgan', isDark),
+              _buildInput(_nameController, 'e.g. Your Full Name', isDark),
 
               const SizedBox(height: 14),
 
               // Q2: Secret
               Text('QUESTION 2: SECRET ANSWER / FAVORITE COLOR', style: _labelStyle(isDark)),
               const SizedBox(height: 6),
-              _buildInput(_secretController, 'e.g. Emerald Green', isDark),
+              _buildInput(_secretController, 'e.g. Blue, Emerald, etc.', isDark),
 
               const SizedBox(height: 16),
 

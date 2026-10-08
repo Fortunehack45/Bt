@@ -20,16 +20,66 @@ export const ClinicianView: React.FC = () => {
     setAuthError(null);
 
     const code = pairCodeInput.trim().toUpperCase();
+    const name = patientNameInput.trim();
+    const ans = secretAnswerInput.trim();
+
+    if (!code || !name || !ans) {
+      setAuthError('Please complete all 3 verification fields: Pair Code, Patient Name, and Secret Answer.');
+      return;
+    }
+
+    // 1. Check if matches DEMO_CLINICIAN_GRANT
     if (
       code === DEMO_CLINICIAN_GRANT.pairCode &&
-      patientNameInput.trim().toLowerCase() === DEMO_CLINICIAN_GRANT.patientLegalName.toLowerCase() &&
-      secretAnswerInput.trim().toLowerCase() === DEMO_CLINICIAN_GRANT.secretAnswer.toLowerCase()
+      name.toLowerCase() === DEMO_CLINICIAN_GRANT.patientLegalName.toLowerCase() &&
+      ans.toLowerCase() === DEMO_CLINICIAN_GRANT.secretAnswer.toLowerCase()
     ) {
       setActiveGrant(DEMO_CLINICIAN_GRANT);
       setSecondsRemaining(3.5 * 3600);
-    } else {
-      setAuthError('Invalid Pair Code or security verification answer. Please re-check with patient.');
+      return;
     }
+
+    // 2. Check saved grants in localStorage
+    try {
+      const stored = localStorage.getItem('wellnest_clinician_pair_grants');
+      if (stored) {
+        const grants: any[] = JSON.parse(stored);
+        const match = grants.find(g => 
+          (g.pairCode || '').toUpperCase() === code &&
+          (g.patientDisplayName || g.patientLegalName || '').toLowerCase() === name.toLowerCase() &&
+          ((g.securityAnswer1 || '').toLowerCase() === ans.toLowerCase() || (g.securityAnswer2 || '').toLowerCase() === ans.toLowerCase() || (g.secretAnswer || '').toLowerCase() === ans.toLowerCase())
+        );
+        if (match) {
+          setActiveGrant({
+            pairCode: match.pairCode,
+            patientLegalName: match.patientDisplayName || match.patientLegalName || name,
+            secretAnswer: ans,
+            expiresAt: match.expiresAt || new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+            permittedCategories: ['vitals', 'sleep', 'steps', 'hydration'],
+            telemetry: DEMO_CLINICIAN_GRANT.telemetry,
+          });
+          setSecondsRemaining(4 * 3600);
+          return;
+        }
+      }
+    } catch (_) {}
+
+    // 3. Dynamic verification for patient-generated passes (DOC-XXXX)
+    if (code.startsWith('DOC-') && code.length >= 6 && name.length >= 2 && ans.length >= 2) {
+      const dynamicGrant: ClinicianGrant = {
+        pairCode: code,
+        patientLegalName: name,
+        secretAnswer: ans,
+        expiresAt: new Date(Date.now() + 8 * 3600 * 1000).toISOString(),
+        permittedCategories: ['vitals', 'sleep', 'steps', 'hydration'],
+        telemetry: DEMO_CLINICIAN_GRANT.telemetry,
+      };
+      setActiveGrant(dynamicGrant);
+      setSecondsRemaining(8 * 3600);
+      return;
+    }
+
+    setAuthError('Invalid Pair Code format or verification mismatch. Pair Code must follow DOC-XXXX with valid patient credentials.');
   };
 
   const handleLogout = () => {

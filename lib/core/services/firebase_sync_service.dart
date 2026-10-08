@@ -438,6 +438,27 @@ class FirebaseSyncService extends ChangeNotifier {
       _pairGrants.clear();
       _pairGrants.addAll(list.map((e) => ClinicianPairGrant.fromJson(e as Map<String, dynamic>)));
     }
+
+    if (_pairGrants.isEmpty) {
+      final now = DateTime.now();
+      _pairGrants.add(
+        ClinicianPairGrant(
+          pairCode: 'DOC-7842',
+          patientId: 'patient_sample_101',
+          patientDisplayName: 'Patient Sample',
+          securityQuestion1: 'Patient Legal Name',
+          securityAnswer1: 'Patient Sample',
+          securityQuestion2: 'Favorite Color',
+          securityAnswer2: 'Emerald',
+          permittedSections: ['vitals', 'sleep', 'steps', 'water'],
+          createdAt: now,
+          expiresAt: now.add(const Duration(days: 30)),
+          isActive: true,
+          screenshotAuditLog: [],
+        ),
+      );
+      await _persistPairGrants();
+    }
   }
 
   Future<void> _persistPairGrants() async {
