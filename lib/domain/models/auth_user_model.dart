@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Subscription tier for Wellnest users.
 enum UserPlanTier {
   freemium('Freemium', 'Essential wellness telemetry & device syncing'),
@@ -51,6 +49,9 @@ class AuthUser {
     final diff = DateTime.now().difference(lastActiveAt);
     return diff.inDays <= 7;
   }
+
+  /// Whether this user is an unauthenticated guest explorer.
+  bool get isGuest => email.isEmpty;
 
   AuthUser copyWith({
     String? displayName,

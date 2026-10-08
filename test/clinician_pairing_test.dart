@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wellnest/core/services/firebase_sync_service.dart';
 import 'package:wellnest/domain/models/clinician_pair_model.dart';
-import 'package:wellnest/domain/models/shared_goal_model.dart';
-import 'package:wellnest/domain/models/support_ticket_model.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

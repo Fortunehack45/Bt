@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Record of an unauthorized or detected screenshot captured during an examiner session.
 class ScreenshotAuditEntry {
   final String id;

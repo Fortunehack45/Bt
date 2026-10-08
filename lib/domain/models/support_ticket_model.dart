@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'auth_user_model.dart';
 
 /// Single chat message within a support inquiry.

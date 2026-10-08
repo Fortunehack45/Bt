@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/glass/platform_frosted_container.dart';
 import '../../core/services/firebase_sync_service.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Participant in a collaborative wellness challenge.
 class GoalParticipant {
   final String userId;

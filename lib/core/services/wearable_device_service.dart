@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import '../../domain/models/smart_device_models.dart';
 import '../../domain/state/wellness_provider.dart';

@@ -162,7 +162,7 @@ class _GoogleAccountSelectorSheetState extends State<GoogleAccountSelectorSheet>
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
-                    color: isDark ? AppColors.darkMutedText : AppColors.lightMutedText,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -209,7 +209,7 @@ class _GoogleAccountSelectorSheetState extends State<GoogleAccountSelectorSheet>
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
-                          color: isDark ? AppColors.darkMutedText : AppColors.lightMutedText,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                         ),
                       ),
                       TextButton(
