@@ -13,6 +13,7 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -46,15 +47,18 @@ class MainActivity: FlutterActivity(), SensorEventListener {
     private val PEDOMETER_CHANNEL = "com.wellnest.vitality.health/pedometer"
     private val WEARABLES_CHANNEL = "com.wellnest.vitality.health/wearables"
     private val BIOMETRICS_CHANNEL = "com.wellnest.vitality.health/biometrics"
+    private val BROWSER_CHANNEL = "com.wellnest.vitality.health/browser"
     private val NOTIFICATION_CHANNEL_ID = "wellnest_alerts"
     private val ACTIVITY_RECOGNITION_REQUEST_CODE = 1001
     private val BLUETOOTH_PERMISSION_REQUEST_CODE = 1002
 
     private var initialAction: String? = null
+    private var initialDeepLinkUri: String? = null
     private var methodChannel: MethodChannel? = null
     private var pedometerChannel: MethodChannel? = null
     private var wearablesChannel: MethodChannel? = null
     private var biometricsChannel: MethodChannel? = null
+    private var browserChannel: MethodChannel? = null
     private var isScanningBle = false
     private var bleScanCallback: ScanCallback? = null
     private var currentCancellationSignal: CancellationSignal? = null
@@ -98,6 +102,13 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                 initialAction = action
             }
         }
+
+        // Handle OAuth / deep link intent data on launch
+        intent?.data?.let { uri ->
+            if (uri.scheme == "wellnest") {
+                initialDeepLinkUri = uri.toString()
+            }
+        }
     }
 
     private fun initHardwareSensors() {
@@ -137,6 +148,11 @@ class MainActivity: FlutterActivity(), SensorEventListener {
         intent.action?.let { action ->
             if (action.startsWith("com.wellnest.vitality.health.ACTION_")) {
                 methodChannel?.invokeMethod("onShortcutAction", action)
+            }
+        }
+        intent.data?.let { uri ->
+            if (uri.scheme == "wellnest") {
+                browserChannel?.invokeMethod("onDeepLink", uri.toString())
             }
         }
     }
@@ -356,6 +372,35 @@ class MainActivity: FlutterActivity(), SensorEventListener {
                 "cancelAuthentication" -> {
                     cancelBiometricAuthentication()
                     result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // 7. Browser & Google OAuth Deep Link Channel
+        val bChannel = MethodChannel(messenger, BROWSER_CHANNEL)
+        browserChannel = bChannel
+        bChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "openUrl" -> {
+                    val url = call.argument<String>("url")
+                    if (url.isNullOrEmpty()) {
+                        result.error("INVALID_URL", "URL cannot be null or empty", null)
+                        return@setMethodCallHandler
+                    }
+                    try {
+                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(browserIntent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("BROWSER_ERROR", e.message, null)
+                    }
+                }
+                "getInitialUri" -> {
+                    result.success(initialDeepLinkUri)
+                    initialDeepLinkUri = null
                 }
                 else -> result.notImplemented()
             }

@@ -7,7 +7,6 @@ import '../../core/utils/haptic_service.dart';
 import '../../core/utils/responsive_layout.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'clinician_login_sheet.dart';
-import 'widgets/google_in_app_browser_sheet.dart';
 
 /// Ultra-premium frosted glass authentication screen.
 /// Supports Google Sign-In, Email/Password login/registration, and guest offline mode.
@@ -102,35 +101,30 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  void _handleGoogleSignIn() {
+  Future<void> _handleGoogleSignIn() async {
     HapticService.selection();
     setState(() => _localError = null);
 
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => GoogleInAppBrowserSheet(
-        onAccountSelected: (email, displayName) async {
-          Navigator.of(ctx).pop();
-          final success = await _authService.signInWithGoogle(
-            email: email,
-            displayName: displayName,
-          );
-          if (mounted) {
-            if (success) {
-              HapticService.success();
-              _onSuccessfulAuth();
-            } else {
-              HapticService.error();
-              setState(() {
-                _localError = _authService.lastAuthError ?? 'Google sign-in failed.';
-              });
-            }
-          }
-        },
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Triggering phone browser for Google Sign-In... Please select your account.'),
+        duration: Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
       ),
     );
+
+    final success = await _authService.signInWithGoogle();
+    if (mounted) {
+      if (success) {
+        HapticService.success();
+        _onSuccessfulAuth();
+      } else {
+        HapticService.error();
+        setState(() {
+          _localError = _authService.lastAuthError ?? 'Google sign-in was not completed in the browser.';
+        });
+      }
+    }
   }
 
   void _handleContinueAsGuest() async {

@@ -3,13 +3,54 @@ import 'package:flutter/services.dart';
 
 /// Production service bridging Flutter to native Android & iOS capabilities:
 /// - Real heads-up system status-bar notifications
-/// - Persistent local key-value store (SharedPreferences / UserDefaults)
 class NativePlatformService {
-  NativePlatformService._();
+  NativePlatformService._() {
+    _browserChannel.setMethodCallHandler((call) async {
+      if (call.method == 'onDeepLink') {
+        final uri = call.arguments as String?;
+        if (uri != null && uri.isNotEmpty) {
+          for (final listener in List.of(_deepLinkListeners)) {
+            listener(uri);
+          }
+        }
+      }
+    });
+  }
   static final NativePlatformService instance = NativePlatformService._();
 
   static const MethodChannel _notificationChannel = MethodChannel('com.wellnest.vitality.health/notifications');
   static const MethodChannel _preferencesChannel = MethodChannel('com.wellnest.vitality.health/preferences');
+  static const MethodChannel _browserChannel = MethodChannel('com.wellnest.vitality.health/browser');
+
+  final List<void Function(String uri)> _deepLinkListeners = [];
+
+  void addDeepLinkListener(void Function(String uri) listener) {
+    _deepLinkListeners.add(listener);
+  }
+
+  void removeDeepLinkListener(void Function(String uri) listener) {
+    _deepLinkListeners.remove(listener);
+  }
+
+  /// Triggers the device's native browser (Chrome on Android, Safari on iOS)
+  Future<bool> openUrlInBrowser(String url) async {
+    try {
+      final res = await _browserChannel.invokeMethod<bool>('openUrl', {'url': url});
+      return res ?? false;
+    } catch (e) {
+      debugPrint('[NativePlatformService] openUrlInBrowser note: $e');
+      return false;
+    }
+  }
+
+  /// Checks if the app was launched by a deep link from the phone browser
+  Future<String?> getInitialDeepLinkUri() async {
+    try {
+      return await _browserChannel.invokeMethod<String>('getInitialUri');
+    } catch (_) {
+      return null;
+    }
+  }
 
   // In-memory fallback map for test environments & web
   final Map<String, dynamic> _fallbackPrefs = {};

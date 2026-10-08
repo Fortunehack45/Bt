@@ -9,7 +9,9 @@ import CoreMotion
   private var notificationsChannel: FlutterMethodChannel?
   private var preferencesChannel: FlutterMethodChannel?
   private var pedometerChannel: FlutterMethodChannel?
+  private var browserChannel: FlutterMethodChannel?
   private var initialAction: String?
+  private var initialDeepLinkUri: String?
 
   private let pedometer = CMPedometer()
   private let motionManager = CMMotionManager()
@@ -19,6 +21,11 @@ import CoreMotion
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    if let url = launchOptions?[UIApplication.LaunchOptionsKey.url] as? URL {
+      if url.scheme == "wellnest" {
+        initialDeepLinkUri = url.absoluteString
+      }
+    }
     let controller = window?.rootViewController as! FlutterViewController
     let messenger = controller.binaryMessenger
 
@@ -193,8 +200,43 @@ import CoreMotion
       }
     }
 
+    // 5. Browser & OAuth Deep Link Channel
+    let bChannel = FlutterMethodChannel(name: "com.wellnest.vitality.health/browser", binaryMessenger: messenger)
+    browserChannel = bChannel
+    bChannel.setMethodCallHandler { [weak self] (call, result) in
+      switch call.method {
+      case "openUrl":
+        guard let args = call.arguments as? [String: Any],
+              let urlString = args["url"] as? String,
+              let url = URL(string: urlString) else {
+          result(FlutterError(code: "INVALID_URL", message: "Invalid URL string", details: nil))
+          return
+        }
+        UIApplication.shared.open(url, options: [:]) { success in
+          result(success)
+        }
+      case "getInitialUri":
+        result(self?.initialDeepLinkUri)
+        self?.initialDeepLinkUri = nil
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  override func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey : Any] = [:]
+  ) -> Bool {
+    if url.scheme == "wellnest" {
+      browserChannel?.invokeMethod("onDeepLink", arguments: url.absoluteString)
+      return true
+    }
+    return super.application(app, open: url, options: options)
   }
 
   override func userNotificationCenter(
