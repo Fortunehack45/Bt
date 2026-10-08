@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../core/glass/platform_frosted_container.dart';
 import '../../../core/services/firebase_auth_service.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/haptic_service.dart';
 
@@ -822,9 +820,6 @@ class _GoogleGPainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    final redPaint = Paint()..color = const Color(0xFFEA4335)..style = PaintingStyle.fill;
-    final yellowPaint = Paint()..color = const Color(0xFFFBBC05)..style = PaintingStyle.fill;
-    final greenPaint = Paint()..color = const Color(0xFF34A853)..style = PaintingStyle.fill;
     final bluePaint = Paint()..color = const Color(0xFF4285F4)..style = PaintingStyle.fill;
 
     // Draw Google blue crossbar

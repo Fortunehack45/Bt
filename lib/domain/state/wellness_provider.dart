@@ -1408,18 +1408,6 @@ class WellnessProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clinical Basal Metabolic Rate using the validated Mifflin-St Jeor equation
-  double get bmr {
-    final w = _weightKg > 0 ? _weightKg : 70.0;
-    final h = _heightCm > 0 ? _heightCm : 175.0;
-    final a = _age;
-    if (_gender.toLowerCase() == 'female') {
-      return (10 * w) + (6.25 * h) - (5 * a) - 161;
-    } else {
-      return (10 * w) + (6.25 * h) - (5 * a) + 5;
-    }
-  }
-
   /// Clinically calculated daily caloric recommendation based on BMR & activity level
   int get recommendedDailyCalories {
     final baseBmr = bmr;
