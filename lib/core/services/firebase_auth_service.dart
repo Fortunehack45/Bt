@@ -271,7 +271,7 @@ class FirebaseAuthService extends ChangeNotifier {
 
     try {
       final clientId = customClientId ?? defaultGoogleClientId;
-      final redirectUri = defaultRedirectUri;
+      const redirectUri = defaultRedirectUri;
 
       // Google OAuth 2.0 authorization endpoint
       final authUri = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
