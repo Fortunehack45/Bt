@@ -65,4 +65,8 @@ class AppColors {
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   static const Color info = Color(0xFF3B82F6);
+
+  // Frosted Modern Wellness Accents
+  static const Color emeraldTeal = Color(0xFF00D084);
+  static const Color warningAmber = Color(0xFFF59E0B);
 }

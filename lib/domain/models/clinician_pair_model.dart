@@ -70,6 +70,9 @@ class ClinicianPairGrant {
     return diff.isNegative ? Duration.zero : diff;
   }
 
+  /// Alias for remainingTime
+  Duration get remainingDuration => remainingTime;
+
   /// Whether a specific health category is permitted to be viewed.
   bool canAccessSection(String sectionKey) {
     if (isExpired || !isActive) return false;

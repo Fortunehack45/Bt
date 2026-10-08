@@ -8,46 +8,52 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('ClinicianPairGrant Domain Model Tests', () {
-    test('accurately calculates isExpired and remaining time', () {
+    test('accurately calculates isExpired and remaining duration', () {
       final activeGrant = ClinicianPairGrant(
-        id: 'grant_1',
         pairCode: 'DOC-1234',
-        patientUid: 'patient_alpha',
-        patientLegalName: 'Sarah Connor',
-        secretAnswer: 'Blue',
-        expiresAt: DateTime.now().add(const Duration(hours: 4)),
+        patientId: 'patient_alpha',
+        patientDisplayName: 'Sarah Connor',
+        securityQuestion1: 'Patient Legal Name',
+        securityAnswer1: 'Sarah Connor',
+        securityQuestion2: 'Favorite Color',
+        securityAnswer2: 'Blue',
+        permittedSections: ['vitals', 'sleep'],
         createdAt: DateTime.now(),
-        permittedCategories: ['vitals', 'sleep'],
+        expiresAt: DateTime.now().add(const Duration(hours: 4)),
       );
 
       expect(activeGrant.isExpired, false);
-      expect(activeGrant.remainingTime.inMinutes, greaterThan(200));
+      expect(activeGrant.remainingDuration.inMinutes, greaterThan(200));
 
       final expiredGrant = ClinicianPairGrant(
-        id: 'grant_2',
         pairCode: 'DOC-9999',
-        patientUid: 'patient_beta',
-        patientLegalName: 'John Doe',
-        secretAnswer: 'Green',
-        expiresAt: DateTime.now().subtract(const Duration(minutes: 5)),
+        patientId: 'patient_beta',
+        patientDisplayName: 'John Doe',
+        securityQuestion1: 'Patient Legal Name',
+        securityAnswer1: 'John Doe',
+        securityQuestion2: 'Favorite Color',
+        securityAnswer2: 'Green',
+        permittedSections: ['vitals'],
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        permittedCategories: ['vitals'],
+        expiresAt: DateTime.now().subtract(const Duration(minutes: 5)),
       );
 
       expect(expiredGrant.isExpired, true);
-      expect(expiredGrant.remainingTime, Duration.zero);
+      expect(expiredGrant.remainingDuration, Duration.zero);
     });
 
     test('enforces strict category access permissions', () {
       final grant = ClinicianPairGrant(
-        id: 'grant_3',
         pairCode: 'DOC-5678',
-        patientUid: 'patient_gamma',
-        patientLegalName: 'Alice Springs',
-        secretAnswer: 'Indigo',
-        expiresAt: DateTime.now().add(const Duration(days: 1)),
+        patientId: 'patient_gamma',
+        patientDisplayName: 'Alice Springs',
+        securityQuestion1: 'Patient Legal Name',
+        securityAnswer1: 'Alice Springs',
+        securityQuestion2: 'Favorite Color',
+        securityAnswer2: 'Indigo',
+        permittedSections: ['vitals', 'steps'],
         createdAt: DateTime.now(),
-        permittedCategories: ['vitals', 'steps'],
+        expiresAt: DateTime.now().add(const Duration(days: 1)),
       );
 
       expect(grant.canAccessSection('vitals'), true);
@@ -58,75 +64,78 @@ void main() {
 
     test('verifies security answers case-insensitively and trims whitespace', () {
       final grant = ClinicianPairGrant(
-        id: 'grant_4',
         pairCode: 'DOC-4444',
-        patientUid: 'patient_delta',
-        patientLegalName: 'Alexander Hamilton',
-        secretAnswer: 'Amber',
-        expiresAt: DateTime.now().add(const Duration(hours: 1)),
+        patientId: 'patient_delta',
+        patientDisplayName: 'Alexander Hamilton',
+        securityQuestion1: 'Patient Legal Name',
+        securityAnswer1: 'Alexander Hamilton',
+        securityQuestion2: 'Favorite Color',
+        securityAnswer2: 'Amber',
+        permittedSections: ['vitals'],
         createdAt: DateTime.now(),
+        expiresAt: DateTime.now().add(const Duration(hours: 1)),
       );
 
-      expect(grant.verifySecurityAnswers('alexander hamilton', 'amber'), true);
-      expect(grant.verifySecurityAnswers(' ALEXANDER HAMILTON ', ' AMBER '), true);
-      expect(grant.verifySecurityAnswers('Alexander Hamilton', 'wrong_secret'), false);
-      expect(grant.verifySecurityAnswers('Wrong Name', 'Amber'), false);
+      expect(grant.verifyAnswers('alexander hamilton', 'amber'), true);
+      expect(grant.verifyAnswers(' ALEXANDER HAMILTON ', ' AMBER '), true);
+      expect(grant.verifyAnswers('Alexander Hamilton', 'wrong_secret'), false);
+      expect(grant.verifyAnswers('Wrong Name', 'Amber'), false);
     });
   });
 
   group('FirebaseSyncService Clinician and Screenshot Tests', () {
-    late FirebaseSyncService syncService;
-
-    setUp(() {
-      syncService = FirebaseSyncService();
-    });
+    final syncService = FirebaseSyncService.instance;
 
     test('creates new grant with unique pair code and security questions', () async {
       final grant = await syncService.createClinicianGrant(
-        patientUid: 'patient_omega',
-        patientLegalName: 'Doctor Who',
-        secretAnswer: 'Tardis Blue',
+        legalName: 'Doctor Who',
+        secretColor: 'Tardis Blue',
         durationHours: 24,
-        categories: ['vitals', 'sleep', 'steps'],
+        allowedCategories: ['vitals', 'sleep', 'steps'],
       );
 
       expect(grant.pairCode.startsWith('DOC-'), true);
-      expect(grant.patientLegalName, 'Doctor Who');
-      expect(grant.permittedCategories.length, 3);
+      expect(grant.patientDisplayName, 'Doctor Who');
+      expect(grant.permittedSections.length, 3);
       expect(grant.isExpired, false);
     });
 
     test('verifies doctor login with pair code and security questions', () async {
       final created = await syncService.createClinicianGrant(
-        patientUid: 'patient_test',
-        patientLegalName: 'Grace Hopper',
-        secretAnswer: 'Navy Blue',
+        legalName: 'Grace Hopper',
+        secretColor: 'Navy Blue',
         durationHours: 12,
       );
 
-      final verified = await syncService.verifyClinicianLogin(
-        pairCode: created.pairCode,
-        patientLegalName: 'grace hopper',
-        secretAnswer: 'navy blue',
+      final verified = await syncService.verifyClinicianCode(
+        code: created.pairCode,
+        ans1: 'grace hopper',
+        ans2: 'navy blue',
       );
 
       expect(verified, isNotNull);
-      expect(verified?.id, created.id);
+      expect(verified?.pairCode, created.pairCode);
 
-      final failed = await syncService.verifyClinicianLogin(
-        pairCode: created.pairCode,
-        patientLegalName: 'grace hopper',
-        secretAnswer: 'red',
+      final failed = await syncService.verifyClinicianCode(
+        code: created.pairCode,
+        ans1: 'grace hopper',
+        ans2: 'red',
       );
       expect(failed, isNull);
     });
 
     test('logs screenshot audit and dispatches notification callback', () async {
       final grant = await syncService.createClinicianGrant(
-        patientUid: 'patient_monitored',
-        patientLegalName: 'Alan Turing',
-        secretAnswer: 'Enigma',
+        legalName: 'Alan Turing',
+        secretColor: 'Enigma',
         durationHours: 2,
+      );
+
+      // Log in as clinician
+      await syncService.verifyClinicianCode(
+        code: grant.pairCode,
+        ans1: 'Alan Turing',
+        ans2: 'Enigma',
       );
 
       ScreenshotAuditEntry? notifiedEntry;
@@ -134,35 +143,24 @@ void main() {
         notifiedEntry = entry;
       };
 
-      final entry = await syncService.reportDoctorScreenshot(
-        grantId: grant.id,
-        capturedSection: 'Resting Heart Rate & HRV Graph',
-      );
+      await syncService.reportScreenshotCaptured('Resting Heart Rate & HRV Graph');
 
-      expect(entry, isNotNull);
-      expect(entry?.capturedSection, 'Resting Heart Rate & HRV Graph');
-      expect(notifiedEntry?.grantId, grant.id);
+      expect(notifiedEntry, isNotNull);
+      expect(notifiedEntry?.sectionName, 'Resting Heart Rate & HRV Graph');
 
-      final updatedGrant = syncService.activeGrants.firstWhere((g) => g.id == grant.id);
-      expect(updatedGrant.screenshotAudits.isNotEmpty, true);
+      final activeSession = syncService.activeClinicianSession;
+      expect(activeSession?.screenshotAuditLog.isNotEmpty, true);
     });
   });
 
   group('FirebaseSyncService Social Goals & Support Tests', () {
-    late FirebaseSyncService syncService;
-
-    setUp(() {
-      syncService = FirebaseSyncService();
-    });
+    final syncService = FirebaseSyncService.instance;
 
     test('creates and tracks shared partner goals with nudges', () async {
       final goal = await syncService.createSharedGoal(
         title: '7-Day 10k Steps Challenge',
         targetValue: 70000,
         unit: 'steps',
-        creatorUid: 'user_1',
-        creatorName: 'Alex',
-        partnerUid: 'user_2',
         partnerName: 'Jordan',
       );
 
@@ -171,39 +169,37 @@ void main() {
       expect(goal.totalProgressPercent, 0.0);
 
       // Send nudge
-      final nudge = await syncService.sendGoalNudge(
+      await syncService.sendGoalNudge(
         goalId: goal.id,
-        senderUid: 'user_1',
-        senderName: 'Alex',
-        targetUid: 'user_2',
+        targetUserId: 'partner_01',
         message: 'Let’s go for an evening walk! 🚶',
       );
 
-      expect(nudge, isNotNull);
-      expect(nudge?.message, contains('evening walk'));
+      final updatedGoal = syncService.sharedGoals.firstWhere((g) => g.id == goal.id);
+      expect(updatedGoal.recentNudges.isNotEmpty, true);
+      expect(updatedGoal.recentNudges.first.message, contains('evening walk'));
     });
 
     test('creates support ticket and exchanges real-time messages', () async {
       final ticket = await syncService.createSupportTicket(
-        userId: 'usr_premium_1',
         subject: 'Pair code expiry extension request',
-        category: SupportCategory.security,
+        category: 'Security',
         initialMessage: 'Can I extend my doctor session while it is active?',
       );
 
       expect(ticket.subject, 'Pair code expiry extension request');
-      expect(ticket.status, TicketStatus.open);
+      expect(ticket.status, 'open');
       expect(ticket.messages.length, 1);
 
-      final repliedTicket = await syncService.addSupportMessage(
-        ticketId: ticket.id,
-        sender: MessageSender.support,
-        senderName: 'Support Agent Marcus',
+      await syncService.sendTicketMessage(
+        ticketId: ticket.ticketId,
         content: 'Hi! You can create a new pass with a custom duration at any time.',
+        isSupport: true,
       );
 
-      expect(repliedTicket?.messages.length, 2);
-      expect(repliedTicket?.status, TicketStatus.inProgress);
+      final updatedTicket = syncService.supportTickets.firstWhere((t) => t.ticketId == ticket.ticketId);
+      expect(updatedTicket.messages.length, 2);
+      expect(updatedTicket.status, 'in_progress');
     });
   });
 }

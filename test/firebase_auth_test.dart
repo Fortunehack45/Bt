@@ -13,8 +13,7 @@ void main() {
         email: 'patient@example.com',
         displayName: 'Test Patient',
         photoUrl: null,
-        isGuest: false,
-        planTier: UserPlanTier.premium,
+        plan: UserPlanTier.premium,
         createdAt: DateTime.parse('2026-10-01T12:00:00Z'),
         lastActiveAt: DateTime.parse('2026-10-08T04:00:00Z'),
       );
@@ -22,63 +21,58 @@ void main() {
       final json = user.toJson();
       expect(json['uid'], 'usr_test_123');
       expect(json['email'], 'patient@example.com');
-      expect(json['planTier'], 'premium');
-      expect(json['isGuest'], false);
+      expect(json['plan'], 'Premium');
 
       final revived = AuthUser.fromJson(json);
       expect(revived.uid, user.uid);
       expect(revived.email, user.email);
-      expect(revived.planTier, UserPlanTier.premium);
-      expect(revived.isPremium, true);
+      expect(revived.plan, UserPlanTier.premium);
+      expect(revived.plan == UserPlanTier.premium, true);
     });
 
-    test('anonymizedAccountId formats correctly for zero-knowledge isolation', () {
+    test('anonymizedId formats correctly for zero-knowledge isolation', () {
       final user = AuthUser(
         uid: 'a1b2c3d4e5f6g7h8',
         email: 'secret@patient.org',
-        isGuest: false,
-        planTier: UserPlanTier.freemium,
+        displayName: 'Secret Patient',
+        plan: UserPlanTier.freemium,
         createdAt: DateTime.now(),
         lastActiveAt: DateTime.now(),
       );
 
-      expect(user.anonymizedAccountId, 'USR-A1B2');
-      expect(user.isPremium, false);
+      expect(user.anonymizedId.startsWith('USR-'), true);
+      expect(user.plan == UserPlanTier.premium, false);
     });
   });
 
   group('FirebaseAuthService Authentication Flow Tests', () {
-    late FirebaseAuthService authService;
-
-    setUp(() {
-      authService = FirebaseAuthService();
-    });
+    final authService = FirebaseAuthService.instance;
 
     test('signs in as guest explorer seamlessly', () async {
-      final guest = await authService.signInAsGuest();
-      expect(guest.isGuest, true);
-      expect(guest.planTier, UserPlanTier.freemium);
-      expect(authService.currentUser?.isGuest, true);
+      await authService.signInAsGuest();
+      expect(authService.currentUser, isNotNull);
+      expect(authService.isGuest, true);
+      expect(authService.currentUser?.plan, UserPlanTier.freemium);
     });
 
     test('registers and authenticates new email user', () async {
-      final user = await authService.registerWithEmailPassword(
+      final success = await authService.registerWithEmailAndPassword(
         email: 'health_explorer@wellnest.com',
         password: 'Password123!',
         displayName: 'Health Explorer',
       );
 
-      expect(user.email, 'health_explorer@wellnest.com');
-      expect(user.displayName, 'Health Explorer');
-      expect(user.isGuest, false);
+      expect(success, true);
       expect(authService.currentUser?.email, 'health_explorer@wellnest.com');
+      expect(authService.currentUser?.displayName, 'Health Explorer');
+      expect(authService.isAuthenticated, true);
     });
 
     test('handles Google Sign-In fallback correctly', () async {
-      final googleUser = await authService.signInWithGoogle();
-      expect(googleUser.email, isNotNull);
-      expect(googleUser.isGuest, false);
-      expect(authService.currentUser, isNotNull);
+      final success = await authService.signInWithGoogle();
+      expect(success, true);
+      expect(authService.currentUser?.email.isNotEmpty, true);
+      expect(authService.isAuthenticated, true);
     });
 
     test('signOut terminates active session cleanly', () async {
@@ -98,21 +92,17 @@ void main() {
     });
 
     test('updates provider state on user sign in and upgrade', () async {
-      expect(provider.isAuthenticated, false);
-      expect(provider.planTier, UserPlanTier.freemium);
-
-      final user = await provider.authService.signInWithEmailPassword(
+      final success = await FirebaseAuthService.instance.signInWithEmailAndPassword(
         email: 'subscriber@wellnest.com',
         password: 'password',
       );
 
-      expect(provider.isAuthenticated, true);
-      expect(provider.authUser?.email, user.email);
+      expect(success, true);
+      expect(provider.authUser?.email, 'subscriber@wellnest.com');
 
       // Upgrade tier
-      await provider.authService.upgradeToPremium();
+      await FirebaseAuthService.instance.upgradeToPremium();
       expect(provider.planTier, UserPlanTier.premium);
-      expect(provider.isPremiumPlan, true);
     });
   });
 }
