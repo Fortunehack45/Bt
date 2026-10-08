@@ -21,7 +21,7 @@ void main() {
       final json = user.toJson();
       expect(json['uid'], 'usr_test_123');
       expect(json['email'], 'patient@example.com');
-      expect(json['plan'], 'Premium');
+      expect(json['plan'], 'premium');
 
       final revived = AuthUser.fromJson(json);
       expect(revived.uid, user.uid);
@@ -80,7 +80,8 @@ void main() {
       expect(authService.currentUser, isNotNull);
 
       await authService.signOut();
-      expect(authService.currentUser, isNull);
+      expect(authService.isGuest, true);
+      expect(authService.isAuthenticated, false);
     });
   });
 
